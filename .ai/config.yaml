@@ -1,0 +1,272 @@
+version: "1.0"
+
+# 工具路径和配置
+tools:
+  go:
+    formatter:
+      command: "gofmt"
+      args: ["-l", "-w"]
+      timeout: 30
+      working_dir: "backend"
+    linter:
+      command: "golangci-lint"
+      args: ["run", "--config", ".golangci.yml"]
+      timeout: 120
+      working_dir: "backend"
+    test_runner:
+      command: "go"
+      args: ["test", "-v", "-race", "-coverprofile=coverage.out", "./..."]
+      timeout: 300
+      working_dir: "backend"
+  
+  vue:
+    linter:
+      command: "pnpm"
+      args: ["eslint", "--ext", ".vue,.js,.ts,.jsx,.tsx", "--fix"]
+      timeout: 60
+      working_dir: "frontend"
+    type_checker:
+      command: "pnpm"
+      args: ["vue-tsc", "--noEmit"]
+      timeout: 120
+      working_dir: "frontend"
+    formatter:
+      command: "pnpm"
+      args: ["prettier", "--write"]
+      timeout: 30
+      working_dir: "frontend"
+  
+  protobuf:
+    compiler:
+      command: "protoc"
+      args: [
+        "--proto_path=backend/api",
+        "--go_out=backend",
+        "--go-grpc_out=backend",
+        "--go_opt=paths=source_relative",
+        "--go-grpc_opt=paths=source_relative"
+      ]
+      timeout: 60
+      working_dir: "."
+  
+  ent:
+    generator:
+      command: "go"
+      args: ["generate", "./ent"]
+      timeout: 60
+      working_dir: "backend"
+
+# 验证规则配置
+validation:
+  go:
+    # 是否运行测试
+    run_tests: true
+    # 是否检查导入
+    check_imports: true
+    # 最大圈复杂度
+    max_complexity: 15
+    # 是否检查错误处理
+    check_error_handling: true
+    # 是否检查 context 使用
+    check_context_usage: true
+    # 验证规则
+    rules:
+      - "no_raw_sql"           # 禁止使用原始 SQL
+      - "require_error_check"  # 要求检查错误
+      - "require_context"      # 要求使用 context
+      - "no_global_vars"       # 禁止全局变量（除常量）
+  
+  vue:
+    # 是否检查类型
+    check_types: true
+    # 是否检查 props 定义
+    check_props: true
+    # 是否检查 emits 定义
+    check_emits: true
+    # 是否检查组件命名
+    check_component_naming: true
+    # 验证规则
+    rules:
+      - "require_prop_types"      # 要求 prop 类型定义
+      - "require_emit_types"      # 要求 emit 类型定义
+      - "composition_api_only"    # 仅使用 Composition API
+      - "script_setup_preferred"  # 优先使用 script setup
+  
+  protobuf:
+    # Protobuf lint 规则
+    lint_rules:
+      - "PACKAGE_DEFINED"
+      - "SERVICE_NAMES_CAMEL_CASE"
+      - "RPC_NAMES_CAMEL_CASE"
+      - "MESSAGE_NAMES_CAMEL_CASE"
+      - "FIELD_NAMES_LOWER_SNAKE_CASE"
+    # 是否检查向后兼容性
+    check_compatibility: true
+  
+  ent:
+    # 是否检查约束
+    check_constraints: true
+    # 是否检查索引
+    check_indexes: true
+    # 是否检查关系
+    check_relations: true
+
+# 任务留痕配置
+trace:
+  # 留痕目录
+  directory: ".ai/traces"
+  # 留痕格式
+  format: "json"
+  # 保留天数
+  retention_days: 90
+  # 是否记录详细信息
+  verbose: true
+  # 是否记录代码差异
+  include_diff: true
+  # 是否记录决策依据
+  include_rationale: true
+  # 是否记录参考资料
+  include_references: true
+
+# 回滚配置
+rollback:
+  # 是否自动回滚
+  auto_rollback: true
+  # 修改前是否备份
+  backup_before_change: true
+  # 备份目录
+  backup_directory: ".ai/backups"
+  # 备份保留天数（成功任务）
+  backup_retention_success: 7
+  # 备份保留天数（失败任务）
+  backup_retention_failure: 30
+  # 是否验证回滚结果
+  verify_rollback: true
+  # 回滚触发条件
+  triggers:
+    - "validation_error"      # 验证错误
+    - "constitution_violation" # 规范违反
+    - "test_failure"          # 测试失败
+    - "manual_request"        # 手动请求
+
+# 错误处理配置
+error_handling:
+  # 重试配置
+  retry:
+    # 最大重试次数
+    max_attempts: 3
+    # 退避策略
+    backoff_strategy: "exponential"
+    # 初始延迟（毫秒）
+    initial_delay_ms: 1000
+    # 最大延迟（毫秒）
+    max_delay_ms: 10000
+  # 错误报告
+  reporting:
+    # 是否包含堆栈跟踪
+    include_stack_trace: true
+    # 是否包含上下文信息
+    include_context: true
+    # 是否提供修复建议
+    include_suggestions: true
+
+# 文档同步配置
+documentation:
+  # 是否自动同步文档
+  auto_sync: true
+  # API 文档路径
+  api_docs_path: "docs/api"
+  # 组件文档路径
+  component_docs_path: "docs/components"
+  # 功能文档路径
+  feature_docs_path: "docs/features"
+  # 文档模板路径
+  templates_path: ".ai/templates"
+  # 是否生成示例代码
+  generate_examples: true
+  # 是否生成 API 参考
+  generate_api_reference: true
+
+# 防幻觉验证配置
+anti_hallucination:
+  # 是否启用验证
+  enabled: true
+  # 是否验证 API 存在性
+  verify_api_exists: true
+  # 是否验证函数存在性
+  verify_function_exists: true
+  # 是否验证模块存在性
+  verify_module_exists: true
+  # 是否验证配置键存在性
+  verify_config_exists: true
+  # 无法验证时是否请求确认
+  request_confirmation: true
+  # 索引更新触发器
+  index_update_triggers:
+    - "protobuf_change"
+    - "ent_schema_change"
+    - "dependency_update"
+    - "manual_trigger"
+
+# 架构约束配置
+architecture:
+  # 后端三层架构
+  backend_layers:
+    - name: "api"
+      path: "backend/api"
+      description: "API 层 - Protobuf 定义"
+      allowed_dependencies: []
+    - name: "app"
+      path: "backend/app"
+      description: "应用层 - 业务逻辑"
+      allowed_dependencies: ["api", "pkg"]
+    - name: "pkg"
+      path: "backend/pkg"
+      description: "基础设施层"
+      allowed_dependencies: []
+  
+  # 前端架构
+  frontend_structure:
+    - name: "apps"
+      path: "frontend/apps"
+      description: "应用入口"
+    - name: "packages"
+      path: "frontend/packages"
+      description: "共享包"
+    - name: "internal"
+      path: "frontend/internal"
+      description: "内部工具"
+  
+  # 依赖方向检查
+  check_dependency_direction: true
+  # 是否允许跨层调用
+  allow_cross_layer_calls: false
+
+# 安全配置
+security:
+  # 是否检查硬编码密钥
+  check_hardcoded_secrets: true
+  # 是否检查认证绕过
+  check_auth_bypass: true
+  # 是否检查 SQL 注入
+  check_sql_injection: true
+  # 是否检查敏感信息泄露
+  check_sensitive_data_leak: true
+  # 敏感信息模式
+  sensitive_patterns:
+    - "password"
+    - "secret"
+    - "token"
+    - "api_key"
+    - "private_key"
+
+# 性能配置
+performance:
+  # 是否检查 N+1 查询
+  check_n_plus_one: true
+  # 是否检查大循环
+  check_large_loops: true
+  # 是否检查内存泄漏
+  check_memory_leaks: true
+  # 最大查询复杂度
+  max_query_complexity: 10

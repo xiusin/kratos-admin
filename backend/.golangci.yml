@@ -1,0 +1,86 @@
+# golangci-lint configuration for AI Programming Constitution
+# This configuration enforces Go coding standards and best practices
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck      # 检查未处理的错误
+    - gosimple      # 简化代码建议
+    - govet         # Go 官方 vet 工具
+    - ineffassign   # 检测无效赋值
+    - staticcheck   # 静态分析
+    - unused        # 检测未使用的常量、变量、函数等
+    - gofmt         # 检查代码格式
+    - goimports     # 检查导入顺序
+    - misspell      # 检查拼写错误
+    - goconst       # 检查可以提取为常量的重复字符串
+    - gocyclo       # 检查圈复杂度
+    - dupl          # 检查重复代码
+    - gosec         # 安全检查
+    - unconvert     # 检查不必要的类型转换
+    - unparam       # 检查未使用的函数参数
+    - prealloc      # 检查可以预分配的切片
+    - exportloopref # 检查循环变量引用问题
+    - nilerr        # 检查返回 nil 错误的问题
+    - errorlint     # 错误处理最佳实践
+    - contextcheck  # 检查 context 使用
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  
+  gocyclo:
+    min-complexity: 15  # 最大圈复杂度
+  
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  
+  dupl:
+    threshold: 100
+  
+  gosec:
+    excludes:
+      - G104  # 允许某些情况下不检查错误（需谨慎使用）
+  
+  govet:
+    check-shadowing: true
+    enable-all: true
+  
+  misspell:
+    locale: US
+  
+  goimports:
+    local-prefixes: github.com/your-org/your-project  # 根据实际项目调整
+
+issues:
+  exclude-rules:
+    # 排除测试文件的某些检查
+    - path: _test\.go
+      linters:
+        - dupl
+        - gosec
+        - goconst
+    
+    # 排除生成的代码
+    - path: ent/
+      linters:
+        - all
+    
+    # 排除 Protobuf 生成的代码
+    - path: \.pb\.go$
+      linters:
+        - all
+  
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
