@@ -53,3 +53,39 @@ func NewIndexUpdateTriggerFromConfig(cfg *Config, verifier AntiHallucinationVeri
 	v := verifier.(*antiHallucinationVerifier)
 	return NewIndexUpdateTrigger(cfg, v)
 }
+
+// NewRollbackManagerFromConfig creates a RollbackManager from configuration
+func NewRollbackManagerFromConfig(cfg *Config) (RollbackManager, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("config is required")
+	}
+
+	backupDir := cfg.Rollback.BackupDirectory
+	if backupDir == "" {
+		backupDir = ".ai/backups"
+	}
+
+	traceDir := cfg.Trace.Directory
+	if traceDir == "" {
+		traceDir = ".ai/traces"
+	}
+
+	// Make paths absolute if they're relative
+	if !filepath.IsAbs(backupDir) {
+		backupDir = filepath.Clean(backupDir)
+	}
+	if !filepath.IsAbs(traceDir) {
+		traceDir = filepath.Clean(traceDir)
+	}
+
+	return NewRollbackManager(backupDir, traceDir)
+}
+
+// NewRollbackTriggerFromConfig creates a RollbackTrigger from configuration
+func NewRollbackTriggerFromConfig(
+	rollbackManager RollbackManager,
+	traceManager TaskTraceManager,
+	validator CodeValidator,
+) *RollbackTrigger {
+	return NewRollbackTrigger(rollbackManager, traceManager, validator)
+}

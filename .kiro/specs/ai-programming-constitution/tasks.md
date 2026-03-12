@@ -121,15 +121,15 @@
     - 验证无法验证的代码元素会请求开发者确认
     - _Requirements: 4.6_
 
-- [-] 6. 实现回滚机制（Rollback Mechanism）
-  - [-] 6.1 实现 RollbackManager 接口
+- [x] 6. 实现回滚机制（Rollback Mechanism）
+  - [x] 6.1 实现 RollbackManager 接口
     - 实现 CreateBackup 方法（创建文件备份，计算哈希）
     - 实现 Rollback 方法（恢复文件，处理冲突）
     - 实现 GetBackup 和 ListBackups 方法
     - 实现 CleanupOldBackups 方法（清理过期备份）
     - _Requirements: 8.3, 8.4, 8.7_
 
-  - [~] 6.2 实现回滚触发逻辑
+  - [x] 6.2 实现回滚触发逻辑
     - 实现验证失败触发回滚
     - 实现规范违反检测和触发回滚
     - 实现手动回滚触发

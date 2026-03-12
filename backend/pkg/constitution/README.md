@@ -323,6 +323,140 @@ if !exists {
 ### RollbackManager
 Creates backups and rolls back changes when violations are detected.
 
+**Implementation**: `rollbackManager` (see `rollback.go`)
+
+**Key Methods**:
+- `CreateBackup`: Creates a backup of files before modification with SHA256 hash
+- `Rollback`: Rolls back changes for a task, restoring files from backup
+- `GetBackup`: Retrieves backup information by backup ID
+- `ListBackups`: Lists all backups for a task
+- `CleanupOldBackups`: Removes backups older than retention period
+
+**Usage Example**:
+```go
+// Create rollback manager
+backupDir := ".ai/backups"
+traceDir := ".ai/traces"
+rollbackManager, err := constitution.NewRollbackManager(backupDir, traceDir)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Create backup before modifying files
+taskID := "task-001"
+files := []string{
+    "backend/app/admin/service/internal/service/user.go",
+    "backend/app/admin/service/internal/data/user.go",
+}
+
+backupID, err := rollbackManager.CreateBackup(taskID, files)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("Created backup: %s\n", backupID)
+
+// ... make changes to files ...
+
+// If something goes wrong, rollback
+if err := rollbackManager.Rollback(taskID, "Validation failed"); err != nil {
+    log.Fatal(err)
+}
+fmt.Println("Changes rolled back successfully")
+
+// List all backups for a task
+backups, err := rollbackManager.ListBackups(taskID)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Printf("Found %d backups\n", len(backups))
+
+// Cleanup old backups (older than 90 days)
+if err := rollbackManager.CleanupOldBackups(90); err != nil {
+    log.Fatal(err)
+}
+```
+
+### RollbackTrigger
+Automatically triggers rollback based on validation failures and constitution violations.
+
+**Implementation**: `RollbackTrigger` (see `rollback_trigger.go`)
+
+**Key Methods**:
+- `CheckValidationResult`: Checks if validation result should trigger rollback
+- `CheckConstitutionViolation`: Checks if code changes violate constitution rules
+- `TriggerRollback`: Triggers a rollback for a task
+- `ManualRollback`: Triggers a manual rollback
+- `AutoRollbackOnValidation`: Automatically checks and triggers rollback on validation failure
+- `AutoRollbackOnViolation`: Automatically checks and triggers rollback on constitution violation
+
+**Trigger Conditions**:
+- `validation_failure`: Critical validation errors (syntax, lint, type errors)
+- `constitution_violation`: Forbidden file modifications, architecture violations
+- `security_violation`: Hardcoded secrets, passwords, API keys
+- `architecture_violation`: Layer dependency violations
+- `manual`: User-requested rollback
+
+**Usage Example**:
+```go
+// Create components
+rollbackManager, _ := constitution.NewRollbackManager(".ai/backups", ".ai/traces")
+traceManager, _ := constitution.NewTaskTraceManager(".ai/traces")
+validator, _ := constitution.NewCodeValidator(cfg)
+
+// Create rollback trigger
+trigger := constitution.NewRollbackTrigger(rollbackManager, traceManager, validator)
+
+// Create task and backup
+taskID, _ := traceManager.CreateTask("Implement feature", "Add user export")
+files := []string{"backend/app/admin/service/internal/service/user.go"}
+rollbackManager.CreateBackup(taskID, files)
+
+// Validate code
+result, err := validator.ValidateGoCode("backend/app/admin/service/internal/service/user.go")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Auto rollback on validation failure
+if err := trigger.AutoRollbackOnValidation(taskID, result); err != nil {
+    log.Printf("Rollback triggered: %v", err)
+}
+
+// Check for constitution violations
+changes := []constitution.CodeChange{
+    {
+        FilePath:  "Dockerfile",
+        Operation: constitution.OperationModify,
+        Summary:   "Modified Dockerfile",
+    },
+}
+
+// Auto rollback on violation
+if err := trigger.AutoRollbackOnViolation(taskID, changes); err != nil {
+    log.Printf("Rollback triggered: %v", err)
+}
+
+// Manual rollback
+if err := trigger.ManualRollback(taskID, "User requested rollback"); err != nil {
+    log.Fatal(err)
+}
+```
+
+**Forbidden File Modifications**:
+- `Dockerfile`, `docker-compose.yaml`: Container configuration
+- `.golangci.yml`, `.eslintrc`: Linter configuration
+- `buf.yaml`, `buf.gen.yaml`: Protobuf configuration
+- `configs/*-prod.yaml`: Production configuration
+- Migration files (deletion forbidden)
+- Protobuf files (deletion forbidden)
+
+**Security Violation Detection**:
+- Hardcoded passwords: `password =`
+- Hardcoded secrets: `secret =`
+- Hardcoded API keys: `api_key =`
+- Hardcoded tokens: `token =`
+- Private keys: `BEGIN PRIVATE KEY`, `BEGIN RSA PRIVATE KEY`
+
 ### DocumentationSyncer
 Synchronizes documentation with code changes.
 
