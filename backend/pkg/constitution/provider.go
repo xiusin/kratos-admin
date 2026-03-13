@@ -98,3 +98,50 @@ func NewDocumentationSyncerFromConfig(cfg *Config) (DocumentationSyncer, error) 
 
 	return NewDocumentationSyncer(cfg), nil
 }
+
+// NewViolationDetectorFromConfig creates a ViolationDetector from configuration
+func NewViolationDetectorFromConfig(cfg *Config) (ViolationDetector, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("config is required")
+	}
+
+	projectRoot := cfg.ProjectRoot
+	if projectRoot == "" {
+		projectRoot = "."
+	}
+
+	return NewViolationDetector(cfg, projectRoot), nil
+}
+
+// NewRuleEngineFromConfig creates a RuleEngine from configuration
+func NewRuleEngineFromConfig(cfg *Config) *RuleEngine {
+	return NewRuleEngine(cfg)
+}
+
+// NewErrorHandlerFromConfig creates an ErrorHandler from configuration
+func NewErrorHandlerFromConfig(
+	cfg *Config,
+	ruleEngine RuleEngine,
+	traceManager TaskTraceManager,
+) ErrorHandler {
+	return NewErrorHandler(cfg, ruleEngine, traceManager)
+}
+
+// NewErrorRecoveryFromConfig creates an ErrorRecovery from configuration
+func NewErrorRecoveryFromConfig(
+	cfg *Config,
+	rollbackManager RollbackManager,
+	traceManager TaskTraceManager,
+	errorHandler ErrorHandler,
+) ErrorRecovery {
+	return NewErrorRecovery(cfg, rollbackManager, traceManager, errorHandler)
+}
+
+// NewErrorReporterFromConfig creates an ErrorReporter from configuration
+func NewErrorReporterFromConfig(
+	cfg *Config,
+	ruleEngine RuleEngine,
+	errorHandler ErrorHandler,
+) ErrorReporter {
+	return NewErrorReporter(cfg, ruleEngine, errorHandler)
+}

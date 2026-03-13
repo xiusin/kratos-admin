@@ -1,5 +1,7 @@
 package constitution
 
+import "context"
+
 // TaskTraceManager manages task trace records
 type TaskTraceManager interface {
 	// CreateTask creates a new task record
@@ -109,4 +111,52 @@ type DocumentationSyncer interface {
 
 	// ValidateDocumentation validates documentation completeness
 	ValidateDocumentation() (*DocumentationReport, error)
+}
+
+// ViolationDetector detects constitution violations in code
+type ViolationDetector interface {
+	// DetectArchitectureViolations detects architecture-related violations
+	DetectArchitectureViolations(ctx context.Context, files []string) ([]Violation, error)
+
+	// DetectSecurityViolations detects security-related violations
+	DetectSecurityViolations(ctx context.Context, files []string) ([]Violation, error)
+
+	// DetectDependencyViolations detects dependency management violations
+	DetectDependencyViolations(ctx context.Context, files []string) ([]Violation, error)
+
+	// DetectSchemaViolations detects schema modification violations
+	DetectSchemaViolations(ctx context.Context, files []string) ([]Violation, error)
+
+	// DetectAllViolations detects all types of violations
+	DetectAllViolations(ctx context.Context, files []string) (*ViolationReport, error)
+}
+
+// RuleEngine evaluates constitution rules against code
+type RuleEngine interface {
+	// AddRule adds a custom rule to the engine
+	AddRule(rule Rule) error
+
+	// GetRules returns all rules
+	GetRules() []Rule
+
+	// GetRulesByType returns rules of a specific type
+	GetRulesByType(violationType ViolationType) []Rule
+
+	// GetRulesBySeverity returns rules of a specific severity
+	GetRulesBySeverity(severity Severity) []Rule
+
+	// EvaluateFile evaluates all rules against a file
+	EvaluateFile(filePath string, content string) ([]Violation, error)
+
+	// GenerateViolationReport generates a formatted violation report
+	GenerateViolationReport(violations []Violation) string
+
+	// EvaluateSeverity evaluates the overall severity of violations
+	EvaluateSeverity(violations []Violation) Severity
+
+	// ShouldRollback determines if violations warrant a rollback
+	ShouldRollback(violations []Violation) bool
+
+	// GenerateFixSuggestions generates actionable fix suggestions
+	GenerateFixSuggestions(violations []Violation) []string
 }

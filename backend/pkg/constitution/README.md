@@ -954,3 +954,375 @@ Each task is stored as a JSON file in `.ai/traces/` with the following structure
   ]
 }
 ```
+
+
+### ViolationDetector
+Detects constitution violations in code including architecture, security, dependency, and schema violations.
+
+**Implementation**: `violationDetector` (see `violation_detector.go`)
+
+**Key Methods**:
+- `DetectArchitectureViolations`: Detects cross-layer calls, directory structure violations, and module dependency violations
+- `DetectSecurityViolations`: Detects hardcoded secrets, authentication bypass, sensitive data in logs, and SQL injection risks
+- `DetectDependencyViolations`: Detects unapproved dependencies in go.mod and package.json
+- `DetectSchemaViolations`: Detects migration deletions and Protobuf/Ent schema breaking changes
+- `DetectAllViolations`: Runs all violation checks and generates a comprehensive report
+
+**Violation Types**:
+- `ViolationTypeArchitecture`: Architecture constraint violations
+- `ViolationTypeSecurity`: Security-related violations
+- `ViolationTypeDependency`: Dependency management violations
+- `ViolationTypeSchema`: Schema modification violations
+- `ViolationTypeAPI`: API breaking changes
+- `ViolationTypeConfiguration`: Configuration violations
+
+**Severity Levels**:
+- `SeverityCritical`: Absolutely forbidden, triggers immediate rollback
+- `SeverityHigh`: Requires explicit approval
+- `SeverityMedium`: Requires confirmation
+- `SeverityLow`: Warning only
+
+**Usage Example**:
+```go
+// Load configuration
+cfg, err := constitution.LoadConfig(".ai/config.yaml")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Create violation detector
+detector := constitution.NewViolationDetector(cfg, ".")
+
+// Files to check
+files := []string{
+    "backend/pkg/utils/helper.go",
+    "backend/app/admin/service/internal/service/user.go",
+}
+
+// Detect all violations
+report, err := detector.DetectAllViolations(context.Background(), files)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Print report summary
+fmt.Printf("Total violations: %d\n", len(report.Violations))
+fmt.Printf("Critical: %d\n", report.CriticalCount)
+fmt.Printf("High: %d\n", report.HighCount)
+fmt.Printf("Medium: %d\n", report.MediumCount)
+fmt.Printf("Low: %d\n", report.LowCount)
+fmt.Printf("Should rollback: %v\n", report.ShouldRollback)
+
+// Print violations
+for _, v := range report.Violations {
+    fmt.Printf("[%s] %s at %s:%d\n", v.Severity, v.Description, v.FilePath, v.LineNumber)
+    fmt.Printf("  Rule: %s\n", v.Rule)
+    fmt.Printf("  Reference: %s\n", v.ConstitutionReference)
+    fmt.Printf("  Suggestion: %s\n", v.Suggestion)
+}
+
+// Detect specific violation types
+archViolations, err := detector.DetectArchitectureViolations(context.Background(), files)
+if err != nil {
+    log.Fatal(err)
+}
+
+secViolations, err := detector.DetectSecurityViolations(context.Background(), files)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+**Architecture Violations Detected**:
+- Cross-layer imports (pkg/ importing app/, api/ importing app/pkg/)
+- Files outside standard architecture layers
+- Direct module-to-module dependencies in app/ layer
+
+**Security Violations Detected**:
+- Hardcoded passwords, API keys, secrets, tokens
+- Authentication bypass attempts
+- Sensitive data in log statements
+- SQL injection risks (string concatenation in queries)
+
+**Example Violations**:
+```go
+// ❌ Architecture violation: pkg/ importing app/
+package utils
+import "backend/app/admin/service/internal/data" // VIOLATION
+
+// ❌ Security violation: hardcoded password
+password := "admin123" // VIOLATION
+
+// ❌ Security violation: sensitive data in logs
+log.Printf("User password: %s", password) // VIOLATION
+
+// ❌ Security violation: SQL injection risk
+query := "SELECT * FROM users WHERE id = " + userID // VIOLATION
+
+// ✅ Correct: use parameterized query or ORM
+user, err := db.User.Query().Where(user.ID(userID)).Only(ctx)
+```
+
+### RuleEngine
+Evaluates constitution rules against code and generates violation reports.
+
+**Implementation**: `RuleEngine` (see `rule_engine.go`)
+
+**Key Methods**:
+- `AddRule`: Adds a custom rule to the engine
+- `GetRules`: Returns all enabled rules
+- `GetRulesByType`: Returns rules of a specific violation type
+- `GetRulesBySeverity`: Returns rules of a specific severity level
+- `EvaluateFile`: Evaluates all rules against a file's content
+- `GenerateViolationReport`: Generates a formatted violation report
+- `EvaluateSeverity`: Evaluates the overall severity of violations
+- `ShouldRollback`: Determines if violations warrant a rollback
+- `GenerateFixSuggestions`: Generates actionable fix suggestions
+
+**Built-in Rules**:
+
+Architecture Rules:
+- `arch-001`: No pkg to app dependency
+- `arch-002`: No api to app/pkg dependency
+- `arch-003`: No direct module dependencies
+
+Security Rules:
+- `sec-001`: No hardcoded passwords
+- `sec-002`: No hardcoded API keys
+- `sec-003`: No hardcoded secrets
+- `sec-004`: No authentication bypass
+- `sec-005`: No sensitive data in logs
+- `sec-006`: No SQL injection
+
+Schema Rules:
+- `schema-001`: No migration deletion
+- `schema-002`: No Protobuf field deletion
+
+Dependency Rules:
+- `dep-001`: No unapproved dependencies
+
+Configuration Rules:
+- `config-001`: No production config modification
+
+**Usage Example**:
+```go
+// Load configuration
+cfg, err := constitution.LoadConfig(".ai/config.yaml")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Create rule engine
+engine := constitution.NewRuleEngine(cfg)
+
+// Get all rules
+allRules := engine.GetRules()
+fmt.Printf("Total rules: %d\n", len(allRules))
+
+// Get security rules
+securityRules := engine.GetRulesByType(constitution.ViolationTypeSecurity)
+fmt.Printf("Security rules: %d\n", len(securityRules))
+
+// Get critical rules
+criticalRules := engine.GetRulesBySeverity(constitution.SeverityCritical)
+fmt.Printf("Critical rules: %d\n", len(criticalRules))
+
+// Evaluate a file
+filePath := "backend/app/admin/service/internal/service/user.go"
+content, _ := os.ReadFile(filePath)
+
+violations, err := engine.EvaluateFile(filePath, string(content))
+if err != nil {
+    log.Fatal(err)
+}
+
+// Generate formatted report
+report := engine.GenerateViolationReport(violations)
+fmt.Println(report)
+
+// Get fix suggestions
+suggestions := engine.GenerateFixSuggestions(violations)
+fmt.Println("Fix Suggestions:")
+for _, s := range suggestions {
+    fmt.Printf("- %s\n", s)
+}
+
+// Check if rollback is needed
+if engine.ShouldRollback(violations) {
+    fmt.Println("⚠️  Rollback recommended!")
+}
+
+// Evaluate overall severity
+severity := engine.EvaluateSeverity(violations)
+fmt.Printf("Overall severity: %s\n", severity)
+```
+
+**Adding Custom Rules**:
+```go
+// Create a custom rule
+customRule := constitution.Rule{
+    ID:                    "custom-001",
+    Name:                  "No TODO comments in production",
+    Description:           "TODO comments should be resolved before production",
+    Type:                  constitution.ViolationTypeConfiguration,
+    Severity:              constitution.SeverityMedium,
+    Pattern:               `(?i)//\s*TODO`,
+    FilePattern:           "*.go",
+    ConstitutionReference: "Custom Rule",
+    Suggestion:            "Resolve TODO or create a ticket",
+    Enabled:               true,
+}
+
+// Add to engine
+engine.AddRule(customRule)
+
+// Now the rule will be evaluated on all files
+```
+
+**Violation Report Format**:
+```
+❌ Constitution Violations Detected
+=====================================
+
+🔴 CRITICAL (2)
+─────────────────
+  [sec-001] Hardcoded password detected
+  File: backend/app/admin/service/internal/service/auth.go:45
+  Type: security
+  Reference: Section 5.4: Security Violations
+  💡 Suggestion: Use environment variables for sensitive data
+
+  [sec-006] Potential SQL injection risk: string concatenation in query
+  File: backend/app/admin/service/internal/data/user.go:78
+  Type: security
+  Reference: Section 12.2: Security and Performance
+  💡 Suggestion: Use parameterized queries or Ent ORM
+
+🟠 HIGH (1)
+─────────────────
+  [arch-001] pkg/ layer cannot depend on app/ layer
+  File: backend/pkg/utils/helper.go:12
+  Type: architecture
+  Reference: Section 3.1: Three-Layer Architecture
+  💡 Suggestion: Move shared code to pkg/ or use dependency inversion
+
+Summary
+─────────────────
+Total: 3 violations
+Critical: 2, High: 1, Medium: 0, Low: 0
+
+⚠️  Rollback recommended due to critical/high severity violations.
+```
+
+### Complete Workflow with Violation Detection
+
+```go
+// 1. Load configuration
+cfg, err := constitution.LoadConfig(".ai/config.yaml")
+if err != nil {
+    log.Fatal(err)
+}
+
+// 2. Create all components
+traceManager, _ := constitution.NewTaskTraceManagerFromConfig(cfg)
+validator, _ := constitution.NewCodeValidatorFromConfig(cfg)
+rollbackManager, _ := constitution.NewRollbackManagerFromConfig(cfg)
+violationDetector, _ := constitution.NewViolationDetectorFromConfig(cfg)
+ruleEngine := constitution.NewRuleEngineFromConfig(cfg)
+
+// 3. Create task
+taskID, _ := traceManager.CreateTask(
+    "Implement user authentication",
+    "Add JWT authentication to user service",
+)
+
+// 4. Record decision
+traceManager.RecordDecision(taskID, constitution.Decision{
+    DecisionType:          constitution.DecisionTypeImplementation,
+    Description:           "Use JWT for authentication",
+    Rationale:             "JWT is stateless and scalable",
+    ConstitutionReference: "Section 12.3: Security Rules",
+})
+
+// 5. Create backup before changes
+files := []string{
+    "backend/app/admin/service/internal/service/auth.go",
+    "backend/pkg/middleware/jwt.go",
+}
+backupID, _ := rollbackManager.CreateBackup(taskID, files)
+
+// 6. Record code changes
+for _, file := range files {
+    traceManager.RecordCodeChange(taskID, constitution.CodeChange{
+        FilePath:     file,
+        Operation:    constitution.OperationCreate,
+        LinesAdded:   150,
+        Summary:      "Implemented JWT authentication",
+    })
+}
+
+// 7. Detect violations
+report, err := violationDetector.DetectAllViolations(context.Background(), files)
+if err != nil {
+    log.Fatal(err)
+}
+
+// 8. Check if rollback is needed
+if report.ShouldRollback {
+    fmt.Println("⚠️  Critical violations detected! Triggering rollback...")
+    
+    // Rollback changes
+    rollbackManager.Rollback(taskID, "Critical constitution violations detected")
+    
+    // Record rollback
+    traceManager.RecordRollback(taskID, constitution.RollbackInfo{
+        Triggered:     true,
+        Reason:        "Critical constitution violations detected",
+        RestoredFiles: files,
+    })
+    
+    // Fail task
+    traceManager.FailTask(taskID, "Rolled back due to constitution violations")
+    
+    // Print violation report
+    fmt.Println(ruleEngine.GenerateViolationReport(report.Violations))
+    
+    return
+}
+
+// 9. Validate code
+for _, file := range files {
+    result, _ := validator.ValidateGoCode(file)
+    traceManager.RecordValidation(taskID, constitution.Validation{
+        Validator: result.Validator,
+        Status:    constitution.ValidationStatusPassed,
+        Output:    result.Output,
+    })
+}
+
+// 10. Complete task
+traceManager.CompleteTask(taskID)
+fmt.Println("✅ Task completed successfully")
+```
+
+## Testing
+
+Run tests for the constitution package:
+
+```bash
+# Run all tests
+go test ./pkg/constitution/...
+
+# Run with coverage
+go test -cover ./pkg/constitution/...
+
+# Run specific test
+go test -run TestTaskTraceManager ./pkg/constitution/
+
+# Run with verbose output
+go test -v ./pkg/constitution/...
+```
+
+## License
+
+This package is part of the GO + Vue backend management framework project.

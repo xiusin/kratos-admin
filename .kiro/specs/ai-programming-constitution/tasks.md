@@ -184,15 +184,15 @@
     - 验证代码变更自动更新对应文档
     - _Requirements: 11.1, 11.2, 11.3, 11.4_
 
-- [ ] 9. 实现规范违反检测器（Constitution Violation Detector）
-  - [ ] 9.1 实现禁止行为检测
+- [x] 9. 实现规范违反检测器（Constitution Violation Detector）
+  - [x] 9.1 实现禁止行为检测
     - 实现架构修改检测（跨层调用、目录结构变更）
     - 实现安全违规检测（绕过认证、硬编码密钥、日志泄露）
     - 实现依赖管理违规检测（未批准的依赖）
     - 实现 Schema 修改违规检测（删除迁移、破坏兼容性）
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
-  - [ ] 9.2 实现规范规则引擎
+  - [x] 9.2 实现规范规则引擎
     - 解析 Constitution 文档中的规则
     - 实现规则匹配和违规判定
     - 实现严重程度评估
@@ -205,21 +205,21 @@
     - 测试严重程度评估
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
-- [ ] 10. 实现错误处理和报告系统
-  - [ ] 10.1 实现错误分类和处理
+- [-] 10. 实现错误处理和报告系统
+  - [x] 10.1 实现错误分类和处理
     - 实现验证错误处理（语法、lint、类型、编译、测试）
     - 实现规范违反错误处理
     - 实现幻觉错误处理
     - 实现系统错误处理（文件系统、工具执行、配置、网络）
     - _Requirements: 7.6, 8.1, 8.2, 8.5_
 
-  - [ ] 10.2 实现错误恢复策略
+  - [x] 10.2 实现错误恢复策略
     - 实现自动重试机制（配置重试次数、退避策略）
     - 实现优雅降级
     - 实现人工介入流程
     - _Requirements: 8.5_
 
-  - [ ] 10.3 实现错误报告生成
+  - [x] 10.3 实现错误报告生成
     - 实现结构化错误报告（JSON 格式）
     - 包含错误详情、代码片段、修复建议
     - 引用 Constitution 相关章节
@@ -231,10 +231,10 @@
     - 测试错误报告生成
     - _Requirements: 8.1, 8.2, 8.5_
 
-- [ ] 11. Checkpoint - 后端系统集成测试
+- [~] 11. Checkpoint - 后端系统集成测试
   - 确保所有后端组件正确集成，端到端流程正常工作，如有问题请向用户询问
 
-- [ ] 12. 实现 Vue 前端管理界面
+- [~] 12. 实现 Vue 前端管理界面
   - [ ] 12.1 创建任务留痕查看器组件
     - 创建 TaskTraceList.vue（任务列表，支持筛选和搜索）
     - 创建 TaskTraceDetail.vue（任务详情，显示决策、代码变更、验证结果）
@@ -272,7 +272,7 @@
     - 使用 Vitest 和 Vue Test Utils
     - _Requirements: 10.6_
 
-- [ ] 13. 实现 API 层和前后端集成
+- [~] 13. 实现 API 层和前后端集成
   - [ ] 13.1 定义 gRPC API
     - 创建 constitution.proto（定义 TaskTrace、Validation、Rollback 等服务）
     - 定义 GetTaskTrace、ListTaskTraces、TriggerRollback 等 RPC 方法
@@ -296,7 +296,7 @@
     - 测试错误处理和边界情况
     - _Requirements: 9.4, 12.3, 12.4_
 
-- [ ] 14. 创建代码模板和示例
+- [~] 14. 创建代码模板和示例
   - [ ] 14.1 创建 Go 代码模板
     - 创建 `.ai/templates/go-service.tmpl`（gRPC 服务模板）
     - 创建 `.ai/templates/go-handler.tmpl`（业务逻辑处理器模板）
@@ -315,7 +315,7 @@
     - 创建 Protobuf 和 Ent Schema 示例
     - _Requirements: 11.6_
 
-- [ ] 15. 实现 CLI 工具
+- [~] 15. 实现 CLI 工具
   - [ ] 15.1 创建 constitution CLI 命令
     - 实现 `constitution init`（初始化 Constitution 文档和配置）
     - 实现 `constitution validate <file>`（验证单个文件）
