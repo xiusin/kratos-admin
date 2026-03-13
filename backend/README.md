@@ -1,5 +1,43 @@
 # GO后端
 
+## 🚀 快速开始
+
+### 本地开发（推荐）
+
+**纯本地模式**（不使用 Docker）：
+
+```bash
+# 1. 检查本地服务
+cd backend
+make check-local
+
+# 2. 启动服务
+make run-local
+```
+
+**混合模式**（Docker 运行依赖，本地运行应用）：
+
+```bash
+# 1. 启动依赖服务（PostgreSQL, Redis, MinIO）
+cd backend
+make docker-libs
+
+# 2. 启动应用
+make run-local
+```
+
+详细说明请查看：[本地开发指南](docs/LOCAL_DEVELOPMENT.md)
+
+### Docker 部署
+
+```bash
+# 启动所有服务（应用 + 依赖）
+cd backend
+make compose-up
+```
+
+---
+
 ## API文档
 
 ### Swagger UI

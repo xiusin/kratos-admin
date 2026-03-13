@@ -47,7 +47,7 @@
 ./backend/script/prepare_windows.ps1
 
 # MacOS
-./backend/script/prepare_macos.sh
+
 ```
 
 一键安装三方组件和`go-wind-admin`服务：

@@ -206,6 +206,82 @@ pm2-deploy:
 	@echo "Deploying services with PM2..."
 	@bash scripts/deploy/pm2_service.sh
 
+# ============================================================================
+# Local Development Commands - 本地开发命令（不使用 Docker）
+# ============================================================================
+
+# diagnose local development environment
+diagnose:
+	@bash scripts/local/diagnose.sh
+
+# install all development tools
+install-tools:
+	@echo "📦 Installing development tools..."
+	@bash scripts/local/install_tools.sh
+
+# check development tools
+check-tools:
+	@echo "🔍 Checking development tools..."
+	@echo ""
+	@command -v go >/dev/null 2>&1 && echo "✅ Go: $$(go version)" || (echo "❌ Go not installed" && exit 1)
+	@command -v buf >/dev/null 2>&1 && echo "✅ buf: $$(buf --version 2>&1 | head -n1)" || (echo "⚠️  buf not installed, run 'make install-tools'" && exit 1)
+	@command -v protoc-gen-go >/dev/null 2>&1 && echo "✅ protoc-gen-go installed" || (echo "⚠️  protoc-gen-go not installed, run 'make install-tools'" && exit 1)
+	@command -v protoc-gen-go-grpc >/dev/null 2>&1 && echo "✅ protoc-gen-go-grpc installed" || (echo "⚠️  protoc-gen-go-grpc not installed, run 'make install-tools'" && exit 1)
+	@echo ""
+	@echo "✅ All required tools are installed!"
+
+# auto-install missing tools
+auto-install-tools:
+	@command -v buf >/dev/null 2>&1 || (echo "Installing buf..." && go install github.com/bufbuild/buf/cmd/buf@latest)
+	@command -v protoc-gen-go >/dev/null 2>&1 || (echo "Installing protoc-gen-go..." && go install google.golang.org/protobuf/cmd/protoc-gen-go@latest)
+	@command -v protoc-gen-go-grpc >/dev/null 2>&1 || (echo "Installing protoc-gen-go-grpc..." && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest)
+	@command -v protoc-gen-go-http >/dev/null 2>&1 || (echo "Installing protoc-gen-go-http..." && go install github.com/go-kratos/kratos/cmd/protoc-gen-go-http/v2@latest)
+	@command -v protoc-gen-go-errors >/dev/null 2>&1 || (echo "Installing protoc-gen-go-errors..." && go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2@latest)
+	@command -v protoc-gen-openapi >/dev/null 2>&1 || (echo "Installing protoc-gen-openapi..." && go install github.com/google/gnostic/cmd/protoc-gen-openapi@latest)
+
+# run admin service locally (without docker)
+run-local: auto-install-tools
+	@echo "🚀 Starting admin service locally..."
+	@echo "⚠️  请确保本地已启动以下服务："
+	@echo "   - PostgreSQL (localhost:5432)"
+	@echo "   - Redis (localhost:6379)"
+	@echo "   - MinIO (localhost:9000)"
+	@echo ""
+	@export PATH="$$PATH:$$(go env GOPATH)/bin" && cd app/admin/service && make run
+
+# run admin service locally with custom config
+run-local-custom:
+	@echo "🚀 Starting admin service with custom config..."
+	@cd app/admin/service && go run -ldflags "-X main.version=dev" ./cmd/server -c ./configs
+
+# check local services status
+check-local:
+	@echo "🔍 Checking local services..."
+	@echo ""
+	@echo "PostgreSQL:"
+	@-pg_isready -h localhost -p 5432 && echo "✅ PostgreSQL is running" || echo "❌ PostgreSQL not running"
+	@echo ""
+	@echo "Redis:"
+	@-redis-cli -h localhost -p 6379 ping > /dev/null 2>&1 && echo "✅ Redis is running" || echo "❌ Redis not running"
+	@echo ""
+	@echo "MinIO:"
+	@-curl -s http://localhost:9000/minio/health/live > /dev/null 2>&1 && echo "✅ MinIO is running" || echo "❌ MinIO not running"
+
+# setup local config for development
+setup-local-config:
+	@echo "⚙️  Setting up local configuration..."
+	@cp app/admin/service/configs/data.yaml app/admin/service/configs/data.local.yaml
+ifdef IS_WINDOWS
+	@powershell -Command "(Get-Content app/admin/service/configs/data.local.yaml) -replace 'host=postgres', 'host=localhost' | Set-Content app/admin/service/configs/data.local.yaml"
+	@powershell -Command "(Get-Content app/admin/service/configs/data.local.yaml) -replace 'redis:6379', 'localhost:6379' | Set-Content app/admin/service/configs/data.local.yaml"
+else
+	@sed -i.bak 's/host=postgres/host=localhost/g' app/admin/service/configs/data.local.yaml
+	@sed -i.bak 's/redis:6379/localhost:6379/g' app/admin/service/configs/data.local.yaml
+	@rm -f app/admin/service/configs/data.local.yaml.bak
+endif
+	@echo "✅ Local config created: app/admin/service/configs/data.local.yaml"
+	@echo "💡 Tip: 修改配置文件后使用 'make run-local' 启动服务"
+
 # show help
 help:
 	@echo ""
