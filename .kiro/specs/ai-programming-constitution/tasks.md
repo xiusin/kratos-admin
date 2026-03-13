@@ -154,7 +154,7 @@
     - 验证回滚恢复所有文件并记录原因
     - _Requirements: 8.3, 8.4, 8.5_
 
-- [~] 7. Checkpoint - 核心后端功能验证
+- [ ] 7. Checkpoint - 核心后端功能验证
   - 确保所有测试通过，核心功能正常工作，如有问题请向用户询问
 
 - [x] 8. 实现文档同步器（Documentation Syncer）
@@ -185,14 +185,14 @@
     - _Requirements: 11.1, 11.2, 11.3, 11.4_
 
 - [ ] 9. 实现规范违反检测器（Constitution Violation Detector）
-  - [~] 9.1 实现禁止行为检测
+  - [ ] 9.1 实现禁止行为检测
     - 实现架构修改检测（跨层调用、目录结构变更）
     - 实现安全违规检测（绕过认证、硬编码密钥、日志泄露）
     - 实现依赖管理违规检测（未批准的依赖）
     - 实现 Schema 修改违规检测（删除迁移、破坏兼容性）
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
-  - [~] 9.2 实现规范规则引擎
+  - [ ] 9.2 实现规范规则引擎
     - 解析 Constitution 文档中的规则
     - 实现规则匹配和违规判定
     - 实现严重程度评估
@@ -206,20 +206,20 @@
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
 - [ ] 10. 实现错误处理和报告系统
-  - [~] 10.1 实现错误分类和处理
+  - [ ] 10.1 实现错误分类和处理
     - 实现验证错误处理（语法、lint、类型、编译、测试）
     - 实现规范违反错误处理
     - 实现幻觉错误处理
     - 实现系统错误处理（文件系统、工具执行、配置、网络）
     - _Requirements: 7.6, 8.1, 8.2, 8.5_
 
-  - [~] 10.2 实现错误恢复策略
+  - [ ] 10.2 实现错误恢复策略
     - 实现自动重试机制（配置重试次数、退避策略）
     - 实现优雅降级
     - 实现人工介入流程
     - _Requirements: 8.5_
 
-  - [~] 10.3 实现错误报告生成
+  - [ ] 10.3 实现错误报告生成
     - 实现结构化错误报告（JSON 格式）
     - 包含错误详情、代码片段、修复建议
     - 引用 Constitution 相关章节
@@ -231,36 +231,36 @@
     - 测试错误报告生成
     - _Requirements: 8.1, 8.2, 8.5_
 
-- [~] 11. Checkpoint - 后端系统集成测试
+- [ ] 11. Checkpoint - 后端系统集成测试
   - 确保所有后端组件正确集成，端到端流程正常工作，如有问题请向用户询问
 
 - [ ] 12. 实现 Vue 前端管理界面
-  - [~] 12.1 创建任务留痕查看器组件
+  - [ ] 12.1 创建任务留痕查看器组件
     - 创建 TaskTraceList.vue（任务列表，支持筛选和搜索）
     - 创建 TaskTraceDetail.vue（任务详情，显示决策、代码变更、验证结果）
     - 创建 TaskTraceTimeline.vue（任务时间线可视化）
     - 使用 Vue 3 Composition API 和 TypeScript
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-  - [~] 12.2 创建验证结果展示组件
+  - [ ] 12.2 创建验证结果展示组件
     - 创建 ValidationResults.vue（验证结果列表，按严重程度分类）
     - 创建 ValidationError.vue（单个错误详情，代码高亮）
     - 支持错误过滤和排序
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.6_
 
-  - [~] 12.3 创建回滚管理组件
+  - [ ] 12.3 创建回滚管理组件
     - 创建 RollbackHistory.vue（回滚历史列表）
     - 创建 RollbackDetail.vue（回滚详情，显示恢复的文件）
     - 创建手动触发回滚的界面
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-  - [~] 12.4 创建 Constitution 文档查看器
+  - [ ] 12.4 创建 Constitution 文档查看器
     - 创建 ConstitutionViewer.vue（Markdown 渲染，章节导航）
     - 创建 ConstitutionSearch.vue（规则搜索功能）
     - 支持规则引用跳转
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-  - [~] 12.5 创建配置管理界面
+  - [ ] 12.5 创建配置管理界面
     - 创建 ConfigEditor.vue（YAML 配置编辑器，语法高亮）
     - 创建配置验证和保存功能
     - 支持配置热加载
@@ -273,19 +273,19 @@
     - _Requirements: 10.6_
 
 - [ ] 13. 实现 API 层和前后端集成
-  - [~] 13.1 定义 gRPC API
+  - [ ] 13.1 定义 gRPC API
     - 创建 constitution.proto（定义 TaskTrace、Validation、Rollback 等服务）
     - 定义 GetTaskTrace、ListTaskTraces、TriggerRollback 等 RPC 方法
     - 生成 Go 和 TypeScript 代码
     - _Requirements: 3.2, 9.4_
 
-  - [~] 13.2 实现 gRPC 服务端
+  - [ ] 13.2 实现 gRPC 服务端
     - 实现 ConstitutionService（调用后端各组件）
     - 实现请求验证和错误处理
     - 实现认证和授权检查
     - _Requirements: 12.3, 12.4_
 
-  - [~] 13.3 实现前端 API 客户端
+  - [ ] 13.3 实现前端 API 客户端
     - 创建 TypeScript gRPC 客户端封装
     - 实现请求拦截器和错误处理
     - 实现状态管理（Pinia store）
@@ -297,26 +297,26 @@
     - _Requirements: 9.4, 12.3, 12.4_
 
 - [ ] 14. 创建代码模板和示例
-  - [~] 14.1 创建 Go 代码模板
+  - [ ] 14.1 创建 Go 代码模板
     - 创建 `.ai/templates/go-service.tmpl`（gRPC 服务模板）
     - 创建 `.ai/templates/go-handler.tmpl`（业务逻辑处理器模板）
     - 创建 `.ai/templates/go-test.tmpl`（测试文件模板）
     - _Requirements: 2.3, 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8_
 
-  - [~] 14.2 创建 Vue 代码模板
+  - [ ] 14.2 创建 Vue 代码模板
     - 创建 `.ai/templates/vue-component.tmpl`（Vue 组件模板）
     - 创建 `.ai/templates/vue-composable.tmpl`（Composable 函数模板）
     - 创建 `.ai/templates/vue-store.tmpl`（Pinia store 模板）
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6, 10.7, 10.8_
 
-  - [~] 14.3 创建示例代码
+  - [ ] 14.3 创建示例代码
     - 创建符合规范的 Go 服务示例
     - 创建符合规范的 Vue 组件示例
     - 创建 Protobuf 和 Ent Schema 示例
     - _Requirements: 11.6_
 
 - [ ] 15. 实现 CLI 工具
-  - [~] 15.1 创建 constitution CLI 命令
+  - [ ] 15.1 创建 constitution CLI 命令
     - 实现 `constitution init`（初始化 Constitution 文档和配置）
     - 实现 `constitution validate <file>`（验证单个文件）
     - 实现 `constitution check`（检查整个项目）
@@ -348,25 +348,25 @@
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
 
 - [ ] 17. 创建项目文档
-  - [~] 17.1 编写用户指南
+  - [ ] 17.1 编写用户指南
     - 编写 Constitution 系统使用指南
     - 编写 CLI 工具使用文档
     - 编写前端界面使用说明
     - _Requirements: 11.5_
 
-  - [~] 17.2 编写开发者文档
+  - [ ] 17.2 编写开发者文档
     - 编写架构设计文档
     - 编写 API 参考文档
     - 编写扩展和定制指南
     - _Requirements: 11.5, 11.6_
 
-  - [~] 17.3 编写部署和配置文档
+  - [ ] 17.3 编写部署和配置文档
     - 编写安装和配置指南
     - 编写工具链集成说明
     - 编写故障排查指南
     - _Requirements: 11.7_
 
-- [~] 18. Final Checkpoint - 完整系统验证
+- [ ] 18. Final Checkpoint - 完整系统验证
   - 运行所有测试（单元测试、属性测试、集成测试、端到端测试）
   - 验证所有功能正常工作
   - 检查代码质量和测试覆盖率
