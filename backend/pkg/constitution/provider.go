@@ -89,3 +89,12 @@ func NewRollbackTriggerFromConfig(
 ) *RollbackTrigger {
 	return NewRollbackTrigger(rollbackManager, traceManager, validator)
 }
+
+// NewDocumentationSyncerFromConfig creates a DocumentationSyncer from configuration
+func NewDocumentationSyncerFromConfig(cfg *Config) (DocumentationSyncer, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("config is required")
+	}
+
+	return NewDocumentationSyncer(cfg), nil
+}

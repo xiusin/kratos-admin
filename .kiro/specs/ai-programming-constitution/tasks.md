@@ -157,8 +157,8 @@
 - [~] 7. Checkpoint - 核心后端功能验证
   - 确保所有测试通过，核心功能正常工作，如有问题请向用户询问
 
-- [ ] 8. 实现文档同步器（Documentation Syncer）
-  - [~] 8.1 实现 DocumentationSyncer 接口
+- [x] 8. 实现文档同步器（Documentation Syncer）
+  - [x] 8.1 实现 DocumentationSyncer 接口
     - 实现 SyncAPIDocumentation 方法（从 .proto 文件提取注释和定义）
     - 实现 SyncComponentDocumentation 方法（从 Vue 组件提取 props、events、slots）
     - 实现 SyncFeatureDocumentation 方法（生成功能文档）
@@ -166,7 +166,7 @@
     - 实现 ValidateDocumentation 方法（检查文档完整性）
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7_
 
-  - [~] 8.2 创建文档模板
+  - [x] 8.2 创建文档模板
     - 创建 API 文档模板（`.ai/templates/api-doc.tmpl`）
     - 创建组件文档模板（`.ai/templates/component-doc.tmpl`）
     - 创建功能文档模板（`.ai/templates/feature-doc.tmpl`）

@@ -458,7 +458,253 @@ if err := trigger.ManualRollback(taskID, "User requested rollback"); err != nil 
 - Private keys: `BEGIN PRIVATE KEY`, `BEGIN RSA PRIVATE KEY`
 
 ### DocumentationSyncer
-Synchronizes documentation with code changes.
+Synchronizes documentation with code changes, automatically generating and updating documentation from source code.
+
+**Implementation**: `documentationSyncer` (see `doc_syncer_impl.go`)
+
+**Key Methods**:
+- `SyncAPIDocumentation`: Generates API documentation from Protobuf files
+- `SyncComponentDocumentation`: Generates component documentation from Vue files
+- `SyncFeatureDocumentation`: Generates feature documentation from code changes
+- `GenerateAPIReference`: Generates complete API reference (concurrent processing)
+- `ValidateDocumentation`: Validates documentation completeness and coverage
+- `DetectChanges`: Detects documentation changes using diff algorithm
+- `BuildSearchIndex`: Builds full-text search index for documentation
+- `SearchDocumentation`: Searches documentation with keyword matching
+- `GetDocumentationVersion`: Retrieves specific documentation version
+- `ListDocumentationVersions`: Lists all versions of a document
+
+**Features**:
+- **Change Detection**: Only regenerates documentation when source code changes
+- **Version Management**: Maintains version history of all documentation
+- **Search Index**: Full-text search across all documentation
+- **Source Links**: Automatic links from documentation to source code
+- **Concurrent Generation**: Parallel processing of multiple files
+- **Template-Based**: Customizable documentation templates
+
+**Usage Example**:
+```go
+// Load configuration
+cfg, err := constitution.LoadConfig(".ai/config.yaml")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Create documentation syncer
+syncer := constitution.NewDocumentationSyncer(cfg)
+
+// Sync API documentation from a proto file
+result, err := syncer.SyncAPIDocumentation(
+    context.Background(),
+    "backend/api/protos/identity/service/v1/user.proto",
+)
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("Documentation: %s\n", result.FilePath)
+fmt.Printf("Changed: %v\n", result.Changed)
+fmt.Printf("Source: %s\n", result.SourceLink)
+
+if result.Changed {
+    fmt.Printf("Changes: %s\n", result.ChangesSummary)
+}
+
+// Sync component documentation from a Vue file
+compResult, err := syncer.SyncComponentDocumentation(
+    context.Background(),
+    "frontend/apps/admin/src/components/UserList.vue",
+)
+if err != nil {
+    log.Fatal(err)
+}
+
+// Generate complete API reference (processes all proto files concurrently)
+if err := syncer.GenerateAPIReference(context.Background(), "docs/api"); err != nil {
+    log.Fatal(err)
+}
+
+// Validate documentation completeness
+report, err := syncer.ValidateDocumentation(context.Background())
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("Total APIs: %d\n", report.TotalAPIs)
+fmt.Printf("Documented: %d\n", report.DocumentedAPIs)
+fmt.Printf("Coverage: %.1f%%\n", report.CoveragePercent)
+fmt.Printf("Missing: %d\n", len(report.MissingDocs))
+
+// Build search index
+if err := syncer.BuildSearchIndex(context.Background()); err != nil {
+    log.Fatal(err)
+}
+
+// Search documentation
+results, err := syncer.SearchDocumentation(context.Background(), "user authentication")
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("Found %d results\n", len(results))
+for _, result := range results {
+    fmt.Printf("- %s (score: %.1f)\n", result.Title, result.Score)
+    fmt.Printf("  %s\n", result.Snippet)
+}
+
+// Get documentation version
+version, err := syncer.GetDocumentationVersion(
+    context.Background(),
+    "docs/api/userservice.md",
+)
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("Version: %s\n", version.Version)
+fmt.Printf("Created: %s\n", version.CreatedAt.Format("2006-01-02"))
+
+// List all versions
+versions, err := syncer.ListDocumentationVersions(
+    context.Background(),
+    "docs/api/userservice.md",
+)
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("Found %d versions\n", len(versions))
+```
+
+**Documentation Templates**:
+
+The syncer uses customizable templates located in `.ai/templates/`:
+
+- `api-doc.tmpl`: API documentation template (Protobuf → Markdown)
+- `component-doc.tmpl`: Component documentation template (Vue → Markdown)
+- `feature-doc.tmpl`: Feature documentation template (Changes → Markdown)
+
+**Template Variables**:
+
+API Template:
+- `ServiceName`: Service name from proto
+- `Package`: Package name
+- `Description`: Service description
+- `Methods`: Array of RPC methods
+- `Messages`: Array of message definitions
+- `SourceFile`: Source proto file path
+- `SourceLink`: Link to source code
+
+Component Template:
+- `Name`: Component name
+- `Description`: Component description
+- `Props`: Array of component props
+- `Events`: Array of component events
+- `Slots`: Array of component slots
+- `Examples`: Usage examples
+- `SourceFile`: Source Vue file path
+- `SourceLink`: Link to source code
+
+**Change Detection**:
+
+The syncer uses SHA256 hashing to detect changes:
+
+```go
+// Detect changes before regenerating
+diff, err := syncer.DetectChanges(context.Background(), "docs/api/userservice.md")
+if err != nil {
+    log.Fatal(err)
+}
+
+if diff.Changed {
+    fmt.Printf("Added lines: %d\n", len(diff.AddedLines))
+    fmt.Printf("Removed lines: %d\n", len(diff.RemovedLines))
+    fmt.Printf("Modified sections: %d\n", len(diff.ModifiedSections))
+}
+```
+
+**Version Management**:
+
+All documentation changes are versioned:
+
+```go
+// Get latest version
+latest, err := syncer.GetDocumentationVersion(ctx, "docs/api/userservice.md")
+
+// List all versions (sorted by date, newest first)
+versions, err := syncer.ListDocumentationVersions(ctx, "docs/api/userservice.md")
+
+// Each version includes:
+// - Version ID (e.g., "v20260312-143000")
+// - Content snapshot
+// - SHA256 hash
+// - Creation timestamp
+// - Author
+// - Commit message
+```
+
+**Search Index**:
+
+The search index provides fast full-text search:
+
+```go
+// Build index (scans all documentation files)
+if err := syncer.BuildSearchIndex(ctx); err != nil {
+    log.Fatal(err)
+}
+
+// Search with multiple keywords
+results, err := syncer.SearchDocumentation(ctx, "user authentication jwt")
+
+// Results are ranked by:
+// - Title matches (weight: 10x)
+// - Content matches (weight: 1x)
+// - Keyword matches (weight: 2x)
+
+// Each result includes:
+// - Document path
+// - Title
+// - Snippet (context around match)
+// - Score
+// - Source file link
+```
+
+**Concurrent Processing**:
+
+The `GenerateAPIReference` method processes multiple files concurrently:
+
+```go
+// Processes all proto files in parallel
+err := syncer.GenerateAPIReference(ctx, "docs/api")
+
+// Internally uses goroutines and sync.WaitGroup
+// Collects errors from all goroutines
+// Returns first error encountered
+```
+
+**Integration with Task Tracing**:
+
+```go
+// Create task
+taskID, _ := traceManager.CreateTask("Update API docs", "Sync user service docs")
+
+// Sync documentation
+result, err := syncer.SyncAPIDocumentation(ctx, "backend/api/protos/user.proto")
+if err != nil {
+    traceManager.FailTask(taskID, err.Error())
+    log.Fatal(err)
+}
+
+// Record in task trace
+traceManager.RecordCodeChange(taskID, constitution.CodeChange{
+    FilePath:     result.FilePath,
+    Operation:    constitution.OperationModify,
+    LinesAdded:   len(strings.Split(result.Content, "\n")),
+    Summary:      result.ChangesSummary,
+})
+
+traceManager.CompleteTask(taskID)
+```
 
 ## Configuration
 
