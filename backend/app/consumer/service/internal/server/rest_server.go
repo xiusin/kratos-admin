@@ -17,17 +17,13 @@ import (
 
 	consumerV1 "go-wind-admin/api/gen/go/consumer/service/v1"
 	"go-wind-admin/app/consumer/service/internal/service"
+	"go-wind-admin/pkg/monitoring"
 )
-
-// HealthResponse 健康检查响应
-type HealthResponse struct {
-	Status   string            `json:"status"`
-	Services map[string]string `json:"services"`
-}
 
 // NewRestMiddleware 创建中间件
 func NewRestMiddleware(
 	ctx *bootstrap.Context,
+	tracingService *monitoring.TracingService,
 ) []middleware.Middleware {
 	var ms []middleware.Middleware
 
@@ -36,6 +32,11 @@ func NewRestMiddleware(
 
 	// 恢复中间件
 	ms = append(ms, recovery.Recovery())
+
+	// 追踪中间件
+	if tracingService != nil {
+		ms = append(ms, monitoring.TracingMiddleware(tracingService.GetTracer()))
+	}
 
 	// 验证中间件
 	ms = append(ms, validate.Validator())
@@ -59,6 +60,8 @@ func NewRestServer(
 	mediaService *service.MediaService,
 	logisticsService *service.LogisticsService,
 	freightService *service.FreightService,
+	healthService *monitoring.HealthService,
+	metricsService *monitoring.MetricsService,
 ) (*khttp.Server, error) {
 	cfg := ctx.GetConfig()
 
@@ -71,8 +74,8 @@ func NewRestServer(
 		return nil, err
 	}
 
-	// 注册健康检查接口
-	registerHealthCheck(srv, ctx)
+	// 注册监控端点
+	registerMonitoringEndpoints(srv, ctx, healthService, metricsService)
 
 	// 注册服务
 	consumerV1.RegisterConsumerServiceHTTPServer(srv, consumerService)
@@ -87,43 +90,16 @@ func NewRestServer(
 	return srv, nil
 }
 
-// registerHealthCheck 注册健康检查接口
-func registerHealthCheck(srv *khttp.Server, ctx *bootstrap.Context) {
-	// /health - 基础健康检查
-	srv.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
+// registerMonitoringEndpoints 注册监控端点
+func registerMonitoringEndpoints(srv *khttp.Server, ctx *bootstrap.Context, healthService *monitoring.HealthService, metricsService *monitoring.MetricsService) {
+	// 健康检查端点
+	srv.HandleFunc("/health", healthService.HealthHandler())
+	srv.HandleFunc("/ready", healthService.ReadyHandler())
+	srv.HandleFunc("/live", healthService.LiveHandler())
 
-		resp := HealthResponse{
-			Status: "UP",
-			Services: map[string]string{
-				"consumer-service": "UP",
-			},
-		}
+	// Prometheus指标端点
+	srv.Handle("/metrics", metricsService.MetricsHandler())
 
-		json.NewEncoder(w).Encode(resp)
-	})
-
-	// /ready - 就绪检查（检查依赖服务）
-	srv.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		// TODO: 检查数据库连接
-		// TODO: 检查 Redis 连接
-		// TODO: 检查 Kafka 连接
-
-		// 暂时返回就绪状态
-		w.WriteHeader(http.StatusOK)
-
-		resp := HealthResponse{
-			Status: "READY",
-			Services: map[string]string{
-				"database": "UP",
-				"redis":    "UP",
-				"kafka":    "UP",
-			},
-		}
-
-		json.NewEncoder(w).Encode(resp)
-	})
+	// 统计信息端点
+	srv.HandleFunc("/stats", metricsService.StatsHandler())
 }

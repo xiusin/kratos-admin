@@ -21,4 +21,5 @@ var ProviderSet = wire.NewSet(
 	server.NewRestServer,
 	server.NewKafkaServer,
 	server.NewRestMiddleware,
+	MonitoringProviderSet,
 )
