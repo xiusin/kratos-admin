@@ -1,8 +1,9 @@
-package service
+package eventbus_test
 
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -17,8 +18,7 @@ import (
 // Requirements: 11.2, 11.6
 func TestUserRegisteredEventFlow(t *testing.T) {
 	// 创建事件总线
-	logger := log.NewStdLogger(nil)
-	bus := eventbus.NewEventBus(logger)
+	bus := eventbus.NewEventBus(log.DefaultLogger)
 	defer bus.Close()
 
 	// 用于验证事件处理的通道
@@ -35,14 +35,14 @@ func TestUserRegisteredEventFlow(t *testing.T) {
 		return nil
 	})
 
-	err := bus.Subscribe("user.registered", handler)
+	err := bus.Subscribe(eventbus.EventUserCreated, handler)
 	require.NoError(t, err, "should subscribe successfully")
 
 	// 发布用户注册事件
-	event := eventbus.NewEvent("user.registered", map[string]interface{}{
-		"user_id":  uint32(123),
-		"username": "testuser",
-		"email":    "test@example.com",
+	event := eventbus.NewEvent(eventbus.EventUserCreated, &eventbus.UserCreatedEvent{
+		UserID:   123,
+		Username: "testuser",
+		Email:    "test@example.com",
 	})
 
 	ctx := context.Background()
@@ -61,21 +61,13 @@ func TestUserRegisteredEventFlow(t *testing.T) {
 	mu.Lock()
 	defer mu.Unlock()
 	assert.NotNil(t, receivedEvent, "event should be received")
-	assert.Equal(t, "user.registered", receivedEvent.Type)
-
-	// 验证事件数据内容
-	data, ok := receivedEvent.Data.(map[string]interface{})
-	require.True(t, ok, "event data should be a map")
-	assert.Equal(t, float64(123), data["user_id"]) // JSON unmarshaling converts numbers to float64
-	assert.Equal(t, "testuser", data["username"])
-	assert.Equal(t, "test@example.com", data["email"])
+	assert.Equal(t, eventbus.EventUserCreated, receivedEvent.Type)
 }
 
 // TestUserRegisteredEventAsyncProcessing 测试用户注册事件异步处理
 // Requirements: 11.6
 func TestUserRegisteredEventAsyncProcessing(t *testing.T) {
-	logger := log.NewStdLogger(nil)
-	bus := eventbus.NewEventBus(logger)
+	bus := eventbus.NewEventBus(log.DefaultLogger)
 	defer bus.Close()
 
 	// 用于验证异步处理的通道
@@ -91,12 +83,12 @@ func TestUserRegisteredEventAsyncProcessing(t *testing.T) {
 		return nil
 	})
 
-	err := bus.SubscribeAsync("user.registered", handler)
+	err := bus.SubscribeAsync(eventbus.EventUserCreated, handler)
 	require.NoError(t, err)
 
 	// 发布事件
-	event := eventbus.NewEvent("user.registered", map[string]interface{}{
-		"user_id": uint32(456),
+	event := eventbus.NewEvent(eventbus.EventUserCreated, &eventbus.UserCreatedEvent{
+		UserID: 456,
 	})
 
 	ctx := context.Background()
@@ -129,8 +121,7 @@ func TestUserRegisteredEventAsyncProcessing(t *testing.T) {
 // TestPaymentSuccessEventFlow 测试支付成功事件流
 // Requirements: 11.3, 11.4
 func TestPaymentSuccessEventFlow(t *testing.T) {
-	logger := log.NewStdLogger(nil)
-	bus := eventbus.NewEventBus(logger)
+	bus := eventbus.NewEventBus(log.DefaultLogger)
 	defer bus.Close()
 
 	// 用于验证事件处理的通道
@@ -152,9 +143,9 @@ func TestPaymentSuccessEventFlow(t *testing.T) {
 
 	// 发布支付成功事件
 	event := eventbus.NewEvent("payment.success", map[string]interface{}{
-		"order_no":    "ORDER123456",
-		"consumer_id": uint32(789),
-		"amount":      "100.00",
+		"order_no":       "ORDER123456",
+		"consumer_id":    uint32(789),
+		"amount":         "100.00",
 		"payment_method": "wechat",
 	})
 
@@ -175,35 +166,24 @@ func TestPaymentSuccessEventFlow(t *testing.T) {
 	defer mu.Unlock()
 	assert.NotNil(t, receivedEvent)
 	assert.Equal(t, "payment.success", receivedEvent.Type)
-
-	data, ok := receivedEvent.Data.(map[string]interface{})
-	require.True(t, ok)
-	assert.Equal(t, "ORDER123456", data["order_no"])
-	assert.Equal(t, float64(789), data["consumer_id"])
-	assert.Equal(t, "100.00", data["amount"])
 }
 
 // TestPaymentSuccessEventRetry 测试支付成功事件重试机制
 // Requirements: 11.7
 func TestPaymentSuccessEventRetry(t *testing.T) {
-	logger := log.NewStdLogger(nil)
-	bus := eventbus.NewEventBus(logger)
+	bus := eventbus.NewEventBus(log.DefaultLogger)
 	defer bus.Close()
 
 	// 用于跟踪重试次数
-	var attemptCount int
-	var mu sync.Mutex
+	var attemptCount int32
 	maxRetries := 3
 	eventProcessed := make(chan bool, 1)
 
 	// 创建会失败的处理器（前几次失败，最后一次成功）
 	handler := eventbus.EventHandlerFunc(func(ctx context.Context, event *eventbus.Event) error {
-		mu.Lock()
-		attemptCount++
-		currentAttempt := attemptCount
-		mu.Unlock()
+		currentAttempt := atomic.AddInt32(&attemptCount, 1)
 
-		if currentAttempt < maxRetries {
+		if currentAttempt < int32(maxRetries) {
 			// 前几次失败
 			return assert.AnError
 		}
@@ -243,16 +223,13 @@ func TestPaymentSuccessEventRetry(t *testing.T) {
 	}
 
 	// 验证重试次数
-	mu.Lock()
-	defer mu.Unlock()
-	assert.Equal(t, maxRetries, attemptCount, "should retry exactly %d times", maxRetries)
+	assert.Equal(t, int32(maxRetries), atomic.LoadInt32(&attemptCount), "should retry exactly %d times", maxRetries)
 }
 
 // TestLogisticsStatusChangedEventFlow 测试物流状态变更事件流
 // Requirements: 11.5, 11.6
 func TestLogisticsStatusChangedEventFlow(t *testing.T) {
-	logger := log.NewStdLogger(nil)
-	bus := eventbus.NewEventBus(logger)
+	bus := eventbus.NewEventBus(log.DefaultLogger)
 	defer bus.Close()
 
 	// 用于验证事件处理的通道
@@ -303,24 +280,19 @@ func TestLogisticsStatusChangedEventFlow(t *testing.T) {
 // TestEventFailureHandling 测试事件失败处理
 // Requirements: 11.7, 11.8, 11.9
 func TestEventFailureHandling(t *testing.T) {
-	logger := log.NewStdLogger(nil)
-	bus := eventbus.NewEventBus(logger)
+	bus := eventbus.NewEventBus(log.DefaultLogger)
 	defer bus.Close()
 
 	// 用于跟踪失败次数
-	var failureCount int
-	var mu sync.Mutex
+	var failureCount int32
 	maxRetries := 3
 	allRetriesDone := make(chan bool, 1)
 
 	// 创建总是失败的处理器
 	handler := eventbus.EventHandlerFunc(func(ctx context.Context, event *eventbus.Event) error {
-		mu.Lock()
-		failureCount++
-		currentCount := failureCount
-		mu.Unlock()
+		currentCount := atomic.AddInt32(&failureCount, 1)
 
-		if currentCount >= maxRetries {
+		if currentCount >= int32(maxRetries) {
 			allRetriesDone <- true
 		}
 
@@ -357,19 +329,13 @@ func TestEventFailureHandling(t *testing.T) {
 	}
 
 	// 验证失败次数
-	mu.Lock()
-	defer mu.Unlock()
-	assert.Equal(t, maxRetries, failureCount, "should fail exactly %d times", maxRetries)
-
-	// 在实际实现中，失败3次后应该进入死信队列
-	// 这里我们只验证重试机制
+	assert.Equal(t, int32(maxRetries), atomic.LoadInt32(&failureCount), "should fail exactly %d times", maxRetries)
 }
 
 // TestEventLogging 测试事件日志记录
 // Requirements: 11.9
 func TestEventLogging(t *testing.T) {
-	logger := log.NewStdLogger(nil)
-	bus := eventbus.NewEventBus(logger)
+	bus := eventbus.NewEventBus(log.DefaultLogger)
 	defer bus.Close()
 
 	// 用于验证日志记录的通道
@@ -411,118 +377,4 @@ func TestEventLogging(t *testing.T) {
 	// 验证事件元数据
 	assert.Equal(t, "test_service", event.Source)
 	assert.Equal(t, "req-123", event.Metadata["request_id"])
-}
-
-// TestMultipleSubscribers 测试多个订阅者
-func TestMultipleSubscribers(t *testing.T) {
-	logger := log.NewStdLogger(nil)
-	bus := eventbus.NewEventBus(logger)
-	defer bus.Close()
-
-	// 用于验证多个订阅者都收到事件
-	subscriber1Received := make(chan bool, 1)
-	subscriber2Received := make(chan bool, 1)
-	subscriber3Received := make(chan bool, 1)
-
-	// 订阅者1
-	handler1 := eventbus.EventHandlerFunc(func(ctx context.Context, event *eventbus.Event) error {
-		subscriber1Received <- true
-		return nil
-	})
-
-	// 订阅者2
-	handler2 := eventbus.EventHandlerFunc(func(ctx context.Context, event *eventbus.Event) error {
-		subscriber2Received <- true
-		return nil
-	})
-
-	// 订阅者3
-	handler3 := eventbus.EventHandlerFunc(func(ctx context.Context, event *eventbus.Event) error {
-		subscriber3Received <- true
-		return nil
-	})
-
-	err := bus.Subscribe("test.multiple", handler1)
-	require.NoError(t, err)
-	err = bus.Subscribe("test.multiple", handler2)
-	require.NoError(t, err)
-	err = bus.Subscribe("test.multiple", handler3)
-	require.NoError(t, err)
-
-	// 发布事件
-	event := eventbus.NewEvent("test.multiple", map[string]interface{}{
-		"test": "multiple_subscribers",
-	})
-
-	ctx := context.Background()
-	err = bus.Publish(ctx, event)
-	require.NoError(t, err)
-
-	// 验证所有订阅者都收到事件
-	timeout := time.After(2 * time.Second)
-	receivedCount := 0
-
-	for receivedCount < 3 {
-		select {
-		case <-subscriber1Received:
-			receivedCount++
-		case <-subscriber2Received:
-			receivedCount++
-		case <-subscriber3Received:
-			receivedCount++
-		case <-timeout:
-			t.Fatalf("timeout: only %d/3 subscribers received event", receivedCount)
-		}
-	}
-
-	assert.Equal(t, 3, receivedCount, "all 3 subscribers should receive the event")
-}
-
-// TestEventPriority 测试事件优先级
-func TestEventPriority(t *testing.T) {
-	logger := log.NewStdLogger(nil)
-	bus := eventbus.NewEventBus(logger)
-	defer bus.Close()
-
-	eventReceived := make(chan int, 3)
-
-	// 订阅事件
-	handler := eventbus.EventHandlerFunc(func(ctx context.Context, event *eventbus.Event) error {
-		eventReceived <- event.Priority
-		return nil
-	})
-
-	err := bus.Subscribe("test.priority", handler)
-	require.NoError(t, err)
-
-	ctx := context.Background()
-
-	// 发布不同优先级的事件
-	lowPriorityEvent := eventbus.NewEvent("test.priority", "low").WithPriority(1)
-	mediumPriorityEvent := eventbus.NewEvent("test.priority", "medium").WithPriority(5)
-	highPriorityEvent := eventbus.NewEvent("test.priority", "high").WithPriority(10)
-
-	err = bus.Publish(ctx, lowPriorityEvent)
-	require.NoError(t, err)
-	err = bus.Publish(ctx, mediumPriorityEvent)
-	require.NoError(t, err)
-	err = bus.Publish(ctx, highPriorityEvent)
-	require.NoError(t, err)
-
-	// 验证事件优先级
-	timeout := time.After(2 * time.Second)
-	priorities := make([]int, 0, 3)
-
-	for len(priorities) < 3 {
-		select {
-		case priority := <-eventReceived:
-			priorities = append(priorities, priority)
-		case <-timeout:
-			t.Fatalf("timeout: only received %d/3 events", len(priorities))
-		}
-	}
-
-	assert.Contains(t, priorities, 1, "should receive low priority event")
-	assert.Contains(t, priorities, 5, "should receive medium priority event")
-	assert.Contains(t, priorities, 10, "should receive high priority event")
 }

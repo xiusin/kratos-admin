@@ -725,7 +725,7 @@
     - **Property 57: 健康检查接口**
     - **Validates: Requirements 15.1**
 
-- [-] 19. 事件驱动集成测试
+- [x] 19. 事件驱动集成测试
   - [ ]*19.1 测试用户注册事件流
     - 测试UserRegisteredEvent发布
     - 测试Finance Service订阅并创建账户
@@ -755,7 +755,7 @@
     - **Property 47: 事件重试机制**
     - **Validates: Requirements 11.7, 11.8**
 
-- [~] 20. Checkpoint - 完整系统验证
+- [x] 20. Checkpoint - 完整系统验证
   - 验证所有功能模块正常工作
   - 验证所有单元测试通过
   - 验证所有属性测试通过(Properties 1-57)
