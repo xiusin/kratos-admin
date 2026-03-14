@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/go-saas/kit/backend/pkg/constitution"
+	"go-wind-admin/pkg/constitution"
 )
 
 // ExampleAntiHallucinationVerifier demonstrates how to use the anti-hallucination verifier

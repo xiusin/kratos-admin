@@ -229,10 +229,10 @@ func (c *WechatClient) QueryOrder(ctx context.Context, orderNo string) (*QueryOr
 	}
 
 	params := map[string]string{
-		"appid":         c.config.AppID,
-		"mch_id":        c.config.MchID,
-		"out_trade_no":  orderNo,
-		"nonce_str":     c.generateNonceStr(),
+		"appid":        c.config.AppID,
+		"mch_id":       c.config.MchID,
+		"out_trade_no": orderNo,
+		"nonce_str":    c.generateNonceStr(),
 	}
 
 	// 添加签名

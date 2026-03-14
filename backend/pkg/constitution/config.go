@@ -13,18 +13,19 @@ import (
 
 // Config represents the complete constitution configuration
 type Config struct {
-	Version string `yaml:"version"`
+	Version     string `yaml:"version"`
+	ProjectRoot string `yaml:"project_root"` // 项目根目录
 
-	Tools          ToolsConfig          `yaml:"tools"`
-	Validation     ValidationConfig     `yaml:"validation"`
-	Trace          TraceConfig          `yaml:"trace"`
-	Rollback       RollbackConfig       `yaml:"rollback"`
-	ErrorHandling  ErrorHandlingConfig  `yaml:"error_handling"`
-	Documentation  DocumentationConfig  `yaml:"documentation"`
+	Tools             ToolsConfig             `yaml:"tools"`
+	Validation        ValidationConfig        `yaml:"validation"`
+	Trace             TraceConfig             `yaml:"trace"`
+	Rollback          RollbackConfig          `yaml:"rollback"`
+	ErrorHandling     ErrorHandlingConfig     `yaml:"error_handling"`
+	Documentation     DocumentationConfig     `yaml:"documentation"`
 	AntiHallucination AntiHallucinationConfig `yaml:"anti_hallucination"`
-	Architecture   ArchitectureConfig   `yaml:"architecture"`
-	Security       SecurityConfig       `yaml:"security"`
-	Performance    PerformanceConfig    `yaml:"performance"`
+	Architecture      ArchitectureConfig      `yaml:"architecture"`
+	Security          SecurityConfig          `yaml:"security"`
+	Performance       PerformanceConfig       `yaml:"performance"`
 }
 
 // ToolsConfig contains tool configurations
@@ -77,12 +78,12 @@ type ValidationConfig struct {
 
 // GoValidationConfig contains Go validation settings
 type GoValidationConfig struct {
-	RunTests            bool     `yaml:"run_tests"`
-	CheckImports        bool     `yaml:"check_imports"`
-	MaxComplexity       int      `yaml:"max_complexity"`
-	CheckErrorHandling  bool     `yaml:"check_error_handling"`
-	CheckContextUsage   bool     `yaml:"check_context_usage"`
-	Rules               []string `yaml:"rules"`
+	RunTests           bool     `yaml:"run_tests"`
+	CheckImports       bool     `yaml:"check_imports"`
+	MaxComplexity      int      `yaml:"max_complexity"`
+	CheckErrorHandling bool     `yaml:"check_error_handling"`
+	CheckContextUsage  bool     `yaml:"check_context_usage"`
+	Rules              []string `yaml:"rules"`
 }
 
 // VueValidationConfig contains Vue validation settings
@@ -120,13 +121,13 @@ type TraceConfig struct {
 
 // RollbackConfig contains rollback configurations
 type RollbackConfig struct {
-	AutoRollback              bool     `yaml:"auto_rollback"`
-	BackupBeforeChange        bool     `yaml:"backup_before_change"`
-	BackupDirectory           string   `yaml:"backup_directory"`
-	BackupRetentionSuccess    int      `yaml:"backup_retention_success"`
-	BackupRetentionFailure    int      `yaml:"backup_retention_failure"`
-	VerifyRollback            bool     `yaml:"verify_rollback"`
-	Triggers                  []string `yaml:"triggers"`
+	AutoRollback           bool     `yaml:"auto_rollback"`
+	BackupBeforeChange     bool     `yaml:"backup_before_change"`
+	BackupDirectory        string   `yaml:"backup_directory"`
+	BackupRetentionSuccess int      `yaml:"backup_retention_success"`
+	BackupRetentionFailure int      `yaml:"backup_retention_failure"`
+	VerifyRollback         bool     `yaml:"verify_rollback"`
+	Triggers               []string `yaml:"triggers"`
 }
 
 // ErrorHandlingConfig contains error handling configurations
@@ -137,10 +138,11 @@ type ErrorHandlingConfig struct {
 
 // RetryConfig contains retry configurations
 type RetryConfig struct {
-	MaxAttempts       int    `yaml:"max_attempts"`
-	BackoffStrategy   string `yaml:"backoff_strategy"`
-	InitialDelayMs    int    `yaml:"initial_delay_ms"`
-	MaxDelayMs        int    `yaml:"max_delay_ms"`
+	MaxAttempts     int             `yaml:"max_attempts"`
+	BackoffStrategy string          `yaml:"backoff_strategy"`
+	InitialDelayMs  int             `yaml:"initial_delay_ms"`
+	MaxDelayMs      int             `yaml:"max_delay_ms"`
+	Delays          []time.Duration `yaml:"delays"` // 自定义重试延迟
 }
 
 // ReportingConfig contains error reporting configurations
@@ -163,13 +165,13 @@ type DocumentationConfig struct {
 
 // AntiHallucinationConfig contains anti-hallucination configurations
 type AntiHallucinationConfig struct {
-	Enabled               bool     `yaml:"enabled"`
-	VerifyAPIExists       bool     `yaml:"verify_api_exists"`
-	VerifyFunctionExists  bool     `yaml:"verify_function_exists"`
-	VerifyModuleExists    bool     `yaml:"verify_module_exists"`
-	VerifyConfigExists    bool     `yaml:"verify_config_exists"`
-	RequestConfirmation   bool     `yaml:"request_confirmation"`
-	IndexUpdateTriggers   []string `yaml:"index_update_triggers"`
+	Enabled              bool     `yaml:"enabled"`
+	VerifyAPIExists      bool     `yaml:"verify_api_exists"`
+	VerifyFunctionExists bool     `yaml:"verify_function_exists"`
+	VerifyModuleExists   bool     `yaml:"verify_module_exists"`
+	VerifyConfigExists   bool     `yaml:"verify_config_exists"`
+	RequestConfirmation  bool     `yaml:"request_confirmation"`
+	IndexUpdateTriggers  []string `yaml:"index_update_triggers"`
 }
 
 // ArchitectureConfig contains architecture configurations
@@ -190,11 +192,11 @@ type LayerConfig struct {
 
 // SecurityConfig contains security configurations
 type SecurityConfig struct {
-	CheckHardcodedSecrets   bool     `yaml:"check_hardcoded_secrets"`
-	CheckAuthBypass         bool     `yaml:"check_auth_bypass"`
-	CheckSQLInjection       bool     `yaml:"check_sql_injection"`
-	CheckSensitiveDataLeak  bool     `yaml:"check_sensitive_data_leak"`
-	SensitivePatterns       []string `yaml:"sensitive_patterns"`
+	CheckHardcodedSecrets  bool     `yaml:"check_hardcoded_secrets"`
+	CheckAuthBypass        bool     `yaml:"check_auth_bypass"`
+	CheckSQLInjection      bool     `yaml:"check_sql_injection"`
+	CheckSensitiveDataLeak bool     `yaml:"check_sensitive_data_leak"`
+	SensitivePatterns      []string `yaml:"sensitive_patterns"`
 }
 
 // PerformanceConfig contains performance configurations

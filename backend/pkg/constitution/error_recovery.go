@@ -331,15 +331,15 @@ func (r *errorRecovery) RequestManualIntervention(ctx context.Context, err *Cons
 
 // GetRetryDelays returns retry delays based on configuration
 func (r *errorRecovery) GetRetryDelays(maxAttempts int) []time.Duration {
-	if r.config != nil && len(r.config.Retry.Delays) > 0 {
+	if r.config != nil && len(r.config.ErrorHandling.Retry.Delays) > 0 {
 		// Use configured delays
 		delays := make([]time.Duration, maxAttempts)
 		for i := 0; i < maxAttempts; i++ {
-			if i < len(r.config.Retry.Delays) {
-				delays[i] = r.config.Retry.Delays[i]
+			if i < len(r.config.ErrorHandling.Retry.Delays) {
+				delays[i] = r.config.ErrorHandling.Retry.Delays[i]
 			} else {
 				// Use last configured delay for remaining attempts
-				delays[i] = r.config.Retry.Delays[len(r.config.Retry.Delays)-1]
+				delays[i] = r.config.ErrorHandling.Retry.Delays[len(r.config.ErrorHandling.Retry.Delays)-1]
 			}
 		}
 		return delays

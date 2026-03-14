@@ -32,7 +32,7 @@ func NewTaskTraceManager(traceDir string) (TaskTraceManager, error) {
 // CreateTask creates a new task record
 func (m *taskTraceManager) CreateTask(description string, developerRequest string) (string, error) {
 	taskID := uuid.New().String()
-	
+
 	trace := &TaskTrace{
 		TaskID:           taskID,
 		TimestampStart:   time.Now(),
@@ -65,7 +65,7 @@ func (m *taskTraceManager) RecordDecision(taskID string, decision Decision) erro
 	}
 
 	trace.Decisions = append(trace.Decisions, decision)
-	
+
 	return m.saveTrace(trace)
 }
 
@@ -77,7 +77,7 @@ func (m *taskTraceManager) RecordCodeChange(taskID string, change CodeChange) er
 	}
 
 	trace.CodeChanges = append(trace.CodeChanges, change)
-	
+
 	return m.saveTrace(trace)
 }
 
@@ -94,7 +94,7 @@ func (m *taskTraceManager) RecordValidation(taskID string, validation Validation
 	}
 
 	trace.Validations = append(trace.Validations, validation)
-	
+
 	return m.saveTrace(trace)
 }
 
@@ -106,7 +106,7 @@ func (m *taskTraceManager) AddReference(taskID string, ref Reference) error {
 	}
 
 	trace.References = append(trace.References, ref)
-	
+
 	return m.saveTrace(trace)
 }
 
@@ -119,7 +119,7 @@ func (m *taskTraceManager) CompleteTask(taskID string) error {
 
 	trace.Status = TaskStatusCompleted
 	trace.TimestampEnd = time.Now()
-	
+
 	return m.saveTrace(trace)
 }
 
@@ -132,7 +132,7 @@ func (m *taskTraceManager) FailTask(taskID string, reason string) error {
 
 	trace.Status = TaskStatusFailed
 	trace.TimestampEnd = time.Now()
-	
+
 	// Add a decision record explaining the failure
 	decision := Decision{
 		Timestamp:    time.Now(),
@@ -141,7 +141,7 @@ func (m *taskTraceManager) FailTask(taskID string, reason string) error {
 		Rationale:    reason,
 	}
 	trace.Decisions = append(trace.Decisions, decision)
-	
+
 	return m.saveTrace(trace)
 }
 
@@ -160,14 +160,14 @@ func (m *taskTraceManager) RecordRollback(taskID string, rollback RollbackInfo) 
 	trace.Rollback = &rollback
 	trace.Status = TaskStatusRolledBack
 	trace.TimestampEnd = time.Now()
-	
+
 	return m.saveTrace(trace)
 }
 
 // GetTask retrieves a task record by ID
 func (m *taskTraceManager) GetTask(taskID string) (*TaskTrace, error) {
 	filePath := m.getTraceFilePath(taskID)
-	
+
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -192,7 +192,7 @@ func (m *taskTraceManager) ListTasks(filter TaskFilter) ([]*TaskTrace, error) {
 	}
 
 	var traces []*TaskTrace
-	
+
 	for _, file := range files {
 		if file.IsDir() || !strings.HasSuffix(file.Name(), ".json") {
 			continue
@@ -235,7 +235,7 @@ func (m *taskTraceManager) ListTasks(filter TaskFilter) ([]*TaskTrace, error) {
 		}
 		traces = traces[filter.Offset:]
 	}
-	
+
 	if filter.Limit > 0 && filter.Limit < len(traces) {
 		traces = traces[:filter.Limit]
 	}
@@ -246,7 +246,7 @@ func (m *taskTraceManager) ListTasks(filter TaskFilter) ([]*TaskTrace, error) {
 // saveTrace saves a task trace to disk
 func (m *taskTraceManager) saveTrace(trace *TaskTrace) error {
 	filePath := m.getTraceFilePath(trace.TaskID)
-	
+
 	data, err := json.MarshalIndent(trace, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal task trace: %w", err)

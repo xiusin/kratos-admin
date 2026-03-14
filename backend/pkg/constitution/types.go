@@ -51,17 +51,17 @@ const (
 
 // TaskTrace represents a complete task execution record
 type TaskTrace struct {
-	TaskID          string        `json:"task_id"`
-	TimestampStart  time.Time     `json:"timestamp_start"`
-	TimestampEnd    time.Time     `json:"timestamp_end"`
-	Status          TaskStatus    `json:"status"`
-	TaskDescription string        `json:"task_description"`
-	DeveloperRequest string       `json:"developer_request"`
-	Decisions       []Decision    `json:"decisions"`
-	CodeChanges     []CodeChange  `json:"code_changes"`
-	Validations     []Validation  `json:"validations"`
-	References      []Reference   `json:"references"`
-	Rollback        *RollbackInfo `json:"rollback,omitempty"`
+	TaskID           string        `json:"task_id"`
+	TimestampStart   time.Time     `json:"timestamp_start"`
+	TimestampEnd     time.Time     `json:"timestamp_end"`
+	Status           TaskStatus    `json:"status"`
+	TaskDescription  string        `json:"task_description"`
+	DeveloperRequest string        `json:"developer_request"`
+	Decisions        []Decision    `json:"decisions"`
+	CodeChanges      []CodeChange  `json:"code_changes"`
+	Validations      []Validation  `json:"validations"`
+	References       []Reference   `json:"references"`
+	Rollback         *RollbackInfo `json:"rollback,omitempty"`
 }
 
 // Decision represents a decision made during task execution

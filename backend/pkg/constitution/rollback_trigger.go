@@ -29,10 +29,10 @@ func NewRollbackTrigger(
 type TriggerCondition string
 
 const (
-	TriggerConditionValidationFailure   TriggerCondition = "validation_failure"
+	TriggerConditionValidationFailure     TriggerCondition = "validation_failure"
 	TriggerConditionConstitutionViolation TriggerCondition = "constitution_violation"
-	TriggerConditionManual              TriggerCondition = "manual"
-	TriggerConditionSecurityViolation   TriggerCondition = "security_violation"
+	TriggerConditionManual                TriggerCondition = "manual"
+	TriggerConditionSecurityViolation     TriggerCondition = "security_violation"
 	TriggerConditionArchitectureViolation TriggerCondition = "architecture_violation"
 )
 

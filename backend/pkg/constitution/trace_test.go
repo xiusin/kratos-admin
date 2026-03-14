@@ -303,7 +303,7 @@ func TestFailTask(t *testing.T) {
 	if trace.TimestampEnd.IsZero() {
 		t.Error("Expected end timestamp to be set")
 	}
-	
+
 	// Verify failure reason was recorded as a decision
 	if len(trace.Decisions) == 0 {
 		t.Fatal("Expected failure reason to be recorded as a decision")
@@ -453,10 +453,10 @@ func TestListTasksWithDateFilter(t *testing.T) {
 	// Create tasks
 	manager.CreateTask("Task 1", "Request 1")
 	time.Sleep(10 * time.Millisecond)
-	
+
 	midTime := time.Now()
 	time.Sleep(10 * time.Millisecond)
-	
+
 	manager.CreateTask("Task 2", "Request 2")
 
 	// Filter by start date

@@ -7,7 +7,7 @@ import (
 
 func TestNewRollbackTrigger(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -20,7 +20,7 @@ func TestNewRollbackTrigger(t *testing.T) {
 
 func TestCheckValidationResultPassed(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -41,7 +41,7 @@ func TestCheckValidationResultPassed(t *testing.T) {
 
 func TestCheckValidationResultFailed(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -79,7 +79,7 @@ func TestCheckValidationResultFailed(t *testing.T) {
 
 func TestCheckValidationResultWarningsOnly(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -109,7 +109,7 @@ func TestCheckValidationResultWarningsOnly(t *testing.T) {
 
 func TestCheckConstitutionViolationForbiddenFile(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -136,7 +136,7 @@ func TestCheckConstitutionViolationForbiddenFile(t *testing.T) {
 
 func TestCheckConstitutionViolationDeleteMigration(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -159,7 +159,7 @@ func TestCheckConstitutionViolationDeleteMigration(t *testing.T) {
 
 func TestCheckConstitutionViolationDeleteProto(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -182,7 +182,7 @@ func TestCheckConstitutionViolationDeleteProto(t *testing.T) {
 
 func TestCheckConstitutionViolationSecurityIssue(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -206,7 +206,7 @@ func TestCheckConstitutionViolationSecurityIssue(t *testing.T) {
 
 func TestCheckConstitutionViolationNoViolation(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -229,7 +229,7 @@ func TestCheckConstitutionViolationNoViolation(t *testing.T) {
 
 func TestManualRollback(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -241,7 +241,7 @@ func TestManualRollback(t *testing.T) {
 	testFile := tempDir + "/test.txt"
 	// Create test file
 	// Note: In real scenario, file should exist before backup
-	
+
 	// Create backup (will handle non-existent file)
 	_, err := rollbackManager.CreateBackup(taskID, []string{testFile})
 	if err != nil {
@@ -267,7 +267,7 @@ func TestManualRollback(t *testing.T) {
 
 func TestAutoRollbackOnValidation(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -307,7 +307,7 @@ func TestAutoRollbackOnValidation(t *testing.T) {
 
 func TestAutoRollbackOnViolation(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})
@@ -340,7 +340,7 @@ func TestAutoRollbackOnViolation(t *testing.T) {
 
 func TestHasSecurityViolationComment(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	rollbackManager, _ := NewRollbackManager(tempDir+"/backups", tempDir+"/traces")
 	traceManager, _ := NewTaskTraceManager(tempDir + "/traces")
 	validator, _ := NewCodeValidator(&Config{})

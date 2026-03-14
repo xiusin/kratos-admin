@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"kratos-admin/backend/pkg/constitution"
+	"go-wind-admin/pkg/constitution"
 )
 
 // ExampleTaskTraceManager demonstrates the basic usage of TaskTraceManager

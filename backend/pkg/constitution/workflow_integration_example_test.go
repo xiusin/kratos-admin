@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"backend/pkg/constitution"
+	"go-wind-admin/pkg/constitution"
 )
 
 // ExampleWorkflow demonstrates a complete workflow with violation detection

@@ -18,13 +18,13 @@ import (
 
 // ProviderSet is the Wire provider set for service layer.
 var ProviderSet = wire.NewSet(
-	// TODO: 添加 Service providers
-	// service.NewConsumerService,
-	// service.NewSMSService,
-	// service.NewPaymentService,
-	// service.NewFinanceService,
-	// service.NewWechatService,
-	// service.NewMediaService,
-	// service.NewLogisticsService,
-	// service.NewFreightService,
+// TODO: 添加 Service providers
+// service.NewConsumerService,
+// service.NewSMSService,
+// service.NewPaymentService,
+// service.NewFinanceService,
+// service.NewWechatService,
+// service.NewMediaService,
+// service.NewLogisticsService,
+// service.NewFreightService,
 )

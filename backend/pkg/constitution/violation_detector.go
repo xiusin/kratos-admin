@@ -3,7 +3,6 @@ package constitution
 import (
 	"context"
 	"fmt"
-	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
@@ -38,6 +37,7 @@ const (
 type Violation struct {
 	Type                  ViolationType `json:"type"`
 	Severity              Severity      `json:"severity"`
+	RuleID                string        `json:"rule_id"` // 规则ID
 	FilePath              string        `json:"file_path"`
 	LineNumber            int           `json:"line_number"`
 	Description           string        `json:"description"`

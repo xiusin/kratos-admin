@@ -125,8 +125,8 @@ func (kb *KafkaEventBus) SubscribeAsync(eventType string, handler Handler) error
 func (kb *KafkaEventBus) SubscribeOnce(eventType string, handler Handler) error {
 	// Kafka不支持一次性订阅，使用包装器实现
 	onceHandler := &onceHandler{
-		handler: handler,
-		bus:     kb,
+		handler:   handler,
+		bus:       kb,
 		eventType: eventType,
 	}
 	return kb.Subscribe(eventType, onceHandler)

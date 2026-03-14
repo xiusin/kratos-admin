@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"backend/pkg/constitution"
+	"go-wind-admin/pkg/constitution"
 )
 
 // ExampleErrorHandler_HandleValidationError demonstrates handling validation errors
@@ -80,18 +80,15 @@ func ExampleErrorHandler_HandleViolationError() {
 
 	// Simulate a violation
 	violation := constitution.Violation{
-		RuleID:        "arch-001",
-		Type:          constitution.ViolationTypeArchitecture,
-		Severity:      constitution.SeverityCritical,
-		Message:       "Cross-layer direct call detected",
-		Description:   "API layer directly calling pkg layer without going through app layer",
-		File:          "api/handler/user.go",
-		Line:          23,
-		RuleReference: "Section 3.1: Three-Layer Architecture",
-		FixSuggestions: []string{
-			"Move the logic to app/service layer",
-			"Call app layer from API layer",
-		},
+		RuleID:                "arch-001",
+		Type:                  constitution.ViolationTypeArchitecture,
+		Severity:              constitution.SeverityCritical,
+		Description:           "Cross-layer direct call detected: API layer directly calling pkg layer without going through app layer",
+		FilePath:              "api/handler/user.go",
+		LineNumber:            23,
+		Rule:                  "Three-Layer Architecture",
+		ConstitutionReference: "Section 3.1: Three-Layer Architecture",
+		Suggestion:            "Move the logic to app/service layer, then call app layer from API layer",
 	}
 
 	// Handle the violation error

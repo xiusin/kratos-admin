@@ -18,12 +18,12 @@ const (
 type PaymentType string
 
 const (
-	PaymentTypeApp     PaymentType = "app"     // APP支付
-	PaymentTypeH5      PaymentType = "h5"      // H5支付
-	PaymentTypeMini    PaymentType = "mini"    // 小程序支付
-	PaymentTypeQRCode  PaymentType = "qrcode"  // 扫码支付
-	PaymentTypeJSAPI   PaymentType = "jsapi"   // JSAPI支付
-	PaymentTypeNative  PaymentType = "native"  // Native支付
+	PaymentTypeApp    PaymentType = "app"    // APP支付
+	PaymentTypeH5     PaymentType = "h5"     // H5支付
+	PaymentTypeMini   PaymentType = "mini"   // 小程序支付
+	PaymentTypeQRCode PaymentType = "qrcode" // 扫码支付
+	PaymentTypeJSAPI  PaymentType = "jsapi"  // JSAPI支付
+	PaymentTypeNative PaymentType = "native" // Native支付
 )
 
 // Client 支付客户端接口

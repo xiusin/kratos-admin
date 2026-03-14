@@ -1,7 +1,5 @@
 package constitution
 
-import "context"
-
 // TaskTraceManager manages task trace records
 type TaskTraceManager interface {
 	// CreateTask creates a new task record

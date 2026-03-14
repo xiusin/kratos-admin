@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"backend/pkg/constitution"
+	"go-wind-admin/pkg/constitution"
 )
 
 func ExampleViolationDetector_DetectArchitectureViolations() {

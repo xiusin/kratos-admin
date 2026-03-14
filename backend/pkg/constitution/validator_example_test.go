@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"backend/pkg/constitution"
+	"go-wind-admin/pkg/constitution"
 )
 
 func ExampleCodeValidator_ValidateGoCode() {

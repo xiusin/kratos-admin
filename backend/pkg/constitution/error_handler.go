@@ -72,12 +72,12 @@ type ErrorHandler interface {
 // errorHandler implements ErrorHandler
 type errorHandler struct {
 	config       *Config
-	ruleEngine   RuleEngine
+	ruleEngine   *RuleEngine
 	traceManager TaskTraceManager
 }
 
 // NewErrorHandler creates a new error handler
-func NewErrorHandler(config *Config, ruleEngine RuleEngine, traceManager TaskTraceManager) ErrorHandler {
+func NewErrorHandler(config *Config, ruleEngine *RuleEngine, traceManager TaskTraceManager) ErrorHandler {
 	return &errorHandler{
 		config:       config,
 		ruleEngine:   ruleEngine,
