@@ -216,8 +216,8 @@
   - 确保所有测试通过,询问用户是否继续
 
 
-- [ ] 6. Consumer Service实现(用户服务)
-  - [ ] 6.1 实现ConsumerRepo数据层
+- [x] 6. Consumer Service实现(用户服务)
+  - [x] 6.1 实现ConsumerRepo数据层
     - 实现Create方法(创建用户)
     - 实现Get方法(查询用户)
     - 实现GetByPhone方法(按手机号查询)
@@ -227,13 +227,13 @@
     - 实现多租户过滤(自动添加tenant_id条件)
     - _Requirements: 2.1-2.8, 10.1-10.8_
 
-  - [ ] 6.2 实现LoginLogRepo数据层
+  - [x] 6.2 实现LoginLogRepo数据层
     - 实现Create方法(记录登录日志)
     - 实现List方法(分页查询登录日志)
     - 实现多租户过滤
     - _Requirements: 1.7, 12.1-12.8_
 
-  - [ ] 6.3 实现ConsumerService服务层 - 注册登录
+  - [x] 6.3 实现ConsumerService服务层 - 注册登录
     - 实现RegisterByPhone方法(手机号注册)
     - 实现LoginByPhone方法(手机号登录)
     - 实现LoginByWechat方法(微信登录)
@@ -245,7 +245,7 @@
     - 发布UserRegisteredEvent事件
     - _Requirements: 1.1-1.10_
 
-  - [ ] 6.4 实现ConsumerService服务层 - 信息管理
+  - [x] 6.4 实现ConsumerService服务层 - 信息管理
     - 实现GetConsumer方法(查询用户信息)
     - 实现UpdateConsumer方法(更新用户信息)
     - 实现UpdatePhone方法(更新手机号,需验证码)
@@ -255,7 +255,7 @@
     - 实现ListConsumers方法(查询用户列表,管理员权限)
     - _Requirements: 2.1-2.8_
 
-  - [ ] 6.5 实现ConsumerService服务层 - 登录日志
+  - [x] 6.5 实现ConsumerService服务层 - 登录日志
     - 实现ListLoginLogs方法(查询登录日志)
     - 实现分页和筛选(按用户、时间范围、状态)
     - 实现敏感数据脱敏(手机号、IP地址)
@@ -290,14 +290,14 @@
     - **Property 14: 多租户数据隔离**
     - **Validates: Requirements 2.8, 10.1-10.8**
 
-- [ ] 7. SMS Service实现(短信服务)
-  - [ ] 7.1 实现SMSLogRepo数据层
+- [x] 7. SMS Service实现(短信服务)
+  - [x] 7.1 实现SMSLogRepo数据层
     - 实现Create方法(记录短信日志)
     - 实现List方法(分页查询短信日志)
     - 实现多租户过滤
     - _Requirements: 3.7, 3.10_
 
-  - [ ] 7.2 实现SMSService服务层
+  - [x] 7.2 实现SMSService服务层
     - 实现SendVerificationCode方法(发送验证码)
     - 实现VerifyCode方法(验证验证码)
     - 实现SendNotification方法(发送通知短信)
@@ -333,8 +333,8 @@
     - **Property 20: 短信日志完整记录**
     - **Validates: Requirements 3.7**
 
-- [ ] 8. Payment Service实现(支付服务)
-  - [ ] 8.1 实现PaymentOrderRepo数据层
+- [x] 8. Payment Service实现(支付服务)
+  - [x] 8.1 实现PaymentOrderRepo数据层
     - 实现Create方法(创建支付订单)
     - 实现Get方法(查询支付订单)
     - 实现GetByOrderNo方法(按订单号查询)
@@ -344,7 +344,7 @@
     - 实现多租户过滤
     - _Requirements: 4.4, 4.7, 4.12_
 
-  - [ ] 8.2 实现PaymentService服务层
+  - [x] 8.2 实现PaymentService服务层
     - 实现CreatePayment方法(创建支付订单)
     - 实现GetPayment方法(查询支付订单)
     - 实现QueryPaymentStatus方法(查询支付结果)
@@ -378,8 +378,8 @@
     - **Property 25: 退款流水记录**
     - **Validates: Requirements 4.10, 4.12**
 
-- [ ] 9. Finance Service实现(财务服务)
-  - [ ] 9.1 实现FinanceAccountRepo数据层
+- [x] 9. Finance Service实现(财务服务)
+  - [x] 9.1 实现FinanceAccountRepo数据层
     - 实现Create方法(创建财务账户)
     - 实现Get方法(查询账户)
     - 实现GetByConsumerID方法(按用户ID查询)
@@ -387,20 +387,20 @@
     - 实现多租户过滤
     - _Requirements: 5.1, 5.9_
 
-  - [ ] 9.2 实现FinanceTransactionRepo数据层
+  - [x] 9.2 实现FinanceTransactionRepo数据层
     - 实现Create方法(记录财务流水)
     - 实现List方法(分页查询流水)
     - 实现Export方法(导出流水为CSV)
     - 实现多租户过滤
     - _Requirements: 5.7, 5.11_
 
-  - [ ] 9.3 实现FinanceService服务层 - 账户管理
+  - [x] 9.3 实现FinanceService服务层 - 账户管理
     - 实现GetAccount方法(获取账户余额)
     - 实现自动创建财务账户(用户注册时)
     - 订阅UserRegisteredEvent事件
     - _Requirements: 5.1, 11.2_
 
-  - [ ] 9.4 实现FinanceService服务层 - 充值提现
+  - [x] 9.4 实现FinanceService服务层 - 充值提现
     - 实现Recharge方法(充值)
     - 实现Withdraw方法(申请提现)
     - 实现ApproveWithdraw方法(审核提现)
@@ -412,7 +412,7 @@
     - 实现财务流水记录
     - _Requirements: 5.2-5.12, 11.4_
 
-  - [ ] 9.5 实现FinanceService服务层 - 流水查询
+  - [x] 9.5 实现FinanceService服务层 - 流水查询
     - 实现ListTransactions方法(查询财务流水)
     - 实现ExportTransactions方法(导出流水)
     - 实现分页和筛选(按时间范围、交易类型)
@@ -445,7 +445,7 @@
     - **Property 48: 充值事件触发余额增加**
     - **Validates: Requirements 11.4**
 
-- [ ] 10. Checkpoint - 核心服务验证
+- [x] 10. Checkpoint - 核心服务验证
   - 验证Consumer、SMS、Payment、Finance服务编译通过
   - 验证所有单元测试通过
   - 验证所有属性测试通过(Properties 1-32, 48)

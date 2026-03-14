@@ -5,7 +5,14 @@ import (
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/redis/go-redis/v9"
+	"github.com/tx7do/go-utils/password"
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
+
+	"go-wind-admin/pkg/auth"
+	"go-wind-admin/pkg/eventbus"
+	"go-wind-admin/pkg/oss"
+	"go-wind-admin/pkg/payment"
+	"go-wind-admin/pkg/sms"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -15,9 +22,9 @@ import (
 
 // Data 数据层结构
 type Data struct {
-	db    *sql.Driver
-	rdb   *redis.ClusterClient
-	log   *log.Helper
+	db  *sql.Driver
+	rdb *redis.ClusterClient
+	log *log.Helper
 }
 
 // NewData 创建数据层实例
@@ -92,14 +99,6 @@ func initDatabase(cfg *bootstrap.Config, logger *log.Helper) (*sql.Driver, error
 
 	logger.Info("database connected successfully")
 
-	// TODO: 运行数据库迁移
-	// if dbCfg.Migrate {
-	//     if err := runMigrations(drv); err != nil {
-	//         logger.Errorf("failed to run migrations: %v", err)
-	//         return nil, err
-	//     }
-	// }
-
 	return drv, nil
 }
 
@@ -142,4 +141,96 @@ func (d *Data) DB() *sql.Driver {
 // Redis 获取 Redis 客户端
 func (d *Data) Redis() *redis.ClusterClient {
 	return d.rdb
+}
+
+// NewPasswordCrypto 创建密码加密工具
+func NewPasswordCrypto() password.Crypto {
+	crypto, err := password.CreateCrypto("bcrypt")
+	if err != nil {
+		panic(err)
+	}
+	return crypto
+}
+
+// NewJWTManager 创建JWT管理器
+func NewJWTManager(cfg *bootstrap.Config) *auth.JWTManager {
+	// 从配置读取JWT密钥，如果没有配置则使用默认值
+	secret := auth.DefaultJWTSecret
+	if cfg != nil && cfg.Server != nil && cfg.Server.Http != nil {
+		// 实际项目中应该从配置文件读取
+		// secret = cfg.Server.Http.JWTSecret
+	}
+	return auth.NewJWTManager(secret)
+}
+
+// NewSMSManager 创建短信管理器
+func NewSMSManager(cfg *bootstrap.Config, logger log.Logger) *sms.Manager {
+	// 从配置读取短信服务配置
+	// 实际项目中应该从配置文件读取
+	// 这里使用默认配置
+	primaryConfig := &sms.Config{
+		Provider:        sms.ProviderAliyun,
+		AccessKeyID:     "your-access-key-id",
+		AccessKeySecret: "your-access-key-secret",
+		SignName:        "your-sign-name",
+	}
+
+	primaryClient, err := sms.NewAliyunClient(primaryConfig, logger)
+	if err != nil {
+		log.NewHelper(logger).Warnf("failed to create primary sms client: %v", err)
+		// 返回nil，服务层需要处理nil的情况
+		return nil
+	}
+
+	// 可选：创建备用通道
+	// secondaryClient, _ := sms.NewTencentClient(secondaryConfig, logger)
+
+	return sms.NewManager(primaryClient, nil, logger)
+}
+
+// NewWechatClient 创建微信支付客户端
+func NewWechatClient(cfg *bootstrap.Config, logger log.Logger) payment.Client {
+	// 从配置读取微信支付配置
+	// 实际项目中应该从配置文件读取
+	wechatConfig := &payment.Config{
+		Provider:  payment.ProviderWechat,
+		AppID:     "your-app-id",
+		MchID:     "your-mch-id",
+		APIKey:    "your-api-key",
+		NotifyURL: "https://your-domain.com/api/payment/wechat/notify",
+	}
+
+	client, err := payment.NewWechatClient(wechatConfig, logger)
+	if err != nil {
+		log.NewHelper(logger).Warnf("failed to create wechat client: %v", err)
+		return nil
+	}
+
+	return client
+}
+
+// NewOSSClient 创建OSS客户端
+func NewOSSClient(cfg *bootstrap.Config, logger log.Logger) oss.Client {
+	// 从配置读取OSS配置
+	// 实际项目中应该从配置文件读取
+	ossConfig := &oss.Config{
+		Provider:        oss.ProviderAliyun,
+		Endpoint:        "oss-cn-hangzhou.aliyuncs.com",
+		AccessKeyID:     "your-access-key-id",
+		AccessKeySecret: "your-access-key-secret",
+		BucketName:      "your-bucket-name",
+	}
+
+	client, err := oss.NewAliyunOSSClient(ossConfig, logger)
+	if err != nil {
+		log.NewHelper(logger).Warnf("failed to create oss client: %v", err)
+		return nil
+	}
+
+	return client
+}
+
+// NewEventBus 创建事件总线
+func NewEventBus(logger log.Logger) eventbus.EventBus {
+	return eventbus.NewEventBus(logger)
 }

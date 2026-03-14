@@ -29,13 +29,13 @@ func NewRestMiddleware(
 	ctx *bootstrap.Context,
 ) []middleware.Middleware {
 	var ms []middleware.Middleware
-	
+
 	// 日志中间件
 	ms = append(ms, logging.Server(ctx.GetLogger()))
-	
+
 	// 恢复中间件
 	ms = append(ms, recovery.Recovery())
-	
+
 	// 验证中间件
 	ms = append(ms, validate.Validator())
 
@@ -83,28 +83,28 @@ func registerHealthCheck(srv *khttp.Server, ctx *bootstrap.Context) {
 	srv.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		
+
 		resp := HealthResponse{
 			Status: "UP",
 			Services: map[string]string{
 				"consumer-service": "UP",
 			},
 		}
-		
+
 		json.NewEncoder(w).Encode(resp)
 	})
 
 	// /ready - 就绪检查（检查依赖服务）
 	srv.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		
+
 		// TODO: 检查数据库连接
 		// TODO: 检查 Redis 连接
 		// TODO: 检查 Kafka 连接
-		
+
 		// 暂时返回就绪状态
 		w.WriteHeader(http.StatusOK)
-		
+
 		resp := HealthResponse{
 			Status: "READY",
 			Services: map[string]string{
@@ -113,7 +113,7 @@ func registerHealthCheck(srv *khttp.Server, ctx *bootstrap.Context) {
 				"kafka":    "UP",
 			},
 		}
-		
+
 		json.NewEncoder(w).Encode(resp)
 	})
 }

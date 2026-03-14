@@ -19,13 +19,21 @@ import (
 // ProviderSet is the Wire provider set for data layer.
 var ProviderSet = wire.NewSet(
 	data.NewData,
-	// TODO: 添加 Repository providers
-	// data.NewConsumerRepo,
-	// data.NewLoginLogRepo,
-	// data.NewSMSLogRepo,
-	// data.NewPaymentOrderRepo,
-	// data.NewFinanceAccountRepo,
-	// data.NewFinanceTransactionRepo,
+	data.NewEntClient,
+	data.NewPasswordCrypto,
+	data.NewJWTManager,
+	data.NewSMSManager,
+	data.NewWechatClient,
+	data.NewOSSClient,
+	data.NewEventBus,
+
+	// Repository providers
+	data.NewConsumerRepo,
+	data.NewLoginLogRepo,
+	data.NewSMSLogRepo,
+	data.NewPaymentOrderRepo,
+	data.NewFinanceAccountRepo,
+	data.NewFinanceTransactionRepo,
 	// data.NewMediaFileRepo,
 	// data.NewLogisticsTrackingRepo,
 	// data.NewFreightTemplateRepo,
