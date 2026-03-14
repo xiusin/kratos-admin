@@ -14,6 +14,7 @@ import (
 
 	"go-wind-admin/app/consumer/service/internal/data"
 	"go-wind-admin/pkg/antivirus"
+	"go-wind-admin/pkg/async"
 	"go-wind-admin/pkg/image"
 	"go-wind-admin/pkg/middleware"
 	"go-wind-admin/pkg/oss"
@@ -43,11 +44,12 @@ const (
 type MediaService struct {
 	consumerV1.UnimplementedMediaServiceServer
 
-	mediaFileRepo    data.MediaFileRepo
-	ossClient        oss.Client
-	imageProcessor   image.Processor
-	virusScanner     antivirus.Scanner
-	tenantConfigMgr  tenantconfig.Manager
+	mediaFileRepo   data.MediaFileRepo
+	ossClient       oss.Client
+	imageProcessor  image.Processor
+	virusScanner    antivirus.Scanner
+	tenantConfigMgr tenantconfig.Manager
+	asyncQueue      async.Queue
 
 	log *log.Helper
 }
@@ -60,14 +62,29 @@ func NewMediaService(
 	virusScanner antivirus.Scanner,
 	tenantConfigMgr tenantconfig.Manager,
 ) *MediaService {
-	return &MediaService{
-		log:              ctx.NewLoggerHelper("consumer/service/media-service"),
-		mediaFileRepo:    mediaFileRepo,
-		ossClient:        ossClient,
-		imageProcessor:   imageProcessor,
-		virusScanner:     virusScanner,
-		tenantConfigMgr:  tenantConfigMgr,
+	// 创建异步队列
+	asyncQueue := async.NewMemoryQueue(&async.Config{
+		Workers:    5,
+		BufferSize: 100,
+	})
+
+	s := &MediaService{
+		log:             ctx.NewLoggerHelper("consumer/service/media-service"),
+		mediaFileRepo:   mediaFileRepo,
+		ossClient:       ossClient,
+		imageProcessor:  imageProcessor,
+		virusScanner:    virusScanner,
+		tenantConfigMgr: tenantConfigMgr,
+		asyncQueue:      asyncQueue,
 	}
+
+	// 注册异步任务处理器
+	s.registerAsyncHandlers()
+
+	// 启动异步队列
+	asyncQueue.Start(context.Background())
+
+	return s
 }
 
 // GenerateUploadURL 生成预签名URL
@@ -165,47 +182,8 @@ func (s *MediaService) ConfirmUpload(ctx context.Context, req *consumerV1.Confir
 
 	fileType := s.detectFileType(fileFormat)
 
-	// 7. 生成缩略图（仅图片）
+	// 7. 准备异步任务（稍后在创建记录后执行）
 	var thumbnailURL *string
-	if fileType == consumerV1.MediaFile_IMAGE {
-		thumbnail, err := s.generateThumbnail(ctx, req.ObjectKey, tenantID, consumerID)
-		if err != nil {
-			s.log.Warnf("generate thumbnail failed: %v", err)
-			// 缩略图生成失败不影响主流程
-		} else {
-			thumbnailURL = trans.Ptr(thumbnail)
-		}
-	}
-
-	// 8. 病毒扫描
-	if s.virusScanner != nil {
-		s.log.Infof("scanning file for viruses: object_key=%s", req.ObjectKey)
-		
-		// 下载文件进行扫描
-		fileData, err := s.ossClient.Download(ctx, req.ObjectKey)
-		if err != nil {
-			s.log.Errorf("download file for scan failed: %v", err)
-			// 下载失败不影响主流程，继续执行
-		} else {
-			scanResult, err := s.virusScanner.Scan(ctx, fileData)
-			if err != nil {
-				s.log.Errorf("virus scan failed: %v", err)
-				// 扫描失败不影响主流程，继续执行
-			} else if !scanResult.Clean {
-				// 检测到病毒，删除文件并返回错误
-				s.log.Warnf("virus detected: object_key=%s, virus=%s", req.ObjectKey, scanResult.VirusName)
-				
-				// 删除OSS文件
-				if err := s.ossClient.Delete(ctx, req.ObjectKey); err != nil {
-					s.log.Errorf("delete infected file failed: %v", err)
-				}
-				
-				return nil, consumerV1.ErrorBadRequest(fmt.Sprintf("virus detected: %s", scanResult.VirusName))
-			} else {
-				s.log.Infof("virus scan passed: object_key=%s, message=%s", req.ObjectKey, scanResult.Message)
-			}
-		}
-	}
 
 	// 9. 保存文件元数据到数据库
 	mediaFile := &consumerV1.MediaFile{
@@ -224,6 +202,25 @@ func (s *MediaService) ConfirmUpload(ctx context.Context, req *consumerV1.Confir
 	createdFile, err := s.mediaFileRepo.Create(ctx, mediaFile)
 	if err != nil {
 		return nil, err
+	}
+
+	// 更新异步任务的 media_file_id
+	if fileType == consumerV1.MediaFile_IMAGE {
+		if err := s.enqueueAsyncTask(ctx, "generate_thumbnail", map[string]interface{}{
+			"media_file_id": createdFile.GetId(),
+			"object_key":    req.ObjectKey,
+		}); err != nil {
+			s.log.Warnf("failed to enqueue thumbnail task: %v", err)
+		}
+	}
+
+	if s.virusScanner != nil {
+		if err := s.enqueueAsyncTask(ctx, "virus_scan", map[string]interface{}{
+			"media_file_id": createdFile.GetId(),
+			"object_key":    req.ObjectKey,
+		}); err != nil {
+			s.log.Warnf("failed to enqueue virus scan task: %v", err)
+		}
 	}
 
 	s.log.Infof("media file confirmed: id=%d, tenant_id=%d, consumer_id=%d, file_name=%s, size=%d",
@@ -389,7 +386,7 @@ func (s *MediaService) generateThumbnail(ctx context.Context, objectKey string, 
 		return "", fmt.Errorf("upload thumbnail failed: %w", err)
 	}
 
-	s.log.Infof("thumbnail generated: object_key=%s, thumbnail_key=%s, size=%d bytes", 
+	s.log.Infof("thumbnail generated: object_key=%s, thumbnail_key=%s, size=%d bytes",
 		objectKey, thumbnailKey, len(thumbnailData))
 
 	return thumbnailURL, nil
@@ -399,13 +396,153 @@ func (s *MediaService) generateThumbnail(ctx context.Context, objectKey string, 
 func (s *MediaService) getBucketName() string {
 	// 注意：实际项目中应该从租户配置中获取
 	// 这里简化处理，返回默认值
-	// 
+	//
 	// 实际实现示例：
 	// tenantID := middleware.GetTenantID(ctx)
 	// ossConfig, err := s.tenantConfigMgr.GetOSSConfig(ctx, tenantID)
 	// if err == nil && ossConfig != nil {
 	//     return ossConfig.BucketName
 	// }
-	
+
 	return "consumer-media"
+}
+
+// registerAsyncHandlers 注册异步任务处理器
+func (s *MediaService) registerAsyncHandlers() {
+	// 注册缩略图生成任务
+	s.asyncQueue.RegisterHandler("generate_thumbnail", s.handleGenerateThumbnail)
+
+	// 注册病毒扫描任务
+	s.asyncQueue.RegisterHandler("virus_scan", s.handleVirusScan)
+}
+
+// handleGenerateThumbnail 处理缩略图生成任务
+func (s *MediaService) handleGenerateThumbnail(ctx context.Context, task *async.Task) error {
+	payload, ok := task.Payload.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("invalid payload type")
+	}
+
+	mediaFileID, ok := payload["media_file_id"].(int64)
+	if !ok {
+		return fmt.Errorf("media_file_id not found in payload")
+	}
+
+	objectKey, ok := payload["object_key"].(string)
+	if !ok {
+		return fmt.Errorf("object_key not found in payload")
+	}
+
+	s.log.Infof("Generating thumbnail for media file %d", mediaFileID)
+
+	// 1. 从OSS下载原图
+	data, err := s.ossClient.GetObject(ctx, objectKey)
+	if err != nil {
+		s.log.Errorf("Failed to download image: %v", err)
+		return err
+	}
+
+	// 2. 生成缩略图
+	thumbnail, err := s.imageProcessor.GenerateThumbnail(data, thumbnailWidth, thumbnailHeight)
+	if err != nil {
+		s.log.Errorf("Failed to generate thumbnail: %v", err)
+		return err
+	}
+
+	// 3. 上传缩略图到OSS
+	thumbnailKey := objectKey + "_thumbnail"
+	if err := s.ossClient.PutObject(ctx, thumbnailKey, thumbnail); err != nil {
+		s.log.Errorf("Failed to upload thumbnail: %v", err)
+		return err
+	}
+
+	// 4. 更新数据库记录
+	mediaFile, err := s.mediaFileRepo.Get(ctx, mediaFileID)
+	if err != nil {
+		s.log.Errorf("Failed to get media file: %v", err)
+		return err
+	}
+
+	mediaFile.ThumbnailURL = thumbnailKey
+	if err := s.mediaFileRepo.Update(ctx, mediaFileID, mediaFile); err != nil {
+		s.log.Errorf("Failed to update media file: %v", err)
+		return err
+	}
+
+	s.log.Infof("Thumbnail generated successfully for media file %d", mediaFileID)
+	return nil
+}
+
+// handleVirusScan 处理病毒扫描任务
+func (s *MediaService) handleVirusScan(ctx context.Context, task *async.Task) error {
+	payload, ok := task.Payload.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("invalid payload type")
+	}
+
+	mediaFileID, ok := payload["media_file_id"].(int64)
+	if !ok {
+		return fmt.Errorf("media_file_id not found in payload")
+	}
+
+	objectKey, ok := payload["object_key"].(string)
+	if !ok {
+		return fmt.Errorf("object_key not found in payload")
+	}
+
+	s.log.Infof("Scanning virus for media file %d", mediaFileID)
+
+	// 1. 从OSS下载文件
+	data, err := s.ossClient.GetObject(ctx, objectKey)
+	if err != nil {
+		s.log.Errorf("Failed to download file: %v", err)
+		return err
+	}
+
+	// 2. 执行病毒扫描
+	result, err := s.virusScanner.Scan(ctx, data)
+	if err != nil {
+		s.log.Errorf("Failed to scan virus: %v", err)
+		return err
+	}
+
+	// 3. 更新数据库记录
+	mediaFile, err := s.mediaFileRepo.Get(ctx, mediaFileID)
+	if err != nil {
+		s.log.Errorf("Failed to get media file: %v", err)
+		return err
+	}
+
+	if !result.Clean {
+		// 发现病毒，标记文件并删除
+		s.log.Warnf("Virus detected in media file %d: %s", mediaFileID, result.VirusName)
+
+		// 软删除文件
+		if err := s.mediaFileRepo.SoftDelete(ctx, mediaFileID); err != nil {
+			s.log.Errorf("Failed to delete infected file: %v", err)
+			return err
+		}
+
+		// 从OSS删除文件
+		if err := s.ossClient.DeleteObject(ctx, objectKey); err != nil {
+			s.log.Errorf("Failed to delete object from OSS: %v", err)
+		}
+	} else {
+		s.log.Infof("File is clean for media file %d", mediaFileID)
+	}
+
+	return nil
+}
+
+// enqueueAsyncTask 入队异步任务
+func (s *MediaService) enqueueAsyncTask(ctx context.Context, taskType string, payload map[string]interface{}) error {
+	task := &async.Task{
+		ID:         fmt.Sprintf("%s_%d", taskType, time.Now().UnixNano()),
+		Type:       taskType,
+		Payload:    payload,
+		CreatedAt:  time.Now(),
+		MaxRetries: 3,
+	}
+
+	return s.asyncQueue.Enqueue(ctx, task)
 }

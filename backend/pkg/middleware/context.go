@@ -56,7 +56,7 @@ func GetIPAddress(ctx context.Context) string {
 	if tr, ok := transport.FromServerContext(ctx); ok {
 		if ht, ok := tr.(http.Transporter); ok {
 			req := ht.Request()
-			
+
 			// 尝试从X-Forwarded-For获取
 			if xff := req.Header.Get("X-Forwarded-For"); xff != "" {
 				ips := strings.Split(xff, ",")
@@ -64,12 +64,12 @@ func GetIPAddress(ctx context.Context) string {
 					return strings.TrimSpace(ips[0])
 				}
 			}
-			
+
 			// 尝试从X-Real-IP获取
 			if xri := req.Header.Get("X-Real-IP"); xri != "" {
 				return xri
 			}
-			
+
 			// 从RemoteAddr获取
 			if req.RemoteAddr != "" {
 				ip, _, err := net.SplitHostPort(req.RemoteAddr)
@@ -106,16 +106,16 @@ func GetUserAgent(ctx context.Context) string {
 // GetDeviceType 从User Agent判断设备类型
 func GetDeviceType(userAgent string) string {
 	userAgentLower := strings.ToLower(userAgent)
-	
-	if strings.Contains(userAgentLower, "mobile") || 
-	   strings.Contains(userAgentLower, "android") || 
-	   strings.Contains(userAgentLower, "iphone") {
+
+	if strings.Contains(userAgentLower, "mobile") ||
+		strings.Contains(userAgentLower, "android") ||
+		strings.Contains(userAgentLower, "iphone") {
 		return "mobile"
-	} else if strings.Contains(userAgentLower, "tablet") || 
-	          strings.Contains(userAgentLower, "ipad") {
+	} else if strings.Contains(userAgentLower, "tablet") ||
+		strings.Contains(userAgentLower, "ipad") {
 		return "tablet"
 	}
-	
+
 	return "desktop"
 }
 

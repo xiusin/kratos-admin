@@ -16,11 +16,11 @@ type IndexDatabase struct {
 	FuncIndex   map[string]*FunctionSignature `json:"func_index"`
 	ModuleIndex map[string]bool               `json:"module_index"`
 	ConfigIndex map[string]bool               `json:"config_index"`
-	
+
 	// Metadata
 	LastUpdated time.Time `json:"last_updated"`
 	Version     string    `json:"version"`
-	
+
 	// File path for persistence
 	filePath string
 	mu       sync.RWMutex
@@ -36,7 +36,7 @@ func NewIndexDatabase(filePath string) (*IndexDatabase, error) {
 		Version:     "1.0.0",
 		filePath:    filePath,
 	}
-	
+
 	// Try to load existing index
 	if err := db.Load(); err != nil {
 		// If file doesn't exist, that's okay
@@ -44,7 +44,7 @@ func NewIndexDatabase(filePath string) (*IndexDatabase, error) {
 			return nil, fmt.Errorf("failed to load index: %w", err)
 		}
 	}
-	
+
 	return db, nil
 }
 
@@ -52,12 +52,12 @@ func NewIndexDatabase(filePath string) (*IndexDatabase, error) {
 func (db *IndexDatabase) Load() error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	
+
 	data, err := os.ReadFile(db.filePath)
 	if err != nil {
 		return err
 	}
-	
+
 	return json.Unmarshal(data, db)
 }
 
@@ -65,31 +65,31 @@ func (db *IndexDatabase) Load() error {
 func (db *IndexDatabase) Save() error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	
+
 	db.LastUpdated = time.Now()
-	
+
 	data, err := json.MarshalIndent(db, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal index: %w", err)
 	}
-	
+
 	// Ensure directory exists
 	dir := filepath.Dir(db.filePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
-	
+
 	// Write to temporary file first
 	tmpFile := db.filePath + ".tmp"
 	if err := os.WriteFile(tmpFile, data, 0644); err != nil {
 		return fmt.Errorf("failed to write index: %w", err)
 	}
-	
+
 	// Rename to final file (atomic operation)
 	if err := os.Rename(tmpFile, db.filePath); err != nil {
 		return fmt.Errorf("failed to rename index file: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -97,7 +97,7 @@ func (db *IndexDatabase) Save() error {
 func (db *IndexDatabase) AddAPIReference(key string, ref *APIReference) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	
+
 	db.APIIndex[key] = ref
 }
 
@@ -105,7 +105,7 @@ func (db *IndexDatabase) AddAPIReference(key string, ref *APIReference) {
 func (db *IndexDatabase) AddFunctionSignature(key string, sig *FunctionSignature) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	
+
 	db.FuncIndex[key] = sig
 }
 
@@ -113,7 +113,7 @@ func (db *IndexDatabase) AddFunctionSignature(key string, sig *FunctionSignature
 func (db *IndexDatabase) AddModule(key string) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	
+
 	db.ModuleIndex[key] = true
 }
 
@@ -121,7 +121,7 @@ func (db *IndexDatabase) AddModule(key string) {
 func (db *IndexDatabase) AddConfigKey(key string) {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	
+
 	db.ConfigIndex[key] = true
 }
 
@@ -129,7 +129,7 @@ func (db *IndexDatabase) AddConfigKey(key string) {
 func (db *IndexDatabase) GetAPIReference(key string) (*APIReference, bool) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	
+
 	ref, exists := db.APIIndex[key]
 	return ref, exists
 }
@@ -138,7 +138,7 @@ func (db *IndexDatabase) GetAPIReference(key string) (*APIReference, bool) {
 func (db *IndexDatabase) GetFunctionSignature(key string) (*FunctionSignature, bool) {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	
+
 	sig, exists := db.FuncIndex[key]
 	return sig, exists
 }
@@ -147,7 +147,7 @@ func (db *IndexDatabase) GetFunctionSignature(key string) (*FunctionSignature, b
 func (db *IndexDatabase) HasModule(key string) bool {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	
+
 	return db.ModuleIndex[key]
 }
 
@@ -155,7 +155,7 @@ func (db *IndexDatabase) HasModule(key string) bool {
 func (db *IndexDatabase) HasConfigKey(key string) bool {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	
+
 	return db.ConfigIndex[key]
 }
 
@@ -163,7 +163,7 @@ func (db *IndexDatabase) HasConfigKey(key string) bool {
 func (db *IndexDatabase) Clear() {
 	db.mu.Lock()
 	defer db.mu.Unlock()
-	
+
 	db.APIIndex = make(map[string]*APIReference)
 	db.FuncIndex = make(map[string]*FunctionSignature)
 	db.ModuleIndex = make(map[string]bool)
@@ -174,7 +174,7 @@ func (db *IndexDatabase) Clear() {
 func (db *IndexDatabase) Stats() map[string]interface{} {
 	db.mu.RLock()
 	defer db.mu.RUnlock()
-	
+
 	return map[string]interface{}{
 		"api_count":    len(db.APIIndex),
 		"func_count":   len(db.FuncIndex),
@@ -189,17 +189,17 @@ func (db *IndexDatabase) Stats() map[string]interface{} {
 type IndexWatcher struct {
 	config   *Config
 	verifier *antiHallucinationVerifier
-	
+
 	// Watch paths
 	watchPaths []string
-	
+
 	// Last modification times
 	lastModTimes map[string]time.Time
-	
+
 	// Control channels
 	stopCh chan struct{}
 	doneCh chan struct{}
-	
+
 	mu sync.RWMutex
 }
 
@@ -219,7 +219,7 @@ func NewIndexWatcher(config *Config, verifier *antiHallucinationVerifier) *Index
 func (w *IndexWatcher) AddWatchPath(path string) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	
+
 	w.watchPaths = append(w.watchPaths, path)
 }
 
@@ -237,10 +237,10 @@ func (w *IndexWatcher) Stop() {
 // watch periodically checks for file changes
 func (w *IndexWatcher) watch(interval time.Duration) {
 	defer close(w.doneCh)
-	
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ticker.C:
@@ -261,36 +261,36 @@ func (w *IndexWatcher) watch(interval time.Duration) {
 func (w *IndexWatcher) checkForChanges() bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	
+
 	changed := false
-	
+
 	for _, path := range w.watchPaths {
 		// Walk the directory tree
 		err := filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
 			if err != nil {
 				return nil // Skip errors
 			}
-			
+
 			if info.IsDir() {
 				return nil
 			}
-			
+
 			// Check if file has been modified
 			lastMod, exists := w.lastModTimes[filePath]
 			if !exists || info.ModTime().After(lastMod) {
 				w.lastModTimes[filePath] = info.ModTime()
 				changed = true
 			}
-			
+
 			return nil
 		})
-		
+
 		if err != nil {
 			// Log error but continue
 			fmt.Printf("Failed to walk path %s: %v\n", path, err)
 		}
 	}
-	
+
 	return changed
 }
 
@@ -308,10 +308,10 @@ func NewIndexUpdateTrigger(config *Config, verifier *antiHallucinationVerifier) 
 		verifier: verifier,
 		watcher:  NewIndexWatcher(config, verifier),
 	}
-	
+
 	// Add default watch paths
 	trigger.addDefaultWatchPaths()
-	
+
 	return trigger
 }
 
@@ -322,25 +322,25 @@ func (t *IndexUpdateTrigger) addDefaultWatchPaths() {
 	if _, err := os.Stat(protoPath); err == nil {
 		t.watcher.AddWatchPath(protoPath)
 	}
-	
+
 	// Watch Go source files
 	backendPath := filepath.Join(t.config.ProjectRoot, "backend")
 	if _, err := os.Stat(backendPath); err == nil {
 		t.watcher.AddWatchPath(backendPath)
 	}
-	
+
 	// Watch config files
 	configPath := filepath.Join(t.config.ProjectRoot, "backend", "app")
 	if _, err := os.Stat(configPath); err == nil {
 		t.watcher.AddWatchPath(configPath)
 	}
-	
+
 	// Watch go.mod
 	goModPath := filepath.Join(t.config.ProjectRoot, "backend", "go.mod")
 	if _, err := os.Stat(goModPath); err == nil {
 		t.watcher.AddWatchPath(goModPath)
 	}
-	
+
 	// Watch package.json
 	packageJSONPath := filepath.Join(t.config.ProjectRoot, "frontend", "package.json")
 	if _, err := os.Stat(packageJSONPath); err == nil {

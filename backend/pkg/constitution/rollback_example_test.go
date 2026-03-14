@@ -205,7 +205,7 @@ func Example_rollbackOnViolation() {
 	triggerResult := trigger.CheckConstitutionViolation(changes)
 	if triggerResult.ShouldRollback {
 		fmt.Printf("Violation detected: %s\n", triggerResult.Reason)
-		
+
 		// Trigger rollback
 		if err := trigger.TriggerRollback(taskID, triggerResult); err != nil {
 			log.Fatal(err)

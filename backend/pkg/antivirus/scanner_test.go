@@ -11,15 +11,15 @@ import (
 func TestMockScanner_Scan(t *testing.T) {
 	scanner := NewMockScanner()
 	ctx := context.Background()
-	
+
 	// 测试数据
 	testData := []byte("test file content")
-	
+
 	// 扫描文件
 	result, err := scanner.Scan(ctx, testData)
 	require.NoError(t, err)
 	assert.NotNil(t, result)
-	
+
 	// Mock扫描器总是返回干净
 	assert.True(t, result.Clean)
 	assert.Empty(t, result.VirusName)
@@ -29,12 +29,12 @@ func TestMockScanner_Scan(t *testing.T) {
 func TestMockScanner_ScanFile(t *testing.T) {
 	scanner := NewMockScanner()
 	ctx := context.Background()
-	
+
 	// 扫描文件路径
 	result, err := scanner.ScanFile(ctx, "/path/to/test/file.txt")
 	require.NoError(t, err)
 	assert.NotNil(t, result)
-	
+
 	// Mock扫描器总是返回干净
 	assert.True(t, result.Clean)
 	assert.Empty(t, result.VirusName)
@@ -43,7 +43,7 @@ func TestMockScanner_ScanFile(t *testing.T) {
 
 func TestMockScanner_GetProvider(t *testing.T) {
 	scanner := NewMockScanner()
-	
+
 	provider := scanner.GetProvider()
 	assert.Equal(t, "mock", provider)
 }
@@ -81,7 +81,7 @@ func TestNewScanner(t *testing.T) {
 			wantError: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			scanner, err := NewScanner(tt.config)

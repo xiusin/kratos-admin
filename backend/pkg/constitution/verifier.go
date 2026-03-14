@@ -17,16 +17,16 @@ import (
 // antiHallucinationVerifier implements the AntiHallucinationVerifier interface
 type antiHallucinationVerifier struct {
 	config *Config
-	
+
 	// Index databases
-	apiIndex      map[string]*APIReference      // key: serviceName.methodName
-	funcIndex     map[string]*FunctionSignature // key: packagePath.functionName
-	moduleIndex   map[string]bool               // key: modulePath
-	configIndex   map[string]bool               // key: configKey
-	
+	apiIndex    map[string]*APIReference      // key: serviceName.methodName
+	funcIndex   map[string]*FunctionSignature // key: packagePath.functionName
+	moduleIndex map[string]bool               // key: modulePath
+	configIndex map[string]bool               // key: configKey
+
 	// Mutex for thread-safe access
 	mu sync.RWMutex
-	
+
 	// Index status
 	indexed bool
 }
@@ -36,7 +36,7 @@ func NewAntiHallucinationVerifier(config *Config) (AntiHallucinationVerifier, er
 	if config == nil {
 		return nil, fmt.Errorf("config cannot be nil")
 	}
-	
+
 	v := &antiHallucinationVerifier{
 		config:      config,
 		apiIndex:    make(map[string]*APIReference),
@@ -45,12 +45,12 @@ func NewAntiHallucinationVerifier(config *Config) (AntiHallucinationVerifier, er
 		configIndex: make(map[string]bool),
 		indexed:     false,
 	}
-	
+
 	// Build initial indexes
 	if err := v.RebuildIndexes(); err != nil {
 		return nil, fmt.Errorf("failed to build indexes: %w", err)
 	}
-	
+
 	return v, nil
 }
 
@@ -58,33 +58,33 @@ func NewAntiHallucinationVerifier(config *Config) (AntiHallucinationVerifier, er
 func (v *antiHallucinationVerifier) RebuildIndexes() error {
 	v.mu.Lock()
 	defer v.mu.Unlock()
-	
+
 	// Clear existing indexes
 	v.apiIndex = make(map[string]*APIReference)
 	v.funcIndex = make(map[string]*FunctionSignature)
 	v.moduleIndex = make(map[string]bool)
 	v.configIndex = make(map[string]bool)
-	
+
 	// Build API index
 	if err := v.buildAPIIndex(); err != nil {
 		return fmt.Errorf("failed to build API index: %w", err)
 	}
-	
+
 	// Build function index
 	if err := v.buildFunctionIndex(); err != nil {
 		return fmt.Errorf("failed to build function index: %w", err)
 	}
-	
+
 	// Build module index
 	if err := v.buildModuleIndex(); err != nil {
 		return fmt.Errorf("failed to build module index: %w", err)
 	}
-	
+
 	// Build config index
 	if err := v.buildConfigIndex(); err != nil {
 		return fmt.Errorf("failed to build config index: %w", err)
 	}
-	
+
 	v.indexed = true
 	return nil
 }
@@ -93,11 +93,11 @@ func (v *antiHallucinationVerifier) RebuildIndexes() error {
 func (v *antiHallucinationVerifier) VerifyAPIExists(serviceName, methodName string) (bool, error) {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	
+
 	if !v.indexed {
 		return false, fmt.Errorf("indexes not built")
 	}
-	
+
 	key := fmt.Sprintf("%s.%s", serviceName, methodName)
 	_, exists := v.apiIndex[key]
 	return exists, nil
@@ -107,11 +107,11 @@ func (v *antiHallucinationVerifier) VerifyAPIExists(serviceName, methodName stri
 func (v *antiHallucinationVerifier) VerifyFunctionExists(packagePath, functionName string) (bool, error) {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	
+
 	if !v.indexed {
 		return false, fmt.Errorf("indexes not built")
 	}
-	
+
 	key := fmt.Sprintf("%s.%s", packagePath, functionName)
 	_, exists := v.funcIndex[key]
 	return exists, nil
@@ -121,11 +121,11 @@ func (v *antiHallucinationVerifier) VerifyFunctionExists(packagePath, functionNa
 func (v *antiHallucinationVerifier) VerifyModuleExists(modulePath string, language string) (bool, error) {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	
+
 	if !v.indexed {
 		return false, fmt.Errorf("indexes not built")
 	}
-	
+
 	key := fmt.Sprintf("%s:%s", language, modulePath)
 	exists := v.moduleIndex[key]
 	return exists, nil
@@ -135,11 +135,11 @@ func (v *antiHallucinationVerifier) VerifyModuleExists(modulePath string, langua
 func (v *antiHallucinationVerifier) VerifyConfigKeyExists(configKey string) (bool, error) {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	
+
 	if !v.indexed {
 		return false, fmt.Errorf("indexes not built")
 	}
-	
+
 	exists := v.configIndex[configKey]
 	return exists, nil
 }
@@ -148,17 +148,17 @@ func (v *antiHallucinationVerifier) VerifyConfigKeyExists(configKey string) (boo
 func (v *antiHallucinationVerifier) GetAPIReference(serviceName, methodName string) (*APIReference, error) {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	
+
 	if !v.indexed {
 		return nil, fmt.Errorf("indexes not built")
 	}
-	
+
 	key := fmt.Sprintf("%s.%s", serviceName, methodName)
 	ref, exists := v.apiIndex[key]
 	if !exists {
 		return nil, fmt.Errorf("API not found: %s", key)
 	}
-	
+
 	return ref, nil
 }
 
@@ -166,17 +166,17 @@ func (v *antiHallucinationVerifier) GetAPIReference(serviceName, methodName stri
 func (v *antiHallucinationVerifier) GetFunctionSignature(packagePath, functionName string) (*FunctionSignature, error) {
 	v.mu.RLock()
 	defer v.mu.RUnlock()
-	
+
 	if !v.indexed {
 		return nil, fmt.Errorf("indexes not built")
 	}
-	
+
 	key := fmt.Sprintf("%s.%s", packagePath, functionName)
 	sig, exists := v.funcIndex[key]
 	if !exists {
 		return nil, fmt.Errorf("function not found: %s", key)
 	}
-	
+
 	return sig, nil
 }
 
@@ -188,16 +188,16 @@ func (v *antiHallucinationVerifier) buildAPIIndex() error {
 		// Proto directory doesn't exist, skip
 		return nil
 	}
-	
+
 	return filepath.Walk(protoDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		if info.IsDir() || !strings.HasSuffix(path, ".proto") {
 			return nil
 		}
-		
+
 		return v.parseProtoFile(path)
 	})
 }
@@ -209,35 +209,35 @@ func (v *antiHallucinationVerifier) parseProtoFile(filePath string) error {
 		return err
 	}
 	defer file.Close()
-	
+
 	scanner := bufio.NewScanner(file)
 	lineNum := 0
-	
+
 	var currentService string
 	var currentDoc strings.Builder
-	
+
 	// Regex patterns
 	servicePattern := regexp.MustCompile(`^\s*service\s+(\w+)\s*\{`)
 	rpcPattern := regexp.MustCompile(`^\s*rpc\s+(\w+)\s*\(\s*(\w+)\s*\)\s*returns\s*\(\s*(\w+)\s*\)`)
 	commentPattern := regexp.MustCompile(`^\s*//\s*(.*)`)
-	
+
 	for scanner.Scan() {
 		lineNum++
 		line := scanner.Text()
-		
+
 		// Check for service definition
 		if matches := servicePattern.FindStringSubmatch(line); matches != nil {
 			currentService = matches[1]
 			currentDoc.Reset()
 			continue
 		}
-		
+
 		// Check for RPC method
 		if matches := rpcPattern.FindStringSubmatch(line); matches != nil && currentService != "" {
 			methodName := matches[1]
 			requestType := matches[2]
 			responseType := matches[3]
-			
+
 			key := fmt.Sprintf("%s.%s", currentService, methodName)
 			v.apiIndex[key] = &APIReference{
 				ServiceName:   currentService,
@@ -248,11 +248,11 @@ func (v *antiHallucinationVerifier) parseProtoFile(filePath string) error {
 				ResponseType:  responseType,
 				Documentation: strings.TrimSpace(currentDoc.String()),
 			}
-			
+
 			currentDoc.Reset()
 			continue
 		}
-		
+
 		// Check for comments
 		if matches := commentPattern.FindStringSubmatch(line); matches != nil {
 			if currentDoc.Len() > 0 {
@@ -266,7 +266,7 @@ func (v *antiHallucinationVerifier) parseProtoFile(filePath string) error {
 			}
 		}
 	}
-	
+
 	return scanner.Err()
 }
 
@@ -278,12 +278,12 @@ func (v *antiHallucinationVerifier) buildFunctionIndex() error {
 		// Backend directory doesn't exist, skip
 		return nil
 	}
-	
+
 	return filepath.Walk(backendDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		// Skip vendor, node_modules, and generated directories
 		if info.IsDir() {
 			name := info.Name()
@@ -292,11 +292,11 @@ func (v *antiHallucinationVerifier) buildFunctionIndex() error {
 			}
 			return nil
 		}
-		
+
 		if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 			return nil
 		}
-		
+
 		return v.parseGoFile(path)
 	})
 }
@@ -309,9 +309,9 @@ func (v *antiHallucinationVerifier) parseGoFile(filePath string) error {
 		// Skip files with parse errors
 		return nil
 	}
-	
+
 	packagePath := node.Name.Name
-	
+
 	// Extract package path from file path
 	relPath, err := filepath.Rel(filepath.Join(v.config.ProjectRoot, "backend"), filePath)
 	if err == nil {
@@ -320,19 +320,19 @@ func (v *antiHallucinationVerifier) parseGoFile(filePath string) error {
 			packagePath = strings.ReplaceAll(dir, string(filepath.Separator), "/")
 		}
 	}
-	
+
 	// Visit all declarations
 	for _, decl := range node.Decls {
 		funcDecl, ok := decl.(*ast.FuncDecl)
 		if !ok {
 			continue
 		}
-		
+
 		// Skip unexported functions
 		if !funcDecl.Name.IsExported() {
 			continue
 		}
-		
+
 		// Extract function signature
 		sig := v.extractFunctionSignature(funcDecl, fset, filePath, packagePath)
 		if sig != nil {
@@ -340,7 +340,7 @@ func (v *antiHallucinationVerifier) parseGoFile(filePath string) error {
 			v.funcIndex[key] = sig
 		}
 	}
-	
+
 	return nil
 }
 
@@ -354,7 +354,7 @@ func (v *antiHallucinationVerifier) extractFunctionSignature(funcDecl *ast.FuncD
 		Parameters:   []string{},
 		ReturnTypes:  []string{},
 	}
-	
+
 	// Extract documentation
 	if funcDecl.Doc != nil {
 		var doc strings.Builder
@@ -370,7 +370,7 @@ func (v *antiHallucinationVerifier) extractFunctionSignature(funcDecl *ast.FuncD
 		}
 		sig.Documentation = doc.String()
 	}
-	
+
 	// Extract parameters
 	if funcDecl.Type.Params != nil {
 		for _, param := range funcDecl.Type.Params.List {
@@ -383,7 +383,7 @@ func (v *antiHallucinationVerifier) extractFunctionSignature(funcDecl *ast.FuncD
 			}
 		}
 	}
-	
+
 	// Extract return types
 	if funcDecl.Type.Results != nil {
 		for _, result := range funcDecl.Type.Results.List {
@@ -391,7 +391,7 @@ func (v *antiHallucinationVerifier) extractFunctionSignature(funcDecl *ast.FuncD
 			sig.ReturnTypes = append(sig.ReturnTypes, resultType)
 		}
 	}
-	
+
 	return sig
 }
 
@@ -423,12 +423,12 @@ func (v *antiHallucinationVerifier) buildModuleIndex() error {
 	if err := v.buildGoModuleIndex(); err != nil {
 		return err
 	}
-	
+
 	// Build NPM module index
 	if err := v.buildNPMModuleIndex(); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -438,16 +438,16 @@ func (v *antiHallucinationVerifier) buildGoModuleIndex() error {
 	if _, err := os.Stat(goModPath); os.IsNotExist(err) {
 		return nil
 	}
-	
+
 	file, err := os.Open(goModPath)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	
+
 	scanner := bufio.NewScanner(file)
 	requirePattern := regexp.MustCompile(`^\s*([^\s]+)\s+v`)
-	
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		if matches := requirePattern.FindStringSubmatch(line); matches != nil {
@@ -456,7 +456,7 @@ func (v *antiHallucinationVerifier) buildGoModuleIndex() error {
 			v.moduleIndex[key] = true
 		}
 	}
-	
+
 	return scanner.Err()
 }
 
@@ -466,32 +466,32 @@ func (v *antiHallucinationVerifier) buildNPMModuleIndex() error {
 	if _, err := os.Stat(packageJSONPath); os.IsNotExist(err) {
 		return nil
 	}
-	
+
 	data, err := os.ReadFile(packageJSONPath)
 	if err != nil {
 		return err
 	}
-	
+
 	var pkg struct {
 		Dependencies    map[string]string `json:"dependencies"`
 		DevDependencies map[string]string `json:"devDependencies"`
 	}
-	
+
 	if err := json.Unmarshal(data, &pkg); err != nil {
 		return err
 	}
-	
+
 	// Add all dependencies
 	for moduleName := range pkg.Dependencies {
 		key := fmt.Sprintf("npm:%s", moduleName)
 		v.moduleIndex[key] = true
 	}
-	
+
 	for moduleName := range pkg.DevDependencies {
 		key := fmt.Sprintf("npm:%s", moduleName)
 		v.moduleIndex[key] = true
 	}
-	
+
 	return nil
 }
 
@@ -502,20 +502,20 @@ func (v *antiHallucinationVerifier) buildConfigIndex() error {
 	if _, err := os.Stat(configDir); os.IsNotExist(err) {
 		return nil
 	}
-	
+
 	return filepath.Walk(configDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		if info.IsDir() {
 			return nil
 		}
-		
+
 		if !strings.HasSuffix(path, ".yaml") && !strings.HasSuffix(path, ".yml") {
 			return nil
 		}
-		
+
 		return v.parseConfigFile(path)
 	})
 }
@@ -527,44 +527,44 @@ func (v *antiHallucinationVerifier) parseConfigFile(filePath string) error {
 		return err
 	}
 	defer file.Close()
-	
+
 	scanner := bufio.NewScanner(file)
 	keyPattern := regexp.MustCompile(`^(\s*)([a-zA-Z_][a-zA-Z0-9_]*):`)
-	
+
 	var keyStack []string
 	var indentStack []int
-	
+
 	for scanner.Scan() {
 		line := scanner.Text()
-		
+
 		// Skip comments and empty lines
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
 			continue
 		}
-		
+
 		matches := keyPattern.FindStringSubmatch(line)
 		if matches == nil {
 			continue
 		}
-		
+
 		indent := len(matches[1])
 		key := matches[2]
-		
+
 		// Adjust key stack based on indentation
 		for len(indentStack) > 0 && indentStack[len(indentStack)-1] >= indent {
 			keyStack = keyStack[:len(keyStack)-1]
 			indentStack = indentStack[:len(indentStack)-1]
 		}
-		
+
 		// Add current key
 		keyStack = append(keyStack, key)
 		indentStack = append(indentStack, indent)
-		
+
 		// Build full key path
 		fullKey := strings.Join(keyStack, ".")
 		v.configIndex[fullKey] = true
 	}
-	
+
 	return scanner.Err()
 }

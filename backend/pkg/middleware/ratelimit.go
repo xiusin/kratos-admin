@@ -141,7 +141,7 @@ func getUserIDFromContext(ctx context.Context) string {
 	// 例如：
 	// tokenPayload := auth.FromContext(ctx)
 	// return strconv.FormatUint(tokenPayload.UserID, 10)
-	
+
 	return ""
 }
 

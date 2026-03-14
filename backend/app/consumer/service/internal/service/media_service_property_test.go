@@ -150,28 +150,28 @@ func TestProperty_ObjectKeyFormat(t *testing.T) {
 	properties.Property("object key should contain tenant_id, consumer_id, file_type", prop.ForAll(
 		func(tenantID, consumerID uint32, fileName string) bool {
 			objectKey := s.generateObjectKey(tenantID, consumerID, consumerV1.MediaFile_IMAGE, fileName)
-			
+
 			// 验证对象键格式: media/{tenant_id}/{consumer_id}/{file_type}/{timestamp}_{filename}
 			parts := strings.Split(objectKey, "/")
 			if len(parts) < 5 {
 				return false
 			}
-			
+
 			// 验证前缀
 			if parts[0] != "media" {
 				return false
 			}
-			
+
 			// 验证文件类型
 			if parts[3] != "image" {
 				return false
 			}
-			
+
 			// 验证文件名包含在对象键中
 			if !strings.Contains(objectKey, fileName) {
 				return false
 			}
-			
+
 			return true
 		},
 		gen.UInt32Range(1, 1000),

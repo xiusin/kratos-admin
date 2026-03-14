@@ -15,7 +15,7 @@ type TenantContextKey struct{}
 
 // TenantInfo 租户信息
 type TenantInfo struct {
-	TenantID uint32
+	TenantID   uint32
 	TenantName string
 }
 
@@ -88,11 +88,11 @@ func getTenantIDFromContext(ctx context.Context) string {
 	// 这里需要根据实际的JWT payload结构来获取租户ID
 	// 假设JWT payload已经被auth中间件注入到上下文中
 	// 这里只是一个示例实现
-	
+
 	// 可以从auth中间件注入的上下文中获取
 	// 例如：tokenPayload := auth.FromContext(ctx)
 	// return strconv.FormatUint(tokenPayload.TenantID, 10)
-	
+
 	return ""
 }
 

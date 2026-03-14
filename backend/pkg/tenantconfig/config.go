@@ -25,7 +25,7 @@ type TenantConfig struct {
 
 // SMSConfig 短信配置
 type SMSConfig struct {
-	Provider        string `json:"provider"`         // aliyun/tencent
+	Provider        string `json:"provider"` // aliyun/tencent
 	AccessKeyID     string `json:"access_key_id"`
 	AccessKeySecret string `json:"access_key_secret"`
 	SignName        string `json:"sign_name"`
@@ -34,10 +34,10 @@ type SMSConfig struct {
 
 // PaymentConfig 支付配置
 type PaymentConfig struct {
-	WechatAppID     string `json:"wechat_app_id"`
-	WechatMchID     string `json:"wechat_mch_id"`
-	WechatAPIKey    string `json:"wechat_api_key"`
-	AlipayAppID     string `json:"alipay_app_id"`
+	WechatAppID      string `json:"wechat_app_id"`
+	WechatMchID      string `json:"wechat_mch_id"`
+	WechatAPIKey     string `json:"wechat_api_key"`
+	AlipayAppID      string `json:"alipay_app_id"`
 	AlipayPrivateKey string `json:"alipay_private_key"`
 }
 
@@ -60,7 +60,7 @@ type Manager interface {
 type memoryManager struct {
 	mu      sync.RWMutex
 	configs map[uint32]*TenantConfig
-	
+
 	// 默认配置
 	defaultOSSConfig *oss.Config
 }

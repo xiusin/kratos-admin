@@ -15,10 +15,10 @@ func TestMemoryManager_GetConfig(t *testing.T) {
 		Provider:   oss.ProviderAliyun,
 		BucketName: "default-bucket",
 	}
-	
+
 	mgr := NewMemoryManager(defaultOSSConfig)
 	ctx := context.Background()
-	
+
 	// 获取不存在的租户配置（应返回默认配置）
 	config, err := mgr.GetConfig(ctx, 1)
 	require.NoError(t, err)
@@ -32,10 +32,10 @@ func TestMemoryManager_SetAndGetConfig(t *testing.T) {
 		Provider:   oss.ProviderAliyun,
 		BucketName: "default-bucket",
 	}
-	
+
 	mgr := NewMemoryManager(defaultOSSConfig)
 	ctx := context.Background()
-	
+
 	// 设置租户配置
 	tenantConfig := &TenantConfig{
 		TenantID: 1,
@@ -44,10 +44,10 @@ func TestMemoryManager_SetAndGetConfig(t *testing.T) {
 			BucketName: "tenant-1-bucket",
 		},
 	}
-	
+
 	err := mgr.SetConfig(ctx, tenantConfig)
 	require.NoError(t, err)
-	
+
 	// 获取租户配置
 	config, err := mgr.GetConfig(ctx, 1)
 	require.NoError(t, err)
@@ -62,16 +62,16 @@ func TestMemoryManager_GetOSSConfig(t *testing.T) {
 		Provider:   oss.ProviderAliyun,
 		BucketName: "default-bucket",
 	}
-	
+
 	mgr := NewMemoryManager(defaultOSSConfig)
 	ctx := context.Background()
-	
+
 	// 获取不存在的租户OSS配置（应返回默认配置）
 	ossConfig, err := mgr.GetOSSConfig(ctx, 1)
 	require.NoError(t, err)
 	assert.NotNil(t, ossConfig)
 	assert.Equal(t, defaultOSSConfig, ossConfig)
-	
+
 	// 设置租户配置
 	tenantConfig := &TenantConfig{
 		TenantID: 2,
@@ -80,10 +80,10 @@ func TestMemoryManager_GetOSSConfig(t *testing.T) {
 			BucketName: "tenant-2-bucket",
 		},
 	}
-	
+
 	err = mgr.SetConfig(ctx, tenantConfig)
 	require.NoError(t, err)
-	
+
 	// 获取租户OSS配置
 	ossConfig, err = mgr.GetOSSConfig(ctx, 2)
 	require.NoError(t, err)
@@ -97,10 +97,10 @@ func TestMemoryManager_DeleteConfig(t *testing.T) {
 		Provider:   oss.ProviderAliyun,
 		BucketName: "default-bucket",
 	}
-	
+
 	mgr := NewMemoryManager(defaultOSSConfig)
 	ctx := context.Background()
-	
+
 	// 设置租户配置
 	tenantConfig := &TenantConfig{
 		TenantID: 1,
@@ -109,14 +109,14 @@ func TestMemoryManager_DeleteConfig(t *testing.T) {
 			BucketName: "tenant-1-bucket",
 		},
 	}
-	
+
 	err := mgr.SetConfig(ctx, tenantConfig)
 	require.NoError(t, err)
-	
+
 	// 删除租户配置
 	err = mgr.DeleteConfig(ctx, 1)
 	require.NoError(t, err)
-	
+
 	// 获取租户配置（应返回默认配置）
 	config, err := mgr.GetConfig(ctx, 1)
 	require.NoError(t, err)
@@ -127,11 +127,11 @@ func TestMemoryManager_DeleteConfig(t *testing.T) {
 func TestMemoryManager_SetConfig_InvalidInput(t *testing.T) {
 	mgr := NewMemoryManager(nil)
 	ctx := context.Background()
-	
+
 	// nil配置
 	err := mgr.SetConfig(ctx, nil)
 	assert.Error(t, err)
-	
+
 	// 无效的租户ID
 	err = mgr.SetConfig(ctx, &TenantConfig{TenantID: 0})
 	assert.Error(t, err)

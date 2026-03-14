@@ -22,9 +22,9 @@ func TestEngine_BasicExecution(t *testing.T) {
 
 	// Create script
 	script := &Script{
-		Name:    "test_script",
-		Hook:    "test_hook",
-		Source:  `
+		Name: "test_script",
+		Hook: "test_hook",
+		Source: `
 local log = require "kratos_logger"
 
 function execute(ctx)
@@ -69,8 +69,8 @@ func TestEngine_ContextDataTransfer(t *testing.T) {
 	engine.RegisterHook("data_transfer", "Test data transfer")
 
 	script := &Script{
-		Name:   "data_script",
-		Hook:   "data_transfer",
+		Name: "data_script",
+		Hook: "data_transfer",
 		Source: `
 function execute(ctx)
     local input = ctx.get("number")
@@ -108,8 +108,8 @@ func TestEngine_ScriptAbort(t *testing.T) {
 	engine.RegisterHook("abort_test", "Test script abort")
 
 	script := &Script{
-		Name:   "abort_script",
-		Hook:   "abort_test",
+		Name: "abort_script",
+		Hook: "abort_test",
 		Source: `
 local log = require "kratos_logger"
 
@@ -142,8 +142,8 @@ func TestEngine_MultipleScripts(t *testing.T) {
 
 	// Script 1: Set initial value
 	script1 := &Script{
-		Name:   "script1",
-		Hook:   "multi_test",
+		Name: "script1",
+		Hook: "multi_test",
 		Source: `
 local log = require "kratos_logger"
 
@@ -159,8 +159,8 @@ end
 
 	// Script 2: Add to value
 	script2 := &Script{
-		Name:   "script2",
-		Hook:   "multi_test",
+		Name: "script2",
+		Hook: "multi_test",
 		Source: `
 local log = require "kratos_logger"
 
@@ -177,8 +177,8 @@ end
 
 	// Script 3: Multiply value
 	script3 := &Script{
-		Name:   "script3",
-		Hook:   "multi_test",
+		Name: "script3",
+		Hook: "multi_test",
 		Source: `
 local log = require "kratos_logger"
 

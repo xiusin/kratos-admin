@@ -93,13 +93,9 @@ func NewScanner(cfg *Config) (Scanner, error) {
 	case "mock":
 		return NewMockScanner(), nil
 	case "clamav":
-		// 实际项目中实现ClamAV集成
-		// return NewClamAVScanner(cfg)
-		return nil, fmt.Errorf("clamav scanner not implemented yet")
+		return NewClamAVScanner(cfg)
 	case "tencent":
-		// 实际项目中实现腾讯云天御集成
-		// return NewTencentScanner(cfg)
-		return nil, fmt.Errorf("tencent scanner not implemented yet")
+		return NewTencentScanner(cfg)
 	case "aliyun":
 		// 实际项目中实现阿里云内容安全集成
 		// return NewAliyunScanner(cfg)

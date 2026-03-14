@@ -43,8 +43,8 @@ type logisticsTrackingRepo struct {
 	entClient *entCrud.EntClient[*ent.Client]
 	log       *log.Helper
 
-	mapper           *mapper.CopierMapper[consumerV1.LogisticsTracking, ent.LogisticsTracking]
-	statusConverter  *mapper.EnumTypeConverter[consumerV1.LogisticsTracking_Status, logisticstracking.Status]
+	mapper          *mapper.CopierMapper[consumerV1.LogisticsTracking, ent.LogisticsTracking]
+	statusConverter *mapper.EnumTypeConverter[consumerV1.LogisticsTracking_Status, logisticstracking.Status]
 
 	repository *entCrud.Repository[
 		ent.LogisticsTrackingQuery, ent.LogisticsTrackingSelect,
