@@ -453,8 +453,8 @@
   - 确保所有测试通过,询问用户是否继续
 
 
-- [ ] 11. Wechat Service实现(微信服务)
-  - [ ] 11.1 实现WechatService服务层 - OAuth登录
+- [x] 11. Wechat Service实现(微信服务)
+  - [x] 11.1 实现WechatService服务层 - OAuth登录
     - 实现GetAuthURL方法(获取微信授权URL)
     - 实现AuthCallback方法(微信授权回调)
     - 实现GetWechatUserInfo方法(获取微信用户信息)
@@ -463,7 +463,7 @@
     - 实现微信签名验证
     - _Requirements: 6.1, 6.2, 6.3, 6.6, 6.10_
 
-  - [ ] 11.2 实现WechatService服务层 - 公众号和小程序
+  - [x] 11.2 实现WechatService服务层 - 公众号和小程序
     - 实现SendTemplateMessage方法(发送模板消息)
     - 实现MiniProgramLogin方法(小程序登录)
     - 实现微信事件消息处理
@@ -491,8 +491,8 @@
     - **Property 35: 微信access_token缓存**
     - **Validates: Requirements 6.10**
 
-- [ ] 12. Media Service实现(媒体服务)
-  - [ ] 12.1 实现MediaFileRepo数据层
+- [x] 12. Media Service实现(媒体服务)
+  - [x] 12.1 实现MediaFileRepo数据层
     - 实现Create方法(记录媒体文件)
     - 实现Get方法(查询媒体文件)
     - 实现List方法(分页查询,过滤已删除)
@@ -500,7 +500,7 @@
     - 实现多租户过滤
     - _Requirements: 7.9, 7.11_
 
-  - [ ] 12.2 实现MediaService服务层
+  - [x] 12.2 实现MediaService服务层
     - 实现GenerateUploadURL方法(生成预签名URL)
     - 实现ConfirmUpload方法(确认上传完成)
     - 实现GetMediaFile方法(获取媒体文件)
@@ -533,8 +533,8 @@
     - **Property 40: 媒体文件软删除**
     - **Validates: Requirements 7.11**
 
-- [ ] 13. Logistics Service实现(物流服务)
-  - [ ] 13.1 实现LogisticsTrackingRepo数据层
+- [-] 13. Logistics Service实现(物流服务)
+  - [x] 13.1 实现LogisticsTrackingRepo数据层
     - 实现Create方法(创建物流跟踪)
     - 实现Get方法(查询物流跟踪)
     - 实现GetByTrackingNo方法(按运单号查询)
@@ -607,7 +607,7 @@
     - **Property 45: 首重续重阶梯计算**
     - **Validates: Requirements 9.3**
 
-- [ ] 15. Checkpoint - 所有服务验证
+- [x] 15. Checkpoint - 所有服务验证
   - 验证所有8个服务模块编译通过
   - 验证所有单元测试通过
   - 验证所有属性测试通过(Properties 1-45, 48)

@@ -16,6 +16,7 @@ import (
 	"github.com/tx7do/kratos-bootstrap/rpc"
 
 	consumerV1 "go-wind-admin/api/gen/go/consumer/service/v1"
+	"go-wind-admin/app/consumer/service/internal/service"
 )
 
 // HealthResponse 健康检查响应
@@ -50,6 +51,11 @@ func NewRestMiddleware(
 func NewRestServer(
 	ctx *bootstrap.Context,
 	middlewares []middleware.Middleware,
+	consumerService *service.ConsumerService,
+	smsService *service.SMSService,
+	paymentService *service.PaymentService,
+	financeService *service.FinanceService,
+	wechatService *service.WechatService,
 ) (*khttp.Server, error) {
 	cfg := ctx.GetConfig()
 
@@ -65,14 +71,12 @@ func NewRestServer(
 	// 注册健康检查接口
 	registerHealthCheck(srv, ctx)
 
-	// TODO: 注册 Consumer Service
-	// TODO: 注册 SMS Service
-	// TODO: 注册 Payment Service
-	// TODO: 注册 Finance Service
-	// TODO: 注册 Wechat Service
-	// TODO: 注册 Media Service
-	// TODO: 注册 Logistics Service
-	// TODO: 注册 Freight Service
+	// 注册服务
+	consumerV1.RegisterConsumerServiceHTTPServer(srv, consumerService)
+	consumerV1.RegisterSMSServiceHTTPServer(srv, smsService)
+	consumerV1.RegisterPaymentServiceHTTPServer(srv, paymentService)
+	consumerV1.RegisterFinanceServiceHTTPServer(srv, financeService)
+	consumerV1.RegisterWechatServiceHTTPServer(srv, wechatService)
 
 	return srv, nil
 }

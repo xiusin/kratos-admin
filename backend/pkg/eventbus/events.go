@@ -1,5 +1,7 @@
 package eventbus
 
+import "time"
+
 // Common event types
 const (
 	// Email events
@@ -29,6 +31,9 @@ const (
 	EventSystemStarted   = "system.started"
 	EventSystemStopped   = "system.stopped"
 	EventSystemError     = "system.error"
+
+	// Logistics events
+	EventLogisticsStatusChanged = "logistics.status_changed"
 )
 
 // EmailReceivedEvent represents an email received event
@@ -73,4 +78,13 @@ type SystemErrorEvent struct {
 	Component string `json:"component"`
 	Error     string `json:"error"`
 	Severity  string `json:"severity"`
+}
+
+// LogisticsStatusChangedEvent represents a logistics status changed event
+type LogisticsStatusChangedEvent struct {
+	TrackingNo     string    `json:"tracking_no"`
+	CourierCompany string    `json:"courier_company"`
+	OldStatus      string    `json:"old_status"`
+	NewStatus      string    `json:"new_status"`
+	ChangedAt      time.Time `json:"changed_at"`
 }

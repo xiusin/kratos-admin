@@ -234,3 +234,22 @@ func NewOSSClient(cfg *bootstrap.Config, logger log.Logger) oss.Client {
 func NewEventBus(logger log.Logger) eventbus.EventBus {
 	return eventbus.NewEventBus(logger)
 }
+
+// NewLogisticsClient 创建物流客户端
+func NewLogisticsClient(cfg *bootstrap.Config, logger log.Logger) logistics.Client {
+	// 从配置读取物流配置
+	// 实际项目中应该从配置文件读取
+	logisticsConfig := &logistics.Config{
+		AppID:   "your-kdniao-app-id",
+		AppKey:  "your-kdniao-app-key",
+		Timeout: 30 * time.Second,
+	}
+
+	client, err := logistics.NewClient(logisticsConfig, logger)
+	if err != nil {
+		log.NewHelper(logger).Warnf("failed to create logistics client: %v", err)
+		return nil
+	}
+
+	return client
+}

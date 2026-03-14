@@ -34,7 +34,7 @@ var ProviderSet = wire.NewSet(
 	data.NewPaymentOrderRepo,
 	data.NewFinanceAccountRepo,
 	data.NewFinanceTransactionRepo,
-	// data.NewMediaFileRepo,
-	// data.NewLogisticsTrackingRepo,
+	data.NewMediaFileRepo,
+	data.NewLogisticsTrackingRepo,
 	// data.NewFreightTemplateRepo,
 )

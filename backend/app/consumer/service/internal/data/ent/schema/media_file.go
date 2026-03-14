@@ -35,7 +35,8 @@ func (MediaFile) Fields() []ent.Field {
 
 		field.String("file_name").
 			Comment("文件名").
-			MaxLen(255),
+			MaxLen(255).
+			NotEmpty(),
 
 		field.Enum("file_type").
 			Comment("文件类型").
@@ -45,15 +46,17 @@ func (MediaFile) Fields() []ent.Field {
 			),
 
 		field.String("file_format").
-			Comment("文件格式").
-			MaxLen(20),
+			Comment("文件格式(JPEG/PNG/GIF/MP4/AVI/MOV)").
+			MaxLen(20).
+			NotEmpty(),
 
 		field.Uint64("file_size").
-			Comment("文件大小（字节）"),
+			Comment("文件大小(字节)"),
 
 		field.String("file_url").
 			Comment("文件URL").
-			MaxLen(500),
+			MaxLen(500).
+			NotEmpty(),
 
 		field.String("thumbnail_url").
 			Comment("缩略图URL").
@@ -63,11 +66,13 @@ func (MediaFile) Fields() []ent.Field {
 
 		field.String("oss_bucket").
 			Comment("OSS Bucket").
-			MaxLen(100),
+			MaxLen(100).
+			NotEmpty(),
 
 		field.String("oss_key").
 			Comment("OSS Key").
-			MaxLen(500),
+			MaxLen(500).
+			NotEmpty(),
 
 		field.Bool("is_deleted").
 			Comment("是否删除").
@@ -84,7 +89,8 @@ func (MediaFile) Fields() []ent.Field {
 func (MediaFile) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		mixin.AutoIncrementId{},
-		mixin.CreatedAt{},
+		mixin.OperatorID{},
+		mixin.TimeAt{},
 		mixin.TenantID[uint32]{},
 	}
 }
@@ -92,20 +98,16 @@ func (MediaFile) Mixin() []ent.Mixin {
 // Indexes of the MediaFile.
 func (MediaFile) Indexes() []ent.Index {
 	return []ent.Index{
-		// 按租户 + 用户 + 是否删除查询
+		// 按租户 + 上传者 + 是否删除查询
 		index.Fields("tenant_id", "consumer_id", "is_deleted").
-			StorageKey("idx_media_file_tenant_consumer_is_deleted"),
+			StorageKey("idx_media_file_tenant_consumer_deleted"),
 
 		// 按租户 + 文件类型 + 创建时间查询
 		index.Fields("tenant_id", "file_type", "created_at").
-			StorageKey("idx_media_file_tenant_file_type_created_at"),
+			StorageKey("idx_media_file_tenant_type_created"),
 
-		// 按租户 + 创建时间查询（用于时间范围查询）
+		// 按租户 + 创建时间查询
 		index.Fields("tenant_id", "created_at").
-			StorageKey("idx_media_file_tenant_created_at"),
-
-		// 按 OSS Key 查询
-		index.Fields("oss_key").
-			StorageKey("idx_media_file_oss_key"),
+			StorageKey("idx_media_file_tenant_created"),
 	}
 }
