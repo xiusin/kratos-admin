@@ -56,6 +56,8 @@ func NewRestServer(
 	paymentService *service.PaymentService,
 	financeService *service.FinanceService,
 	wechatService *service.WechatService,
+	mediaService *service.MediaService,
+	logisticsService *service.LogisticsService,
 ) (*khttp.Server, error) {
 	cfg := ctx.GetConfig()
 
@@ -77,6 +79,8 @@ func NewRestServer(
 	consumerV1.RegisterPaymentServiceHTTPServer(srv, paymentService)
 	consumerV1.RegisterFinanceServiceHTTPServer(srv, financeService)
 	consumerV1.RegisterWechatServiceHTTPServer(srv, wechatService)
+	consumerV1.RegisterMediaServiceHTTPServer(srv, mediaService)
+	consumerV1.RegisterLogisticsServiceHTTPServer(srv, logisticsService)
 
 	return srv, nil
 }

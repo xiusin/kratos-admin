@@ -25,6 +25,7 @@ var ProviderSet = wire.NewSet(
 	data.NewSMSManager,
 	data.NewWechatClient,
 	data.NewOSSClient,
+	data.NewLogisticsClient,
 	data.NewEventBus,
 
 	// Repository providers
