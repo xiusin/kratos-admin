@@ -297,19 +297,23 @@ var (
 	// ConsumerMediaFilesColumns holds the columns for the "consumer_media_files" table.
 	ConsumerMediaFilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint32, Increment: true, Comment: "id"},
+		{Name: "created_by", Type: field.TypeUint32, Nullable: true, Comment: "创建者ID"},
+		{Name: "updated_by", Type: field.TypeUint32, Nullable: true, Comment: "更新者ID"},
+		{Name: "deleted_by", Type: field.TypeUint32, Nullable: true, Comment: "删除者ID"},
 		{Name: "created_at", Type: field.TypeTime, Nullable: true, Comment: "创建时间"},
+		{Name: "updated_at", Type: field.TypeTime, Nullable: true, Comment: "更新时间"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true, Comment: "删除时间"},
 		{Name: "tenant_id", Type: field.TypeUint32, Nullable: true, Comment: "租户ID", Default: 0},
 		{Name: "consumer_id", Type: field.TypeUint32, Comment: "上传者ID"},
 		{Name: "file_name", Type: field.TypeString, Size: 255, Comment: "文件名"},
 		{Name: "file_type", Type: field.TypeEnum, Comment: "文件类型", Enums: []string{"IMAGE", "VIDEO"}},
-		{Name: "file_format", Type: field.TypeString, Size: 20, Comment: "文件格式"},
-		{Name: "file_size", Type: field.TypeUint64, Comment: "文件大小（字节）"},
+		{Name: "file_format", Type: field.TypeString, Size: 20, Comment: "文件格式(JPEG/PNG/GIF/MP4/AVI/MOV)"},
+		{Name: "file_size", Type: field.TypeUint64, Comment: "文件大小(字节)"},
 		{Name: "file_url", Type: field.TypeString, Size: 500, Comment: "文件URL"},
 		{Name: "thumbnail_url", Type: field.TypeString, Nullable: true, Size: 500, Comment: "缩略图URL"},
 		{Name: "oss_bucket", Type: field.TypeString, Size: 100, Comment: "OSS Bucket"},
 		{Name: "oss_key", Type: field.TypeString, Size: 500, Comment: "OSS Key"},
 		{Name: "is_deleted", Type: field.TypeBool, Comment: "是否删除", Default: false},
-		{Name: "deleted_at", Type: field.TypeTime, Nullable: true, Comment: "删除时间"},
 	}
 	// ConsumerMediaFilesTable holds the schema information for the "consumer_media_files" table.
 	ConsumerMediaFilesTable = &schema.Table{
@@ -319,24 +323,19 @@ var (
 		PrimaryKey: []*schema.Column{ConsumerMediaFilesColumns[0]},
 		Indexes: []*schema.Index{
 			{
-				Name:    "idx_media_file_tenant_consumer_is_deleted",
+				Name:    "idx_media_file_tenant_consumer_deleted",
 				Unique:  false,
-				Columns: []*schema.Column{ConsumerMediaFilesColumns[2], ConsumerMediaFilesColumns[3], ConsumerMediaFilesColumns[12]},
+				Columns: []*schema.Column{ConsumerMediaFilesColumns[7], ConsumerMediaFilesColumns[8], ConsumerMediaFilesColumns[17]},
 			},
 			{
-				Name:    "idx_media_file_tenant_file_type_created_at",
+				Name:    "idx_media_file_tenant_type_created",
 				Unique:  false,
-				Columns: []*schema.Column{ConsumerMediaFilesColumns[2], ConsumerMediaFilesColumns[5], ConsumerMediaFilesColumns[1]},
+				Columns: []*schema.Column{ConsumerMediaFilesColumns[7], ConsumerMediaFilesColumns[10], ConsumerMediaFilesColumns[4]},
 			},
 			{
-				Name:    "idx_media_file_tenant_created_at",
+				Name:    "idx_media_file_tenant_created",
 				Unique:  false,
-				Columns: []*schema.Column{ConsumerMediaFilesColumns[2], ConsumerMediaFilesColumns[1]},
-			},
-			{
-				Name:    "idx_media_file_oss_key",
-				Unique:  false,
-				Columns: []*schema.Column{ConsumerMediaFilesColumns[11]},
+				Columns: []*schema.Column{ConsumerMediaFilesColumns[7], ConsumerMediaFilesColumns[4]},
 			},
 		},
 	}
@@ -451,6 +450,94 @@ var (
 			},
 		},
 	}
+	// TenantConfigsColumns holds the columns for the "tenant_configs" table.
+	TenantConfigsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint32, Increment: true, Comment: "id"},
+		{Name: "created_by", Type: field.TypeUint32, Nullable: true, Comment: "创建者ID"},
+		{Name: "updated_by", Type: field.TypeUint32, Nullable: true, Comment: "更新者ID"},
+		{Name: "deleted_by", Type: field.TypeUint32, Nullable: true, Comment: "删除者ID"},
+		{Name: "created_at", Type: field.TypeTime, Nullable: true, Comment: "创建时间"},
+		{Name: "updated_at", Type: field.TypeTime, Nullable: true, Comment: "更新时间"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true, Comment: "删除时间"},
+		{Name: "tenant_id", Type: field.TypeUint32, Nullable: true, Comment: "租户ID", Default: 0},
+		{Name: "config_key", Type: field.TypeString, Size: 100, Comment: "配置键"},
+		{Name: "config_value", Type: field.TypeString, Nullable: true, Size: 2000, Comment: "配置值"},
+		{Name: "config_type", Type: field.TypeString, Size: 20, Comment: "配置类型: string/int/bool/json/encrypted", Default: "string"},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 500, Comment: "配置描述"},
+		{Name: "category", Type: field.TypeString, Nullable: true, Size: 50, Comment: "配置分类: sms/payment/wechat/media/logistics/freight/system"},
+		{Name: "is_encrypted", Type: field.TypeBool, Comment: "是否加密存储", Default: false},
+		{Name: "is_active", Type: field.TypeBool, Comment: "是否启用", Default: true},
+		{Name: "validation_rule", Type: field.TypeString, Nullable: true, Size: 500, Comment: "验证规则（JSON格式）"},
+	}
+	// TenantConfigsTable holds the schema information for the "tenant_configs" table.
+	TenantConfigsTable = &schema.Table{
+		Name:       "tenant_configs",
+		Comment:    "租户配置表",
+		Columns:    TenantConfigsColumns,
+		PrimaryKey: []*schema.Column{TenantConfigsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idx_tenant_config_tenant_key",
+				Unique:  true,
+				Columns: []*schema.Column{TenantConfigsColumns[7], TenantConfigsColumns[8]},
+			},
+			{
+				Name:    "idx_tenant_config_tenant_category",
+				Unique:  false,
+				Columns: []*schema.Column{TenantConfigsColumns[7], TenantConfigsColumns[12]},
+			},
+			{
+				Name:    "idx_tenant_config_tenant_active",
+				Unique:  false,
+				Columns: []*schema.Column{TenantConfigsColumns[7], TenantConfigsColumns[14]},
+			},
+			{
+				Name:    "idx_tenant_config_tenant_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{TenantConfigsColumns[7], TenantConfigsColumns[4]},
+			},
+		},
+	}
+	// TenantConfigHistoriesColumns holds the columns for the "tenant_config_histories" table.
+	TenantConfigHistoriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUint32, Increment: true, Comment: "id"},
+		{Name: "created_at", Type: field.TypeTime, Nullable: true, Comment: "创建时间"},
+		{Name: "updated_at", Type: field.TypeTime, Nullable: true, Comment: "更新时间"},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true, Comment: "删除时间"},
+		{Name: "tenant_id", Type: field.TypeUint32, Nullable: true, Comment: "租户ID", Default: 0},
+		{Name: "config_id", Type: field.TypeUint32, Comment: "配置ID"},
+		{Name: "config_key", Type: field.TypeString, Size: 100, Comment: "配置键"},
+		{Name: "old_value", Type: field.TypeString, Nullable: true, Size: 2000, Comment: "旧值"},
+		{Name: "new_value", Type: field.TypeString, Nullable: true, Size: 2000, Comment: "新值"},
+		{Name: "change_type", Type: field.TypeEnum, Comment: "变更类型", Enums: []string{"CREATE", "UPDATE", "DELETE", "ROLLBACK"}, Default: "UPDATE"},
+		{Name: "change_reason", Type: field.TypeString, Nullable: true, Size: 500, Comment: "变更原因"},
+		{Name: "changed_by", Type: field.TypeUint32, Comment: "变更人ID"},
+		{Name: "changed_by_name", Type: field.TypeString, Nullable: true, Size: 100, Comment: "变更人姓名"},
+	}
+	// TenantConfigHistoriesTable holds the schema information for the "tenant_config_histories" table.
+	TenantConfigHistoriesTable = &schema.Table{
+		Name:       "tenant_config_histories",
+		Comment:    "租户配置变更历史表",
+		Columns:    TenantConfigHistoriesColumns,
+		PrimaryKey: []*schema.Column{TenantConfigHistoriesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idx_config_history_tenant_config_time",
+				Unique:  false,
+				Columns: []*schema.Column{TenantConfigHistoriesColumns[4], TenantConfigHistoriesColumns[5], TenantConfigHistoriesColumns[1]},
+			},
+			{
+				Name:    "idx_config_history_tenant_key_time",
+				Unique:  false,
+				Columns: []*schema.Column{TenantConfigHistoriesColumns[4], TenantConfigHistoriesColumns[6], TenantConfigHistoriesColumns[1]},
+			},
+			{
+				Name:    "idx_config_history_tenant_changer_time",
+				Unique:  false,
+				Columns: []*schema.Column{TenantConfigHistoriesColumns[4], TenantConfigHistoriesColumns[11], TenantConfigHistoriesColumns[1]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		ConsumerUsersTable,
@@ -462,6 +549,8 @@ var (
 		ConsumerMediaFilesTable,
 		ConsumerPaymentOrdersTable,
 		ConsumerSmsLogsTable,
+		TenantConfigsTable,
+		TenantConfigHistoriesTable,
 	}
 )
 
@@ -508,6 +597,16 @@ func init() {
 	}
 	ConsumerSmsLogsTable.Annotation = &entsql.Annotation{
 		Table:     "consumer_sms_logs",
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	TenantConfigsTable.Annotation = &entsql.Annotation{
+		Table:     "tenant_configs",
+		Charset:   "utf8mb4",
+		Collation: "utf8mb4_bin",
+	}
+	TenantConfigHistoriesTable.Annotation = &entsql.Annotation{
+		Table:     "tenant_config_histories",
 		Charset:   "utf8mb4",
 		Collation: "utf8mb4_bin",
 	}

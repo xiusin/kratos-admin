@@ -30,6 +30,10 @@ type Tx struct {
 	PaymentOrder *PaymentOrderClient
 	// SMSLog is the client for interacting with the SMSLog builders.
 	SMSLog *SMSLogClient
+	// TenantConfig is the client for interacting with the TenantConfig builders.
+	TenantConfig *TenantConfigClient
+	// TenantConfigHistory is the client for interacting with the TenantConfigHistory builders.
+	TenantConfigHistory *TenantConfigHistoryClient
 
 	// lazily loaded.
 	client     *Client
@@ -170,6 +174,8 @@ func (tx *Tx) init() {
 	tx.MediaFile = NewMediaFileClient(tx.config)
 	tx.PaymentOrder = NewPaymentOrderClient(tx.config)
 	tx.SMSLog = NewSMSLogClient(tx.config)
+	tx.TenantConfig = NewTenantConfigClient(tx.config)
+	tx.TenantConfigHistory = NewTenantConfigHistoryClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

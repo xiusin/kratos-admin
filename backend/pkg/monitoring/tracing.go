@@ -6,11 +6,13 @@ import (
 	"github.com/go-kratos/kratos/v2/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // TracingConfig 追踪配置
@@ -18,7 +20,7 @@ type TracingConfig struct {
 	ServiceName    string
 	ServiceVersion string
 	Environment    string
-	JaegerEndpoint string
+	OTLPEndpoint   string // OTLP gRPC endpoint (e.g., "localhost:4317")
 	SamplingRate   float64
 }
 
@@ -31,15 +33,27 @@ type TracingService struct {
 
 // NewTracingService 创建追踪服务
 func NewTracingService(cfg TracingConfig, logger log.Logger) (*TracingService, error) {
-	// 创建Jaeger导出器
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(cfg.JaegerEndpoint)))
+	// 创建OTLP gRPC导出器
+	ctx := context.Background()
+	
+	// 创建gRPC连接
+	conn, err := grpc.DialContext(ctx, cfg.OTLPEndpoint,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建OTLP trace导出器
+	exp, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
 	if err != nil {
 		return nil, err
 	}
 
 	// 创建资源
 	res, err := resource.New(
-		context.Background(),
+		ctx,
 		resource.WithAttributes(
 			semconv.ServiceName(cfg.ServiceName),
 			semconv.ServiceVersion(cfg.ServiceVersion),

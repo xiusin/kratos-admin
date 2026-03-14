@@ -18,9 +18,8 @@ import (
 // SMSLogUpdate is the builder for updating SMSLog entities.
 type SMSLogUpdate struct {
 	config
-	hooks     []Hook
-	mutation  *SMSLogMutation
-	modifiers []func(*sql.UpdateBuilder)
+	hooks    []Hook
+	mutation *SMSLogMutation
 }
 
 // Where appends a list predicates to the SMSLogUpdate builder.
@@ -245,12 +244,6 @@ func (_u *SMSLogUpdate) check() error {
 	return nil
 }
 
-// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *SMSLogUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SMSLogUpdate {
-	_u.modifiers = append(_u.modifiers, modifiers...)
-	return _u
-}
-
 func (_u *SMSLogUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -302,7 +295,6 @@ func (_u *SMSLogUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.ExpiresAtCleared() {
 		_spec.ClearField(smslog.FieldExpiresAt, field.TypeTime)
 	}
-	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{smslog.Label}
@@ -318,10 +310,9 @@ func (_u *SMSLogUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 // SMSLogUpdateOne is the builder for updating a single SMSLog entity.
 type SMSLogUpdateOne struct {
 	config
-	fields    []string
-	hooks     []Hook
-	mutation  *SMSLogMutation
-	modifiers []func(*sql.UpdateBuilder)
+	fields   []string
+	hooks    []Hook
+	mutation *SMSLogMutation
 }
 
 // SetPhone sets the "phone" field.
@@ -553,12 +544,6 @@ func (_u *SMSLogUpdateOne) check() error {
 	return nil
 }
 
-// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *SMSLogUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *SMSLogUpdateOne {
-	_u.modifiers = append(_u.modifiers, modifiers...)
-	return _u
-}
-
 func (_u *SMSLogUpdateOne) sqlSave(ctx context.Context) (_node *SMSLog, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -627,7 +612,6 @@ func (_u *SMSLogUpdateOne) sqlSave(ctx context.Context) (_node *SMSLog, err erro
 	if _u.mutation.ExpiresAtCleared() {
 		_spec.ClearField(smslog.FieldExpiresAt, field.TypeTime)
 	}
-	_spec.AddModifiers(_u.modifiers...)
 	_node = &SMSLog{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

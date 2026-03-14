@@ -18,14 +18,134 @@ import (
 // MediaFileUpdate is the builder for updating MediaFile entities.
 type MediaFileUpdate struct {
 	config
-	hooks     []Hook
-	mutation  *MediaFileMutation
-	modifiers []func(*sql.UpdateBuilder)
+	hooks    []Hook
+	mutation *MediaFileMutation
 }
 
 // Where appends a list predicates to the MediaFileUpdate builder.
 func (_u *MediaFileUpdate) Where(ps ...predicate.MediaFile) *MediaFileUpdate {
 	_u.mutation.Where(ps...)
+	return _u
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (_u *MediaFileUpdate) SetCreatedBy(v uint32) *MediaFileUpdate {
+	_u.mutation.ResetCreatedBy()
+	_u.mutation.SetCreatedBy(v)
+	return _u
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (_u *MediaFileUpdate) SetNillableCreatedBy(v *uint32) *MediaFileUpdate {
+	if v != nil {
+		_u.SetCreatedBy(*v)
+	}
+	return _u
+}
+
+// AddCreatedBy adds value to the "created_by" field.
+func (_u *MediaFileUpdate) AddCreatedBy(v int32) *MediaFileUpdate {
+	_u.mutation.AddCreatedBy(v)
+	return _u
+}
+
+// ClearCreatedBy clears the value of the "created_by" field.
+func (_u *MediaFileUpdate) ClearCreatedBy() *MediaFileUpdate {
+	_u.mutation.ClearCreatedBy()
+	return _u
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (_u *MediaFileUpdate) SetUpdatedBy(v uint32) *MediaFileUpdate {
+	_u.mutation.ResetUpdatedBy()
+	_u.mutation.SetUpdatedBy(v)
+	return _u
+}
+
+// SetNillableUpdatedBy sets the "updated_by" field if the given value is not nil.
+func (_u *MediaFileUpdate) SetNillableUpdatedBy(v *uint32) *MediaFileUpdate {
+	if v != nil {
+		_u.SetUpdatedBy(*v)
+	}
+	return _u
+}
+
+// AddUpdatedBy adds value to the "updated_by" field.
+func (_u *MediaFileUpdate) AddUpdatedBy(v int32) *MediaFileUpdate {
+	_u.mutation.AddUpdatedBy(v)
+	return _u
+}
+
+// ClearUpdatedBy clears the value of the "updated_by" field.
+func (_u *MediaFileUpdate) ClearUpdatedBy() *MediaFileUpdate {
+	_u.mutation.ClearUpdatedBy()
+	return _u
+}
+
+// SetDeletedBy sets the "deleted_by" field.
+func (_u *MediaFileUpdate) SetDeletedBy(v uint32) *MediaFileUpdate {
+	_u.mutation.ResetDeletedBy()
+	_u.mutation.SetDeletedBy(v)
+	return _u
+}
+
+// SetNillableDeletedBy sets the "deleted_by" field if the given value is not nil.
+func (_u *MediaFileUpdate) SetNillableDeletedBy(v *uint32) *MediaFileUpdate {
+	if v != nil {
+		_u.SetDeletedBy(*v)
+	}
+	return _u
+}
+
+// AddDeletedBy adds value to the "deleted_by" field.
+func (_u *MediaFileUpdate) AddDeletedBy(v int32) *MediaFileUpdate {
+	_u.mutation.AddDeletedBy(v)
+	return _u
+}
+
+// ClearDeletedBy clears the value of the "deleted_by" field.
+func (_u *MediaFileUpdate) ClearDeletedBy() *MediaFileUpdate {
+	_u.mutation.ClearDeletedBy()
+	return _u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *MediaFileUpdate) SetUpdatedAt(v time.Time) *MediaFileUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_u *MediaFileUpdate) SetNillableUpdatedAt(v *time.Time) *MediaFileUpdate {
+	if v != nil {
+		_u.SetUpdatedAt(*v)
+	}
+	return _u
+}
+
+// ClearUpdatedAt clears the value of the "updated_at" field.
+func (_u *MediaFileUpdate) ClearUpdatedAt() *MediaFileUpdate {
+	_u.mutation.ClearUpdatedAt()
+	return _u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *MediaFileUpdate) SetDeletedAt(v time.Time) *MediaFileUpdate {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *MediaFileUpdate) SetNillableDeletedAt(v *time.Time) *MediaFileUpdate {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *MediaFileUpdate) ClearDeletedAt() *MediaFileUpdate {
+	_u.mutation.ClearDeletedAt()
 	return _u
 }
 
@@ -189,26 +309,6 @@ func (_u *MediaFileUpdate) SetNillableIsDeleted(v *bool) *MediaFileUpdate {
 	return _u
 }
 
-// SetDeletedAt sets the "deleted_at" field.
-func (_u *MediaFileUpdate) SetDeletedAt(v time.Time) *MediaFileUpdate {
-	_u.mutation.SetDeletedAt(v)
-	return _u
-}
-
-// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
-func (_u *MediaFileUpdate) SetNillableDeletedAt(v *time.Time) *MediaFileUpdate {
-	if v != nil {
-		_u.SetDeletedAt(*v)
-	}
-	return _u
-}
-
-// ClearDeletedAt clears the value of the "deleted_at" field.
-func (_u *MediaFileUpdate) ClearDeletedAt() *MediaFileUpdate {
-	_u.mutation.ClearDeletedAt()
-	return _u
-}
-
 // Mutation returns the MediaFileMutation object of the builder.
 func (_u *MediaFileUpdate) Mutation() *MediaFileMutation {
 	return _u.mutation
@@ -281,12 +381,6 @@ func (_u *MediaFileUpdate) check() error {
 	return nil
 }
 
-// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *MediaFileUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *MediaFileUpdate {
-	_u.modifiers = append(_u.modifiers, modifiers...)
-	return _u
-}
-
 func (_u *MediaFileUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -299,8 +393,47 @@ func (_u *MediaFileUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			}
 		}
 	}
+	if value, ok := _u.mutation.CreatedBy(); ok {
+		_spec.SetField(mediafile.FieldCreatedBy, field.TypeUint32, value)
+	}
+	if value, ok := _u.mutation.AddedCreatedBy(); ok {
+		_spec.AddField(mediafile.FieldCreatedBy, field.TypeUint32, value)
+	}
+	if _u.mutation.CreatedByCleared() {
+		_spec.ClearField(mediafile.FieldCreatedBy, field.TypeUint32)
+	}
+	if value, ok := _u.mutation.UpdatedBy(); ok {
+		_spec.SetField(mediafile.FieldUpdatedBy, field.TypeUint32, value)
+	}
+	if value, ok := _u.mutation.AddedUpdatedBy(); ok {
+		_spec.AddField(mediafile.FieldUpdatedBy, field.TypeUint32, value)
+	}
+	if _u.mutation.UpdatedByCleared() {
+		_spec.ClearField(mediafile.FieldUpdatedBy, field.TypeUint32)
+	}
+	if value, ok := _u.mutation.DeletedBy(); ok {
+		_spec.SetField(mediafile.FieldDeletedBy, field.TypeUint32, value)
+	}
+	if value, ok := _u.mutation.AddedDeletedBy(); ok {
+		_spec.AddField(mediafile.FieldDeletedBy, field.TypeUint32, value)
+	}
+	if _u.mutation.DeletedByCleared() {
+		_spec.ClearField(mediafile.FieldDeletedBy, field.TypeUint32)
+	}
 	if _u.mutation.CreatedAtCleared() {
 		_spec.ClearField(mediafile.FieldCreatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(mediafile.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.UpdatedAtCleared() {
+		_spec.ClearField(mediafile.FieldUpdatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(mediafile.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(mediafile.FieldDeletedAt, field.TypeTime)
 	}
 	if _u.mutation.TenantIDCleared() {
 		_spec.ClearField(mediafile.FieldTenantID, field.TypeUint32)
@@ -344,13 +477,6 @@ func (_u *MediaFileUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.IsDeleted(); ok {
 		_spec.SetField(mediafile.FieldIsDeleted, field.TypeBool, value)
 	}
-	if value, ok := _u.mutation.DeletedAt(); ok {
-		_spec.SetField(mediafile.FieldDeletedAt, field.TypeTime, value)
-	}
-	if _u.mutation.DeletedAtCleared() {
-		_spec.ClearField(mediafile.FieldDeletedAt, field.TypeTime)
-	}
-	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{mediafile.Label}
@@ -366,10 +492,130 @@ func (_u *MediaFileUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 // MediaFileUpdateOne is the builder for updating a single MediaFile entity.
 type MediaFileUpdateOne struct {
 	config
-	fields    []string
-	hooks     []Hook
-	mutation  *MediaFileMutation
-	modifiers []func(*sql.UpdateBuilder)
+	fields   []string
+	hooks    []Hook
+	mutation *MediaFileMutation
+}
+
+// SetCreatedBy sets the "created_by" field.
+func (_u *MediaFileUpdateOne) SetCreatedBy(v uint32) *MediaFileUpdateOne {
+	_u.mutation.ResetCreatedBy()
+	_u.mutation.SetCreatedBy(v)
+	return _u
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (_u *MediaFileUpdateOne) SetNillableCreatedBy(v *uint32) *MediaFileUpdateOne {
+	if v != nil {
+		_u.SetCreatedBy(*v)
+	}
+	return _u
+}
+
+// AddCreatedBy adds value to the "created_by" field.
+func (_u *MediaFileUpdateOne) AddCreatedBy(v int32) *MediaFileUpdateOne {
+	_u.mutation.AddCreatedBy(v)
+	return _u
+}
+
+// ClearCreatedBy clears the value of the "created_by" field.
+func (_u *MediaFileUpdateOne) ClearCreatedBy() *MediaFileUpdateOne {
+	_u.mutation.ClearCreatedBy()
+	return _u
+}
+
+// SetUpdatedBy sets the "updated_by" field.
+func (_u *MediaFileUpdateOne) SetUpdatedBy(v uint32) *MediaFileUpdateOne {
+	_u.mutation.ResetUpdatedBy()
+	_u.mutation.SetUpdatedBy(v)
+	return _u
+}
+
+// SetNillableUpdatedBy sets the "updated_by" field if the given value is not nil.
+func (_u *MediaFileUpdateOne) SetNillableUpdatedBy(v *uint32) *MediaFileUpdateOne {
+	if v != nil {
+		_u.SetUpdatedBy(*v)
+	}
+	return _u
+}
+
+// AddUpdatedBy adds value to the "updated_by" field.
+func (_u *MediaFileUpdateOne) AddUpdatedBy(v int32) *MediaFileUpdateOne {
+	_u.mutation.AddUpdatedBy(v)
+	return _u
+}
+
+// ClearUpdatedBy clears the value of the "updated_by" field.
+func (_u *MediaFileUpdateOne) ClearUpdatedBy() *MediaFileUpdateOne {
+	_u.mutation.ClearUpdatedBy()
+	return _u
+}
+
+// SetDeletedBy sets the "deleted_by" field.
+func (_u *MediaFileUpdateOne) SetDeletedBy(v uint32) *MediaFileUpdateOne {
+	_u.mutation.ResetDeletedBy()
+	_u.mutation.SetDeletedBy(v)
+	return _u
+}
+
+// SetNillableDeletedBy sets the "deleted_by" field if the given value is not nil.
+func (_u *MediaFileUpdateOne) SetNillableDeletedBy(v *uint32) *MediaFileUpdateOne {
+	if v != nil {
+		_u.SetDeletedBy(*v)
+	}
+	return _u
+}
+
+// AddDeletedBy adds value to the "deleted_by" field.
+func (_u *MediaFileUpdateOne) AddDeletedBy(v int32) *MediaFileUpdateOne {
+	_u.mutation.AddDeletedBy(v)
+	return _u
+}
+
+// ClearDeletedBy clears the value of the "deleted_by" field.
+func (_u *MediaFileUpdateOne) ClearDeletedBy() *MediaFileUpdateOne {
+	_u.mutation.ClearDeletedBy()
+	return _u
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (_u *MediaFileUpdateOne) SetUpdatedAt(v time.Time) *MediaFileUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (_u *MediaFileUpdateOne) SetNillableUpdatedAt(v *time.Time) *MediaFileUpdateOne {
+	if v != nil {
+		_u.SetUpdatedAt(*v)
+	}
+	return _u
+}
+
+// ClearUpdatedAt clears the value of the "updated_at" field.
+func (_u *MediaFileUpdateOne) ClearUpdatedAt() *MediaFileUpdateOne {
+	_u.mutation.ClearUpdatedAt()
+	return _u
+}
+
+// SetDeletedAt sets the "deleted_at" field.
+func (_u *MediaFileUpdateOne) SetDeletedAt(v time.Time) *MediaFileUpdateOne {
+	_u.mutation.SetDeletedAt(v)
+	return _u
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_u *MediaFileUpdateOne) SetNillableDeletedAt(v *time.Time) *MediaFileUpdateOne {
+	if v != nil {
+		_u.SetDeletedAt(*v)
+	}
+	return _u
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (_u *MediaFileUpdateOne) ClearDeletedAt() *MediaFileUpdateOne {
+	_u.mutation.ClearDeletedAt()
+	return _u
 }
 
 // SetConsumerID sets the "consumer_id" field.
@@ -532,26 +778,6 @@ func (_u *MediaFileUpdateOne) SetNillableIsDeleted(v *bool) *MediaFileUpdateOne 
 	return _u
 }
 
-// SetDeletedAt sets the "deleted_at" field.
-func (_u *MediaFileUpdateOne) SetDeletedAt(v time.Time) *MediaFileUpdateOne {
-	_u.mutation.SetDeletedAt(v)
-	return _u
-}
-
-// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
-func (_u *MediaFileUpdateOne) SetNillableDeletedAt(v *time.Time) *MediaFileUpdateOne {
-	if v != nil {
-		_u.SetDeletedAt(*v)
-	}
-	return _u
-}
-
-// ClearDeletedAt clears the value of the "deleted_at" field.
-func (_u *MediaFileUpdateOne) ClearDeletedAt() *MediaFileUpdateOne {
-	_u.mutation.ClearDeletedAt()
-	return _u
-}
-
 // Mutation returns the MediaFileMutation object of the builder.
 func (_u *MediaFileUpdateOne) Mutation() *MediaFileMutation {
 	return _u.mutation
@@ -637,12 +863,6 @@ func (_u *MediaFileUpdateOne) check() error {
 	return nil
 }
 
-// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *MediaFileUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *MediaFileUpdateOne {
-	_u.modifiers = append(_u.modifiers, modifiers...)
-	return _u
-}
-
 func (_u *MediaFileUpdateOne) sqlSave(ctx context.Context) (_node *MediaFile, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -672,8 +892,47 @@ func (_u *MediaFileUpdateOne) sqlSave(ctx context.Context) (_node *MediaFile, er
 			}
 		}
 	}
+	if value, ok := _u.mutation.CreatedBy(); ok {
+		_spec.SetField(mediafile.FieldCreatedBy, field.TypeUint32, value)
+	}
+	if value, ok := _u.mutation.AddedCreatedBy(); ok {
+		_spec.AddField(mediafile.FieldCreatedBy, field.TypeUint32, value)
+	}
+	if _u.mutation.CreatedByCleared() {
+		_spec.ClearField(mediafile.FieldCreatedBy, field.TypeUint32)
+	}
+	if value, ok := _u.mutation.UpdatedBy(); ok {
+		_spec.SetField(mediafile.FieldUpdatedBy, field.TypeUint32, value)
+	}
+	if value, ok := _u.mutation.AddedUpdatedBy(); ok {
+		_spec.AddField(mediafile.FieldUpdatedBy, field.TypeUint32, value)
+	}
+	if _u.mutation.UpdatedByCleared() {
+		_spec.ClearField(mediafile.FieldUpdatedBy, field.TypeUint32)
+	}
+	if value, ok := _u.mutation.DeletedBy(); ok {
+		_spec.SetField(mediafile.FieldDeletedBy, field.TypeUint32, value)
+	}
+	if value, ok := _u.mutation.AddedDeletedBy(); ok {
+		_spec.AddField(mediafile.FieldDeletedBy, field.TypeUint32, value)
+	}
+	if _u.mutation.DeletedByCleared() {
+		_spec.ClearField(mediafile.FieldDeletedBy, field.TypeUint32)
+	}
 	if _u.mutation.CreatedAtCleared() {
 		_spec.ClearField(mediafile.FieldCreatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.UpdatedAt(); ok {
+		_spec.SetField(mediafile.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.UpdatedAtCleared() {
+		_spec.ClearField(mediafile.FieldUpdatedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.DeletedAt(); ok {
+		_spec.SetField(mediafile.FieldDeletedAt, field.TypeTime, value)
+	}
+	if _u.mutation.DeletedAtCleared() {
+		_spec.ClearField(mediafile.FieldDeletedAt, field.TypeTime)
 	}
 	if _u.mutation.TenantIDCleared() {
 		_spec.ClearField(mediafile.FieldTenantID, field.TypeUint32)
@@ -717,13 +976,6 @@ func (_u *MediaFileUpdateOne) sqlSave(ctx context.Context) (_node *MediaFile, er
 	if value, ok := _u.mutation.IsDeleted(); ok {
 		_spec.SetField(mediafile.FieldIsDeleted, field.TypeBool, value)
 	}
-	if value, ok := _u.mutation.DeletedAt(); ok {
-		_spec.SetField(mediafile.FieldDeletedAt, field.TypeTime, value)
-	}
-	if _u.mutation.DeletedAtCleared() {
-		_spec.ClearField(mediafile.FieldDeletedAt, field.TypeTime)
-	}
-	_spec.AddModifiers(_u.modifiers...)
 	_node = &MediaFile{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

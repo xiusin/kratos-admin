@@ -4,7 +4,7 @@ package ent
 
 import (
 	"fmt"
-	"go-wind-admin/app/consumer/service/internal/data/ent/mediafile"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfig"
 	"strings"
 	"time"
 
@@ -12,8 +12,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// 媒体文件表
-type MediaFile struct {
+// 租户配置表
+type TenantConfig struct {
 	config `json:"-"`
 	// ID of the ent.
 	// id
@@ -32,41 +32,37 @@ type MediaFile struct {
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 	// 租户ID
 	TenantID *uint32 `json:"tenant_id,omitempty"`
-	// 上传者ID
-	ConsumerID uint32 `json:"consumer_id,omitempty"`
-	// 文件名
-	FileName string `json:"file_name,omitempty"`
-	// 文件类型
-	FileType mediafile.FileType `json:"file_type,omitempty"`
-	// 文件格式(JPEG/PNG/GIF/MP4/AVI/MOV)
-	FileFormat string `json:"file_format,omitempty"`
-	// 文件大小(字节)
-	FileSize uint64 `json:"file_size,omitempty"`
-	// 文件URL
-	FileURL string `json:"file_url,omitempty"`
-	// 缩略图URL
-	ThumbnailURL *string `json:"thumbnail_url,omitempty"`
-	// OSS Bucket
-	OssBucket string `json:"oss_bucket,omitempty"`
-	// OSS Key
-	OssKey string `json:"oss_key,omitempty"`
-	// 是否删除
-	IsDeleted    bool `json:"is_deleted,omitempty"`
-	selectValues sql.SelectValues
+	// 配置键
+	ConfigKey string `json:"config_key,omitempty"`
+	// 配置值
+	ConfigValue *string `json:"config_value,omitempty"`
+	// 配置类型: string/int/bool/json/encrypted
+	ConfigType string `json:"config_type,omitempty"`
+	// 配置描述
+	Description *string `json:"description,omitempty"`
+	// 配置分类: sms/payment/wechat/media/logistics/freight/system
+	Category *string `json:"category,omitempty"`
+	// 是否加密存储
+	IsEncrypted bool `json:"is_encrypted,omitempty"`
+	// 是否启用
+	IsActive bool `json:"is_active,omitempty"`
+	// 验证规则（JSON格式）
+	ValidationRule *string `json:"validation_rule,omitempty"`
+	selectValues   sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*MediaFile) scanValues(columns []string) ([]any, error) {
+func (*TenantConfig) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case mediafile.FieldIsDeleted:
+		case tenantconfig.FieldIsEncrypted, tenantconfig.FieldIsActive:
 			values[i] = new(sql.NullBool)
-		case mediafile.FieldID, mediafile.FieldCreatedBy, mediafile.FieldUpdatedBy, mediafile.FieldDeletedBy, mediafile.FieldTenantID, mediafile.FieldConsumerID, mediafile.FieldFileSize:
+		case tenantconfig.FieldID, tenantconfig.FieldCreatedBy, tenantconfig.FieldUpdatedBy, tenantconfig.FieldDeletedBy, tenantconfig.FieldTenantID:
 			values[i] = new(sql.NullInt64)
-		case mediafile.FieldFileName, mediafile.FieldFileType, mediafile.FieldFileFormat, mediafile.FieldFileURL, mediafile.FieldThumbnailURL, mediafile.FieldOssBucket, mediafile.FieldOssKey:
+		case tenantconfig.FieldConfigKey, tenantconfig.FieldConfigValue, tenantconfig.FieldConfigType, tenantconfig.FieldDescription, tenantconfig.FieldCategory, tenantconfig.FieldValidationRule:
 			values[i] = new(sql.NullString)
-		case mediafile.FieldCreatedAt, mediafile.FieldUpdatedAt, mediafile.FieldDeletedAt:
+		case tenantconfig.FieldCreatedAt, tenantconfig.FieldUpdatedAt, tenantconfig.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -76,128 +72,119 @@ func (*MediaFile) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the MediaFile fields.
-func (_m *MediaFile) assignValues(columns []string, values []any) error {
+// to the TenantConfig fields.
+func (_m *TenantConfig) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case mediafile.FieldID:
+		case tenantconfig.FieldID:
 			value, ok := values[i].(*sql.NullInt64)
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			_m.ID = uint32(value.Int64)
-		case mediafile.FieldCreatedBy:
+		case tenantconfig.FieldCreatedBy:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field created_by", values[i])
 			} else if value.Valid {
 				_m.CreatedBy = new(uint32)
 				*_m.CreatedBy = uint32(value.Int64)
 			}
-		case mediafile.FieldUpdatedBy:
+		case tenantconfig.FieldUpdatedBy:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_by", values[i])
 			} else if value.Valid {
 				_m.UpdatedBy = new(uint32)
 				*_m.UpdatedBy = uint32(value.Int64)
 			}
-		case mediafile.FieldDeletedBy:
+		case tenantconfig.FieldDeletedBy:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field deleted_by", values[i])
 			} else if value.Valid {
 				_m.DeletedBy = new(uint32)
 				*_m.DeletedBy = uint32(value.Int64)
 			}
-		case mediafile.FieldCreatedAt:
+		case tenantconfig.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = new(time.Time)
 				*_m.CreatedAt = value.Time
 			}
-		case mediafile.FieldUpdatedAt:
+		case tenantconfig.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = new(time.Time)
 				*_m.UpdatedAt = value.Time
 			}
-		case mediafile.FieldDeletedAt:
+		case tenantconfig.FieldDeletedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
 			} else if value.Valid {
 				_m.DeletedAt = new(time.Time)
 				*_m.DeletedAt = value.Time
 			}
-		case mediafile.FieldTenantID:
+		case tenantconfig.FieldTenantID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field tenant_id", values[i])
 			} else if value.Valid {
 				_m.TenantID = new(uint32)
 				*_m.TenantID = uint32(value.Int64)
 			}
-		case mediafile.FieldConsumerID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field consumer_id", values[i])
-			} else if value.Valid {
-				_m.ConsumerID = uint32(value.Int64)
-			}
-		case mediafile.FieldFileName:
+		case tenantconfig.FieldConfigKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field file_name", values[i])
+				return fmt.Errorf("unexpected type %T for field config_key", values[i])
 			} else if value.Valid {
-				_m.FileName = value.String
+				_m.ConfigKey = value.String
 			}
-		case mediafile.FieldFileType:
+		case tenantconfig.FieldConfigValue:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field file_type", values[i])
+				return fmt.Errorf("unexpected type %T for field config_value", values[i])
 			} else if value.Valid {
-				_m.FileType = mediafile.FileType(value.String)
+				_m.ConfigValue = new(string)
+				*_m.ConfigValue = value.String
 			}
-		case mediafile.FieldFileFormat:
+		case tenantconfig.FieldConfigType:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field file_format", values[i])
+				return fmt.Errorf("unexpected type %T for field config_type", values[i])
 			} else if value.Valid {
-				_m.FileFormat = value.String
+				_m.ConfigType = value.String
 			}
-		case mediafile.FieldFileSize:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field file_size", values[i])
-			} else if value.Valid {
-				_m.FileSize = uint64(value.Int64)
-			}
-		case mediafile.FieldFileURL:
+		case tenantconfig.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field file_url", values[i])
+				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				_m.FileURL = value.String
+				_m.Description = new(string)
+				*_m.Description = value.String
 			}
-		case mediafile.FieldThumbnailURL:
+		case tenantconfig.FieldCategory:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field thumbnail_url", values[i])
+				return fmt.Errorf("unexpected type %T for field category", values[i])
 			} else if value.Valid {
-				_m.ThumbnailURL = new(string)
-				*_m.ThumbnailURL = value.String
+				_m.Category = new(string)
+				*_m.Category = value.String
 			}
-		case mediafile.FieldOssBucket:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field oss_bucket", values[i])
-			} else if value.Valid {
-				_m.OssBucket = value.String
-			}
-		case mediafile.FieldOssKey:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field oss_key", values[i])
-			} else if value.Valid {
-				_m.OssKey = value.String
-			}
-		case mediafile.FieldIsDeleted:
+		case tenantconfig.FieldIsEncrypted:
 			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field is_deleted", values[i])
+				return fmt.Errorf("unexpected type %T for field is_encrypted", values[i])
 			} else if value.Valid {
-				_m.IsDeleted = value.Bool
+				_m.IsEncrypted = value.Bool
+			}
+		case tenantconfig.FieldIsActive:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_active", values[i])
+			} else if value.Valid {
+				_m.IsActive = value.Bool
+			}
+		case tenantconfig.FieldValidationRule:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field validation_rule", values[i])
+			} else if value.Valid {
+				_m.ValidationRule = new(string)
+				*_m.ValidationRule = value.String
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -206,34 +193,34 @@ func (_m *MediaFile) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the MediaFile.
+// Value returns the ent.Value that was dynamically selected and assigned to the TenantConfig.
 // This includes values selected through modifiers, order, etc.
-func (_m *MediaFile) Value(name string) (ent.Value, error) {
+func (_m *TenantConfig) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// Update returns a builder for updating this MediaFile.
-// Note that you need to call MediaFile.Unwrap() before calling this method if this MediaFile
+// Update returns a builder for updating this TenantConfig.
+// Note that you need to call TenantConfig.Unwrap() before calling this method if this TenantConfig
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *MediaFile) Update() *MediaFileUpdateOne {
-	return NewMediaFileClient(_m.config).UpdateOne(_m)
+func (_m *TenantConfig) Update() *TenantConfigUpdateOne {
+	return NewTenantConfigClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the MediaFile entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the TenantConfig entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *MediaFile) Unwrap() *MediaFile {
+func (_m *TenantConfig) Unwrap() *TenantConfig {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: MediaFile is not a transactional entity")
+		panic("ent: TenantConfig is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *MediaFile) String() string {
+func (_m *TenantConfig) String() string {
 	var builder strings.Builder
-	builder.WriteString("MediaFile(")
+	builder.WriteString("TenantConfig(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	if v := _m.CreatedBy; v != nil {
 		builder.WriteString("created_by=")
@@ -270,40 +257,40 @@ func (_m *MediaFile) String() string {
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
-	builder.WriteString("consumer_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.ConsumerID))
+	builder.WriteString("config_key=")
+	builder.WriteString(_m.ConfigKey)
 	builder.WriteString(", ")
-	builder.WriteString("file_name=")
-	builder.WriteString(_m.FileName)
-	builder.WriteString(", ")
-	builder.WriteString("file_type=")
-	builder.WriteString(fmt.Sprintf("%v", _m.FileType))
-	builder.WriteString(", ")
-	builder.WriteString("file_format=")
-	builder.WriteString(_m.FileFormat)
-	builder.WriteString(", ")
-	builder.WriteString("file_size=")
-	builder.WriteString(fmt.Sprintf("%v", _m.FileSize))
-	builder.WriteString(", ")
-	builder.WriteString("file_url=")
-	builder.WriteString(_m.FileURL)
-	builder.WriteString(", ")
-	if v := _m.ThumbnailURL; v != nil {
-		builder.WriteString("thumbnail_url=")
+	if v := _m.ConfigValue; v != nil {
+		builder.WriteString("config_value=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	builder.WriteString("oss_bucket=")
-	builder.WriteString(_m.OssBucket)
+	builder.WriteString("config_type=")
+	builder.WriteString(_m.ConfigType)
 	builder.WriteString(", ")
-	builder.WriteString("oss_key=")
-	builder.WriteString(_m.OssKey)
+	if v := _m.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	builder.WriteString("is_deleted=")
-	builder.WriteString(fmt.Sprintf("%v", _m.IsDeleted))
+	if v := _m.Category; v != nil {
+		builder.WriteString("category=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	builder.WriteString("is_encrypted=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsEncrypted))
+	builder.WriteString(", ")
+	builder.WriteString("is_active=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsActive))
+	builder.WriteString(", ")
+	if v := _m.ValidationRule; v != nil {
+		builder.WriteString("validation_rule=")
+		builder.WriteString(*v)
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }
 
-// MediaFiles is a parsable slice of MediaFile.
-type MediaFiles []*MediaFile
+// TenantConfigs is a parsable slice of TenantConfig.
+type TenantConfigs []*TenantConfig

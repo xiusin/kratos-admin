@@ -18,9 +18,8 @@ import (
 // PaymentOrderUpdate is the builder for updating PaymentOrder entities.
 type PaymentOrderUpdate struct {
 	config
-	hooks     []Hook
-	mutation  *PaymentOrderMutation
-	modifiers []func(*sql.UpdateBuilder)
+	hooks    []Hook
+	mutation *PaymentOrderMutation
 }
 
 // Where appends a list predicates to the PaymentOrderUpdate builder.
@@ -326,12 +325,6 @@ func (_u *PaymentOrderUpdate) check() error {
 	return nil
 }
 
-// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *PaymentOrderUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *PaymentOrderUpdate {
-	_u.modifiers = append(_u.modifiers, modifiers...)
-	return _u
-}
-
 func (_u *PaymentOrderUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -410,7 +403,6 @@ func (_u *PaymentOrderUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if value, ok := _u.mutation.ExpiresAt(); ok {
 		_spec.SetField(paymentorder.FieldExpiresAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{paymentorder.Label}
@@ -426,10 +418,9 @@ func (_u *PaymentOrderUpdate) sqlSave(ctx context.Context) (_node int, err error
 // PaymentOrderUpdateOne is the builder for updating a single PaymentOrder entity.
 type PaymentOrderUpdateOne struct {
 	config
-	fields    []string
-	hooks     []Hook
-	mutation  *PaymentOrderMutation
-	modifiers []func(*sql.UpdateBuilder)
+	fields   []string
+	hooks    []Hook
+	mutation *PaymentOrderMutation
 }
 
 // SetUpdatedAt sets the "updated_at" field.
@@ -742,12 +733,6 @@ func (_u *PaymentOrderUpdateOne) check() error {
 	return nil
 }
 
-// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *PaymentOrderUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *PaymentOrderUpdateOne {
-	_u.modifiers = append(_u.modifiers, modifiers...)
-	return _u
-}
-
 func (_u *PaymentOrderUpdateOne) sqlSave(ctx context.Context) (_node *PaymentOrder, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -843,7 +828,6 @@ func (_u *PaymentOrderUpdateOne) sqlSave(ctx context.Context) (_node *PaymentOrd
 	if value, ok := _u.mutation.ExpiresAt(); ok {
 		_spec.SetField(paymentorder.FieldExpiresAt, field.TypeTime, value)
 	}
-	_spec.AddModifiers(_u.modifiers...)
 	_node = &PaymentOrder{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

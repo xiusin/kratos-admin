@@ -77,11 +77,6 @@ func (MediaFile) Fields() []ent.Field {
 		field.Bool("is_deleted").
 			Comment("是否删除").
 			Default(false),
-
-		field.Time("deleted_at").
-			Comment("删除时间").
-			Optional().
-			Nillable(),
 	}
 }
 

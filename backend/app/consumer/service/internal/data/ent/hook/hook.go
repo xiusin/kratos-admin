@@ -116,6 +116,30 @@ func (f SMSLogFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SMSLogMutation", m)
 }
 
+// The TenantConfigFunc type is an adapter to allow the use of ordinary
+// function as TenantConfig mutator.
+type TenantConfigFunc func(context.Context, *ent.TenantConfigMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TenantConfigFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TenantConfigMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TenantConfigMutation", m)
+}
+
+// The TenantConfigHistoryFunc type is an adapter to allow the use of ordinary
+// function as TenantConfigHistory mutator.
+type TenantConfigHistoryFunc func(context.Context, *ent.TenantConfigHistoryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TenantConfigHistoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TenantConfigHistoryMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TenantConfigHistoryMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

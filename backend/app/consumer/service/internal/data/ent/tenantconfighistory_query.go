@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-wind-admin/app/consumer/service/internal/data/ent/paymentorder"
 	"go-wind-admin/app/consumer/service/internal/data/ent/predicate"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfighistory"
 	"math"
 
 	"entgo.io/ent"
@@ -16,64 +16,64 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// PaymentOrderQuery is the builder for querying PaymentOrder entities.
-type PaymentOrderQuery struct {
+// TenantConfigHistoryQuery is the builder for querying TenantConfigHistory entities.
+type TenantConfigHistoryQuery struct {
 	config
 	ctx        *QueryContext
-	order      []paymentorder.OrderOption
+	order      []tenantconfighistory.OrderOption
 	inters     []Interceptor
-	predicates []predicate.PaymentOrder
+	predicates []predicate.TenantConfigHistory
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the PaymentOrderQuery builder.
-func (_q *PaymentOrderQuery) Where(ps ...predicate.PaymentOrder) *PaymentOrderQuery {
+// Where adds a new predicate for the TenantConfigHistoryQuery builder.
+func (_q *TenantConfigHistoryQuery) Where(ps ...predicate.TenantConfigHistory) *TenantConfigHistoryQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *PaymentOrderQuery) Limit(limit int) *PaymentOrderQuery {
+func (_q *TenantConfigHistoryQuery) Limit(limit int) *TenantConfigHistoryQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *PaymentOrderQuery) Offset(offset int) *PaymentOrderQuery {
+func (_q *TenantConfigHistoryQuery) Offset(offset int) *TenantConfigHistoryQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *PaymentOrderQuery) Unique(unique bool) *PaymentOrderQuery {
+func (_q *TenantConfigHistoryQuery) Unique(unique bool) *TenantConfigHistoryQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *PaymentOrderQuery) Order(o ...paymentorder.OrderOption) *PaymentOrderQuery {
+func (_q *TenantConfigHistoryQuery) Order(o ...tenantconfighistory.OrderOption) *TenantConfigHistoryQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// First returns the first PaymentOrder entity from the query.
-// Returns a *NotFoundError when no PaymentOrder was found.
-func (_q *PaymentOrderQuery) First(ctx context.Context) (*PaymentOrder, error) {
+// First returns the first TenantConfigHistory entity from the query.
+// Returns a *NotFoundError when no TenantConfigHistory was found.
+func (_q *TenantConfigHistoryQuery) First(ctx context.Context) (*TenantConfigHistory, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{paymentorder.Label}
+		return nil, &NotFoundError{tenantconfighistory.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *PaymentOrderQuery) FirstX(ctx context.Context) *PaymentOrder {
+func (_q *TenantConfigHistoryQuery) FirstX(ctx context.Context) *TenantConfigHistory {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -81,22 +81,22 @@ func (_q *PaymentOrderQuery) FirstX(ctx context.Context) *PaymentOrder {
 	return node
 }
 
-// FirstID returns the first PaymentOrder ID from the query.
-// Returns a *NotFoundError when no PaymentOrder ID was found.
-func (_q *PaymentOrderQuery) FirstID(ctx context.Context) (id uint32, err error) {
+// FirstID returns the first TenantConfigHistory ID from the query.
+// Returns a *NotFoundError when no TenantConfigHistory ID was found.
+func (_q *TenantConfigHistoryQuery) FirstID(ctx context.Context) (id uint32, err error) {
 	var ids []uint32
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{paymentorder.Label}
+		err = &NotFoundError{tenantconfighistory.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *PaymentOrderQuery) FirstIDX(ctx context.Context) uint32 {
+func (_q *TenantConfigHistoryQuery) FirstIDX(ctx context.Context) uint32 {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -104,10 +104,10 @@ func (_q *PaymentOrderQuery) FirstIDX(ctx context.Context) uint32 {
 	return id
 }
 
-// Only returns a single PaymentOrder entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one PaymentOrder entity is found.
-// Returns a *NotFoundError when no PaymentOrder entities are found.
-func (_q *PaymentOrderQuery) Only(ctx context.Context) (*PaymentOrder, error) {
+// Only returns a single TenantConfigHistory entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one TenantConfigHistory entity is found.
+// Returns a *NotFoundError when no TenantConfigHistory entities are found.
+func (_q *TenantConfigHistoryQuery) Only(ctx context.Context) (*TenantConfigHistory, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -116,14 +116,14 @@ func (_q *PaymentOrderQuery) Only(ctx context.Context) (*PaymentOrder, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{paymentorder.Label}
+		return nil, &NotFoundError{tenantconfighistory.Label}
 	default:
-		return nil, &NotSingularError{paymentorder.Label}
+		return nil, &NotSingularError{tenantconfighistory.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *PaymentOrderQuery) OnlyX(ctx context.Context) *PaymentOrder {
+func (_q *TenantConfigHistoryQuery) OnlyX(ctx context.Context) *TenantConfigHistory {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -131,10 +131,10 @@ func (_q *PaymentOrderQuery) OnlyX(ctx context.Context) *PaymentOrder {
 	return node
 }
 
-// OnlyID is like Only, but returns the only PaymentOrder ID in the query.
-// Returns a *NotSingularError when more than one PaymentOrder ID is found.
+// OnlyID is like Only, but returns the only TenantConfigHistory ID in the query.
+// Returns a *NotSingularError when more than one TenantConfigHistory ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *PaymentOrderQuery) OnlyID(ctx context.Context) (id uint32, err error) {
+func (_q *TenantConfigHistoryQuery) OnlyID(ctx context.Context) (id uint32, err error) {
 	var ids []uint32
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -143,15 +143,15 @@ func (_q *PaymentOrderQuery) OnlyID(ctx context.Context) (id uint32, err error) 
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{paymentorder.Label}
+		err = &NotFoundError{tenantconfighistory.Label}
 	default:
-		err = &NotSingularError{paymentorder.Label}
+		err = &NotSingularError{tenantconfighistory.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *PaymentOrderQuery) OnlyIDX(ctx context.Context) uint32 {
+func (_q *TenantConfigHistoryQuery) OnlyIDX(ctx context.Context) uint32 {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -159,18 +159,18 @@ func (_q *PaymentOrderQuery) OnlyIDX(ctx context.Context) uint32 {
 	return id
 }
 
-// All executes the query and returns a list of PaymentOrders.
-func (_q *PaymentOrderQuery) All(ctx context.Context) ([]*PaymentOrder, error) {
+// All executes the query and returns a list of TenantConfigHistories.
+func (_q *TenantConfigHistoryQuery) All(ctx context.Context) ([]*TenantConfigHistory, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*PaymentOrder, *PaymentOrderQuery]()
-	return withInterceptors[[]*PaymentOrder](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*TenantConfigHistory, *TenantConfigHistoryQuery]()
+	return withInterceptors[[]*TenantConfigHistory](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *PaymentOrderQuery) AllX(ctx context.Context) []*PaymentOrder {
+func (_q *TenantConfigHistoryQuery) AllX(ctx context.Context) []*TenantConfigHistory {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -178,20 +178,20 @@ func (_q *PaymentOrderQuery) AllX(ctx context.Context) []*PaymentOrder {
 	return nodes
 }
 
-// IDs executes the query and returns a list of PaymentOrder IDs.
-func (_q *PaymentOrderQuery) IDs(ctx context.Context) (ids []uint32, err error) {
+// IDs executes the query and returns a list of TenantConfigHistory IDs.
+func (_q *TenantConfigHistoryQuery) IDs(ctx context.Context) (ids []uint32, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(paymentorder.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(tenantconfighistory.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *PaymentOrderQuery) IDsX(ctx context.Context) []uint32 {
+func (_q *TenantConfigHistoryQuery) IDsX(ctx context.Context) []uint32 {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -200,16 +200,16 @@ func (_q *PaymentOrderQuery) IDsX(ctx context.Context) []uint32 {
 }
 
 // Count returns the count of the given query.
-func (_q *PaymentOrderQuery) Count(ctx context.Context) (int, error) {
+func (_q *TenantConfigHistoryQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*PaymentOrderQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*TenantConfigHistoryQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *PaymentOrderQuery) CountX(ctx context.Context) int {
+func (_q *TenantConfigHistoryQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -218,7 +218,7 @@ func (_q *PaymentOrderQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *PaymentOrderQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *TenantConfigHistoryQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -231,7 +231,7 @@ func (_q *PaymentOrderQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *PaymentOrderQuery) ExistX(ctx context.Context) bool {
+func (_q *TenantConfigHistoryQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -239,18 +239,18 @@ func (_q *PaymentOrderQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the PaymentOrderQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the TenantConfigHistoryQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *PaymentOrderQuery) Clone() *PaymentOrderQuery {
+func (_q *TenantConfigHistoryQuery) Clone() *TenantConfigHistoryQuery {
 	if _q == nil {
 		return nil
 	}
-	return &PaymentOrderQuery{
+	return &TenantConfigHistoryQuery{
 		config:     _q.config,
 		ctx:        _q.ctx.Clone(),
-		order:      append([]paymentorder.OrderOption{}, _q.order...),
+		order:      append([]tenantconfighistory.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.PaymentOrder{}, _q.predicates...),
+		predicates: append([]predicate.TenantConfigHistory{}, _q.predicates...),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -267,15 +267,15 @@ func (_q *PaymentOrderQuery) Clone() *PaymentOrderQuery {
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.PaymentOrder.Query().
-//		GroupBy(paymentorder.FieldCreatedAt).
+//	client.TenantConfigHistory.Query().
+//		GroupBy(tenantconfighistory.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *PaymentOrderQuery) GroupBy(field string, fields ...string) *PaymentOrderGroupBy {
+func (_q *TenantConfigHistoryQuery) GroupBy(field string, fields ...string) *TenantConfigHistoryGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &PaymentOrderGroupBy{build: _q}
+	grbuild := &TenantConfigHistoryGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = paymentorder.Label
+	grbuild.label = tenantconfighistory.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -289,23 +289,23 @@ func (_q *PaymentOrderQuery) GroupBy(field string, fields ...string) *PaymentOrd
 //		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
-//	client.PaymentOrder.Query().
-//		Select(paymentorder.FieldCreatedAt).
+//	client.TenantConfigHistory.Query().
+//		Select(tenantconfighistory.FieldCreatedAt).
 //		Scan(ctx, &v)
-func (_q *PaymentOrderQuery) Select(fields ...string) *PaymentOrderSelect {
+func (_q *TenantConfigHistoryQuery) Select(fields ...string) *TenantConfigHistorySelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &PaymentOrderSelect{PaymentOrderQuery: _q}
-	sbuild.label = paymentorder.Label
+	sbuild := &TenantConfigHistorySelect{TenantConfigHistoryQuery: _q}
+	sbuild.label = tenantconfighistory.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a PaymentOrderSelect configured with the given aggregations.
-func (_q *PaymentOrderQuery) Aggregate(fns ...AggregateFunc) *PaymentOrderSelect {
+// Aggregate returns a TenantConfigHistorySelect configured with the given aggregations.
+func (_q *TenantConfigHistoryQuery) Aggregate(fns ...AggregateFunc) *TenantConfigHistorySelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *PaymentOrderQuery) prepareQuery(ctx context.Context) error {
+func (_q *TenantConfigHistoryQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -317,7 +317,7 @@ func (_q *PaymentOrderQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !paymentorder.ValidColumn(f) {
+		if !tenantconfighistory.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -328,25 +328,25 @@ func (_q *PaymentOrderQuery) prepareQuery(ctx context.Context) error {
 		}
 		_q.sql = prev
 	}
-	if paymentorder.Policy == nil {
-		return errors.New("ent: uninitialized paymentorder.Policy (forgotten import ent/runtime?)")
+	if tenantconfighistory.Policy == nil {
+		return errors.New("ent: uninitialized tenantconfighistory.Policy (forgotten import ent/runtime?)")
 	}
-	if err := paymentorder.Policy.EvalQuery(ctx, _q); err != nil {
+	if err := tenantconfighistory.Policy.EvalQuery(ctx, _q); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (_q *PaymentOrderQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*PaymentOrder, error) {
+func (_q *TenantConfigHistoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*TenantConfigHistory, error) {
 	var (
-		nodes = []*PaymentOrder{}
+		nodes = []*TenantConfigHistory{}
 		_spec = _q.querySpec()
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*PaymentOrder).scanValues(nil, columns)
+		return (*TenantConfigHistory).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &PaymentOrder{config: _q.config}
+		node := &TenantConfigHistory{config: _q.config}
 		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
 	}
@@ -362,7 +362,7 @@ func (_q *PaymentOrderQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	return nodes, nil
 }
 
-func (_q *PaymentOrderQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *TenantConfigHistoryQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -371,8 +371,8 @@ func (_q *PaymentOrderQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *PaymentOrderQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(paymentorder.Table, paymentorder.Columns, sqlgraph.NewFieldSpec(paymentorder.FieldID, field.TypeUint32))
+func (_q *TenantConfigHistoryQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(tenantconfighistory.Table, tenantconfighistory.Columns, sqlgraph.NewFieldSpec(tenantconfighistory.FieldID, field.TypeUint32))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -381,9 +381,9 @@ func (_q *PaymentOrderQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, paymentorder.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, tenantconfighistory.FieldID)
 		for i := range fields {
-			if fields[i] != paymentorder.FieldID {
+			if fields[i] != tenantconfighistory.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -411,12 +411,12 @@ func (_q *PaymentOrderQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *PaymentOrderQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *TenantConfigHistoryQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(paymentorder.Table)
+	t1 := builder.Table(tenantconfighistory.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = paymentorder.Columns
+		columns = tenantconfighistory.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -443,28 +443,28 @@ func (_q *PaymentOrderQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// PaymentOrderGroupBy is the group-by builder for PaymentOrder entities.
-type PaymentOrderGroupBy struct {
+// TenantConfigHistoryGroupBy is the group-by builder for TenantConfigHistory entities.
+type TenantConfigHistoryGroupBy struct {
 	selector
-	build *PaymentOrderQuery
+	build *TenantConfigHistoryQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *PaymentOrderGroupBy) Aggregate(fns ...AggregateFunc) *PaymentOrderGroupBy {
+func (_g *TenantConfigHistoryGroupBy) Aggregate(fns ...AggregateFunc) *TenantConfigHistoryGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *PaymentOrderGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *TenantConfigHistoryGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*PaymentOrderQuery, *PaymentOrderGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*TenantConfigHistoryQuery, *TenantConfigHistoryGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *PaymentOrderGroupBy) sqlScan(ctx context.Context, root *PaymentOrderQuery, v any) error {
+func (_g *TenantConfigHistoryGroupBy) sqlScan(ctx context.Context, root *TenantConfigHistoryQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -491,28 +491,28 @@ func (_g *PaymentOrderGroupBy) sqlScan(ctx context.Context, root *PaymentOrderQu
 	return sql.ScanSlice(rows, v)
 }
 
-// PaymentOrderSelect is the builder for selecting fields of PaymentOrder entities.
-type PaymentOrderSelect struct {
-	*PaymentOrderQuery
+// TenantConfigHistorySelect is the builder for selecting fields of TenantConfigHistory entities.
+type TenantConfigHistorySelect struct {
+	*TenantConfigHistoryQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *PaymentOrderSelect) Aggregate(fns ...AggregateFunc) *PaymentOrderSelect {
+func (_s *TenantConfigHistorySelect) Aggregate(fns ...AggregateFunc) *TenantConfigHistorySelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *PaymentOrderSelect) Scan(ctx context.Context, v any) error {
+func (_s *TenantConfigHistorySelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*PaymentOrderQuery, *PaymentOrderSelect](ctx, _s.PaymentOrderQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*TenantConfigHistoryQuery, *TenantConfigHistorySelect](ctx, _s.TenantConfigHistoryQuery, _s, _s.inters, v)
 }
 
-func (_s *PaymentOrderSelect) sqlScan(ctx context.Context, root *PaymentOrderQuery, v any) error {
+func (_s *TenantConfigHistorySelect) sqlScan(ctx context.Context, root *TenantConfigHistoryQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

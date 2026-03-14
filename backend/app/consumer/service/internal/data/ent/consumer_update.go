@@ -18,9 +18,8 @@ import (
 // ConsumerUpdate is the builder for updating Consumer entities.
 type ConsumerUpdate struct {
 	config
-	hooks     []Hook
-	mutation  *ConsumerMutation
-	modifiers []func(*sql.UpdateBuilder)
+	hooks    []Hook
+	mutation *ConsumerMutation
 }
 
 // Where appends a list predicates to the ConsumerUpdate builder.
@@ -506,12 +505,6 @@ func (_u *ConsumerUpdate) check() error {
 	return nil
 }
 
-// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *ConsumerUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ConsumerUpdate {
-	_u.modifiers = append(_u.modifiers, modifiers...)
-	return _u
-}
-
 func (_u *ConsumerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -644,7 +637,6 @@ func (_u *ConsumerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.DeactivatedAtCleared() {
 		_spec.ClearField(consumer.FieldDeactivatedAt, field.TypeTime)
 	}
-	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{consumer.Label}
@@ -660,10 +652,9 @@ func (_u *ConsumerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 // ConsumerUpdateOne is the builder for updating a single Consumer entity.
 type ConsumerUpdateOne struct {
 	config
-	fields    []string
-	hooks     []Hook
-	mutation  *ConsumerMutation
-	modifiers []func(*sql.UpdateBuilder)
+	fields   []string
+	hooks    []Hook
+	mutation *ConsumerMutation
 }
 
 // SetCreatedBy sets the "created_by" field.
@@ -1156,12 +1147,6 @@ func (_u *ConsumerUpdateOne) check() error {
 	return nil
 }
 
-// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *ConsumerUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *ConsumerUpdateOne {
-	_u.modifiers = append(_u.modifiers, modifiers...)
-	return _u
-}
-
 func (_u *ConsumerUpdateOne) sqlSave(ctx context.Context) (_node *Consumer, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -1311,7 +1296,6 @@ func (_u *ConsumerUpdateOne) sqlSave(ctx context.Context) (_node *Consumer, err 
 	if _u.mutation.DeactivatedAtCleared() {
 		_spec.ClearField(consumer.FieldDeactivatedAt, field.TypeTime)
 	}
-	_spec.AddModifiers(_u.modifiers...)
 	_node = &Consumer{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

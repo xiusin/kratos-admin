@@ -15,6 +15,8 @@ import (
 	"go-wind-admin/app/consumer/service/internal/data/ent/mediafile"
 	"go-wind-admin/app/consumer/service/internal/data/ent/paymentorder"
 	"go-wind-admin/app/consumer/service/internal/data/ent/smslog"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfig"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfighistory"
 	"reflect"
 	"sync"
 
@@ -81,15 +83,17 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			consumer.Table:           consumer.ValidColumn,
-			financeaccount.Table:     financeaccount.ValidColumn,
-			financetransaction.Table: financetransaction.ValidColumn,
-			freighttemplate.Table:    freighttemplate.ValidColumn,
-			loginlog.Table:           loginlog.ValidColumn,
-			logisticstracking.Table:  logisticstracking.ValidColumn,
-			mediafile.Table:          mediafile.ValidColumn,
-			paymentorder.Table:       paymentorder.ValidColumn,
-			smslog.Table:             smslog.ValidColumn,
+			consumer.Table:            consumer.ValidColumn,
+			financeaccount.Table:      financeaccount.ValidColumn,
+			financetransaction.Table:  financetransaction.ValidColumn,
+			freighttemplate.Table:     freighttemplate.ValidColumn,
+			loginlog.Table:            loginlog.ValidColumn,
+			logisticstracking.Table:   logisticstracking.ValidColumn,
+			mediafile.Table:           mediafile.ValidColumn,
+			paymentorder.Table:        paymentorder.ValidColumn,
+			smslog.Table:              smslog.ValidColumn,
+			tenantconfig.Table:        tenantconfig.ValidColumn,
+			tenantconfighistory.Table: tenantconfighistory.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

@@ -98,14 +98,24 @@ func (c *TencentClient) Send(ctx context.Context, phone string, templateCode str
 	// 检查发送状态
 	status := response.Response.SendStatusSet[0]
 	if status.Code == nil || *status.Code != "Ok" {
-		c.logger.Errorf("sms send failed: code=%s, message=%s",
-			common.StringValue(status.Code),
-			common.StringValue(status.Message))
-		return fmt.Errorf("sms send failed: %s", common.StringValue(status.Message))
+		code := ""
+		if status.Code != nil {
+			code = *status.Code
+		}
+		message := ""
+		if status.Message != nil {
+			message = *status.Message
+		}
+		c.logger.Errorf("sms send failed: code=%s, message=%s", code, message)
+		return fmt.Errorf("sms send failed: %s", message)
 	}
 
+	requestID := ""
+	if response.Response.RequestId != nil {
+		requestID = *response.Response.RequestId
+	}
 	c.logger.Infof("sms sent successfully: phone=%s, template=%s, request_id=%s",
-		phone, templateCode, common.StringValue(response.Response.RequestId))
+		phone, templateCode, requestID)
 
 	return nil
 }

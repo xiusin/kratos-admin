@@ -17,9 +17,8 @@ import (
 // FinanceTransactionUpdate is the builder for updating FinanceTransaction entities.
 type FinanceTransactionUpdate struct {
 	config
-	hooks     []Hook
-	mutation  *FinanceTransactionMutation
-	modifiers []func(*sql.UpdateBuilder)
+	hooks    []Hook
+	mutation *FinanceTransactionMutation
 }
 
 // Where appends a list predicates to the FinanceTransactionUpdate builder.
@@ -258,12 +257,6 @@ func (_u *FinanceTransactionUpdate) check() error {
 	return nil
 }
 
-// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *FinanceTransactionUpdate) Modify(modifiers ...func(u *sql.UpdateBuilder)) *FinanceTransactionUpdate {
-	_u.modifiers = append(_u.modifiers, modifiers...)
-	return _u
-}
-
 func (_u *FinanceTransactionUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -324,7 +317,6 @@ func (_u *FinanceTransactionUpdate) sqlSave(ctx context.Context) (_node int, err
 	if _u.mutation.OperatorIDCleared() {
 		_spec.ClearField(financetransaction.FieldOperatorID, field.TypeUint32)
 	}
-	_spec.AddModifiers(_u.modifiers...)
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{financetransaction.Label}
@@ -340,10 +332,9 @@ func (_u *FinanceTransactionUpdate) sqlSave(ctx context.Context) (_node int, err
 // FinanceTransactionUpdateOne is the builder for updating a single FinanceTransaction entity.
 type FinanceTransactionUpdateOne struct {
 	config
-	fields    []string
-	hooks     []Hook
-	mutation  *FinanceTransactionMutation
-	modifiers []func(*sql.UpdateBuilder)
+	fields   []string
+	hooks    []Hook
+	mutation *FinanceTransactionMutation
 }
 
 // SetConsumerID sets the "consumer_id" field.
@@ -589,12 +580,6 @@ func (_u *FinanceTransactionUpdateOne) check() error {
 	return nil
 }
 
-// Modify adds a statement modifier for attaching custom logic to the UPDATE statement.
-func (_u *FinanceTransactionUpdateOne) Modify(modifiers ...func(u *sql.UpdateBuilder)) *FinanceTransactionUpdateOne {
-	_u.modifiers = append(_u.modifiers, modifiers...)
-	return _u
-}
-
 func (_u *FinanceTransactionUpdateOne) sqlSave(ctx context.Context) (_node *FinanceTransaction, err error) {
 	if err := _u.check(); err != nil {
 		return _node, err
@@ -672,7 +657,6 @@ func (_u *FinanceTransactionUpdateOne) sqlSave(ctx context.Context) (_node *Fina
 	if _u.mutation.OperatorIDCleared() {
 		_spec.ClearField(financetransaction.FieldOperatorID, field.TypeUint32)
 	}
-	_spec.AddModifiers(_u.modifiers...)
 	_node = &FinanceTransaction{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues

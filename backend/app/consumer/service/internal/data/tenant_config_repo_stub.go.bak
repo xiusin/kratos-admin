@@ -1,0 +1,80 @@
+package data
+
+import (
+"context"
+
+"github.com/go-kratos/kratos/v2/log"
+"github.com/tx7do/kratos-bootstrap/bootstrap"
+
+paginationV1 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
+consumerV1 "go-wind-admin/api/gen/go/consumer/service/v1"
+)
+
+// TenantConfigRepo 租户配置数据访问接口
+type TenantConfigRepo interface {
+Create(ctx context.Context, data *consumerV1.TenantConfig) (*consumerV1.TenantConfig, error)
+Get(ctx context.Context, id uint32) (*consumerV1.TenantConfig, error)
+GetByKey(ctx context.Context, tenantID uint32, key string) (*consumerV1.TenantConfig, error)
+Update(ctx context.Context, id uint32, data *consumerV1.TenantConfig) error
+Delete(ctx context.Context, id uint32) error
+List(ctx context.Context, req *paginationV1.PagingRequest) (*consumerV1.ListTenantConfigsResponse, error)
+ListByCategory(ctx context.Context, tenantID uint32, category string) ([]*consumerV1.TenantConfig, error)
+CreateHistory(ctx context.Context, data *consumerV1.TenantConfigHistory) error
+ListHistory(ctx context.Context, tenantID uint32, configID uint32, req *paginationV1.PagingRequest) (*consumerV1.ListTenantConfigHistoriesResponse, error)
+}
+
+type tenantConfigRepoStub struct {
+log *log.Helper
+}
+
+// NewTenantConfigRepo 创建租户配置数据访问实例
+func NewTenantConfigRepo(ctx *bootstrap.Context, _ interface{}) TenantConfigRepo {
+return &tenantConfigRepoStub{
+log: ctx.NewLoggerHelper("consumer/repo/tenant-config-stub"),
+}
+}
+
+func (r *tenantConfigRepoStub) Create(ctx context.Context, data *consumerV1.TenantConfig) (*consumerV1.TenantConfig, error) {
+r.log.Warn("Using stub implementation")
+return nil, consumerV1.ErrorUnimplemented("not implemented")
+}
+
+func (r *tenantConfigRepoStub) Get(ctx context.Context, id uint32) (*consumerV1.TenantConfig, error) {
+r.log.Warn("Using stub implementation")
+return nil, consumerV1.ErrorUnimplemented("not implemented")
+}
+
+func (r *tenantConfigRepoStub) GetByKey(ctx context.Context, tenantID uint32, key string) (*consumerV1.TenantConfig, error) {
+r.log.Warn("Using stub implementation")
+return nil, consumerV1.ErrorUnimplemented("not implemented")
+}
+
+func (r *tenantConfigRepoStub) Update(ctx context.Context, id uint32, data *consumerV1.TenantConfig) error {
+r.log.Warn("Using stub implementation")
+return consumerV1.ErrorUnimplemented("not implemented")
+}
+
+func (r *tenantConfigRepoStub) Delete(ctx context.Context, id uint32) error {
+r.log.Warn("Using stub implementation")
+return consumerV1.ErrorUnimplemented("not implemented")
+}
+
+func (r *tenantConfigRepoStub) List(ctx context.Context, req *paginationV1.PagingRequest) (*consumerV1.ListTenantConfigsResponse, error) {
+r.log.Warn("Using stub implementation")
+return nil, consumerV1.ErrorUnimplemented("not implemented")
+}
+
+func (r *tenantConfigRepoStub) ListByCategory(ctx context.Context, tenantID uint32, category string) ([]*consumerV1.TenantConfig, error) {
+r.log.Warn("Using stub implementation")
+return nil, consumerV1.ErrorUnimplemented("not implemented")
+}
+
+func (r *tenantConfigRepoStub) CreateHistory(ctx context.Context, data *consumerV1.TenantConfigHistory) error {
+r.log.Warn("Using stub implementation")
+return consumerV1.ErrorUnimplemented("not implemented")
+}
+
+func (r *tenantConfigRepoStub) ListHistory(ctx context.Context, tenantID uint32, configID uint32, req *paginationV1.PagingRequest) (*consumerV1.ListTenantConfigHistoriesResponse, error) {
+r.log.Warn("Using stub implementation")
+return nil, consumerV1.ErrorUnimplemented("not implemented")
+}

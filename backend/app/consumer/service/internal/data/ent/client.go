@@ -20,6 +20,8 @@ import (
 	"go-wind-admin/app/consumer/service/internal/data/ent/mediafile"
 	"go-wind-admin/app/consumer/service/internal/data/ent/paymentorder"
 	"go-wind-admin/app/consumer/service/internal/data/ent/smslog"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfig"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfighistory"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -49,6 +51,10 @@ type Client struct {
 	PaymentOrder *PaymentOrderClient
 	// SMSLog is the client for interacting with the SMSLog builders.
 	SMSLog *SMSLogClient
+	// TenantConfig is the client for interacting with the TenantConfig builders.
+	TenantConfig *TenantConfigClient
+	// TenantConfigHistory is the client for interacting with the TenantConfigHistory builders.
+	TenantConfigHistory *TenantConfigHistoryClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -69,6 +75,8 @@ func (c *Client) init() {
 	c.MediaFile = NewMediaFileClient(c.config)
 	c.PaymentOrder = NewPaymentOrderClient(c.config)
 	c.SMSLog = NewSMSLogClient(c.config)
+	c.TenantConfig = NewTenantConfigClient(c.config)
+	c.TenantConfigHistory = NewTenantConfigHistoryClient(c.config)
 }
 
 type (
@@ -159,17 +167,19 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		Consumer:           NewConsumerClient(cfg),
-		FinanceAccount:     NewFinanceAccountClient(cfg),
-		FinanceTransaction: NewFinanceTransactionClient(cfg),
-		FreightTemplate:    NewFreightTemplateClient(cfg),
-		LoginLog:           NewLoginLogClient(cfg),
-		LogisticsTracking:  NewLogisticsTrackingClient(cfg),
-		MediaFile:          NewMediaFileClient(cfg),
-		PaymentOrder:       NewPaymentOrderClient(cfg),
-		SMSLog:             NewSMSLogClient(cfg),
+		ctx:                 ctx,
+		config:              cfg,
+		Consumer:            NewConsumerClient(cfg),
+		FinanceAccount:      NewFinanceAccountClient(cfg),
+		FinanceTransaction:  NewFinanceTransactionClient(cfg),
+		FreightTemplate:     NewFreightTemplateClient(cfg),
+		LoginLog:            NewLoginLogClient(cfg),
+		LogisticsTracking:   NewLogisticsTrackingClient(cfg),
+		MediaFile:           NewMediaFileClient(cfg),
+		PaymentOrder:        NewPaymentOrderClient(cfg),
+		SMSLog:              NewSMSLogClient(cfg),
+		TenantConfig:        NewTenantConfigClient(cfg),
+		TenantConfigHistory: NewTenantConfigHistoryClient(cfg),
 	}, nil
 }
 
@@ -187,17 +197,19 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		Consumer:           NewConsumerClient(cfg),
-		FinanceAccount:     NewFinanceAccountClient(cfg),
-		FinanceTransaction: NewFinanceTransactionClient(cfg),
-		FreightTemplate:    NewFreightTemplateClient(cfg),
-		LoginLog:           NewLoginLogClient(cfg),
-		LogisticsTracking:  NewLogisticsTrackingClient(cfg),
-		MediaFile:          NewMediaFileClient(cfg),
-		PaymentOrder:       NewPaymentOrderClient(cfg),
-		SMSLog:             NewSMSLogClient(cfg),
+		ctx:                 ctx,
+		config:              cfg,
+		Consumer:            NewConsumerClient(cfg),
+		FinanceAccount:      NewFinanceAccountClient(cfg),
+		FinanceTransaction:  NewFinanceTransactionClient(cfg),
+		FreightTemplate:     NewFreightTemplateClient(cfg),
+		LoginLog:            NewLoginLogClient(cfg),
+		LogisticsTracking:   NewLogisticsTrackingClient(cfg),
+		MediaFile:           NewMediaFileClient(cfg),
+		PaymentOrder:        NewPaymentOrderClient(cfg),
+		SMSLog:              NewSMSLogClient(cfg),
+		TenantConfig:        NewTenantConfigClient(cfg),
+		TenantConfigHistory: NewTenantConfigHistoryClient(cfg),
 	}, nil
 }
 
@@ -229,6 +241,7 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.Consumer, c.FinanceAccount, c.FinanceTransaction, c.FreightTemplate,
 		c.LoginLog, c.LogisticsTracking, c.MediaFile, c.PaymentOrder, c.SMSLog,
+		c.TenantConfig, c.TenantConfigHistory,
 	} {
 		n.Use(hooks...)
 	}
@@ -240,6 +253,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.Consumer, c.FinanceAccount, c.FinanceTransaction, c.FreightTemplate,
 		c.LoginLog, c.LogisticsTracking, c.MediaFile, c.PaymentOrder, c.SMSLog,
+		c.TenantConfig, c.TenantConfigHistory,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -266,6 +280,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.PaymentOrder.mutate(ctx, m)
 	case *SMSLogMutation:
 		return c.SMSLog.mutate(ctx, m)
+	case *TenantConfigMutation:
+		return c.TenantConfig.mutate(ctx, m)
+	case *TenantConfigHistoryMutation:
+		return c.TenantConfigHistory.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -1477,14 +1495,284 @@ func (c *SMSLogClient) mutate(ctx context.Context, m *SMSLogMutation) (Value, er
 	}
 }
 
+// TenantConfigClient is a client for the TenantConfig schema.
+type TenantConfigClient struct {
+	config
+}
+
+// NewTenantConfigClient returns a client for the TenantConfig from the given config.
+func NewTenantConfigClient(c config) *TenantConfigClient {
+	return &TenantConfigClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tenantconfig.Hooks(f(g(h())))`.
+func (c *TenantConfigClient) Use(hooks ...Hook) {
+	c.hooks.TenantConfig = append(c.hooks.TenantConfig, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tenantconfig.Intercept(f(g(h())))`.
+func (c *TenantConfigClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TenantConfig = append(c.inters.TenantConfig, interceptors...)
+}
+
+// Create returns a builder for creating a TenantConfig entity.
+func (c *TenantConfigClient) Create() *TenantConfigCreate {
+	mutation := newTenantConfigMutation(c.config, OpCreate)
+	return &TenantConfigCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TenantConfig entities.
+func (c *TenantConfigClient) CreateBulk(builders ...*TenantConfigCreate) *TenantConfigCreateBulk {
+	return &TenantConfigCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TenantConfigClient) MapCreateBulk(slice any, setFunc func(*TenantConfigCreate, int)) *TenantConfigCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TenantConfigCreateBulk{err: fmt.Errorf("calling to TenantConfigClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TenantConfigCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TenantConfigCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TenantConfig.
+func (c *TenantConfigClient) Update() *TenantConfigUpdate {
+	mutation := newTenantConfigMutation(c.config, OpUpdate)
+	return &TenantConfigUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TenantConfigClient) UpdateOne(_m *TenantConfig) *TenantConfigUpdateOne {
+	mutation := newTenantConfigMutation(c.config, OpUpdateOne, withTenantConfig(_m))
+	return &TenantConfigUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TenantConfigClient) UpdateOneID(id uint32) *TenantConfigUpdateOne {
+	mutation := newTenantConfigMutation(c.config, OpUpdateOne, withTenantConfigID(id))
+	return &TenantConfigUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TenantConfig.
+func (c *TenantConfigClient) Delete() *TenantConfigDelete {
+	mutation := newTenantConfigMutation(c.config, OpDelete)
+	return &TenantConfigDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TenantConfigClient) DeleteOne(_m *TenantConfig) *TenantConfigDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TenantConfigClient) DeleteOneID(id uint32) *TenantConfigDeleteOne {
+	builder := c.Delete().Where(tenantconfig.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TenantConfigDeleteOne{builder}
+}
+
+// Query returns a query builder for TenantConfig.
+func (c *TenantConfigClient) Query() *TenantConfigQuery {
+	return &TenantConfigQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTenantConfig},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TenantConfig entity by its id.
+func (c *TenantConfigClient) Get(ctx context.Context, id uint32) (*TenantConfig, error) {
+	return c.Query().Where(tenantconfig.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TenantConfigClient) GetX(ctx context.Context, id uint32) *TenantConfig {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TenantConfigClient) Hooks() []Hook {
+	hooks := c.hooks.TenantConfig
+	return append(hooks[:len(hooks):len(hooks)], tenantconfig.Hooks[:]...)
+}
+
+// Interceptors returns the client interceptors.
+func (c *TenantConfigClient) Interceptors() []Interceptor {
+	return c.inters.TenantConfig
+}
+
+func (c *TenantConfigClient) mutate(ctx context.Context, m *TenantConfigMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TenantConfigCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TenantConfigUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TenantConfigUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TenantConfigDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TenantConfig mutation op: %q", m.Op())
+	}
+}
+
+// TenantConfigHistoryClient is a client for the TenantConfigHistory schema.
+type TenantConfigHistoryClient struct {
+	config
+}
+
+// NewTenantConfigHistoryClient returns a client for the TenantConfigHistory from the given config.
+func NewTenantConfigHistoryClient(c config) *TenantConfigHistoryClient {
+	return &TenantConfigHistoryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tenantconfighistory.Hooks(f(g(h())))`.
+func (c *TenantConfigHistoryClient) Use(hooks ...Hook) {
+	c.hooks.TenantConfigHistory = append(c.hooks.TenantConfigHistory, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tenantconfighistory.Intercept(f(g(h())))`.
+func (c *TenantConfigHistoryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TenantConfigHistory = append(c.inters.TenantConfigHistory, interceptors...)
+}
+
+// Create returns a builder for creating a TenantConfigHistory entity.
+func (c *TenantConfigHistoryClient) Create() *TenantConfigHistoryCreate {
+	mutation := newTenantConfigHistoryMutation(c.config, OpCreate)
+	return &TenantConfigHistoryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TenantConfigHistory entities.
+func (c *TenantConfigHistoryClient) CreateBulk(builders ...*TenantConfigHistoryCreate) *TenantConfigHistoryCreateBulk {
+	return &TenantConfigHistoryCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TenantConfigHistoryClient) MapCreateBulk(slice any, setFunc func(*TenantConfigHistoryCreate, int)) *TenantConfigHistoryCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TenantConfigHistoryCreateBulk{err: fmt.Errorf("calling to TenantConfigHistoryClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TenantConfigHistoryCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TenantConfigHistoryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TenantConfigHistory.
+func (c *TenantConfigHistoryClient) Update() *TenantConfigHistoryUpdate {
+	mutation := newTenantConfigHistoryMutation(c.config, OpUpdate)
+	return &TenantConfigHistoryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TenantConfigHistoryClient) UpdateOne(_m *TenantConfigHistory) *TenantConfigHistoryUpdateOne {
+	mutation := newTenantConfigHistoryMutation(c.config, OpUpdateOne, withTenantConfigHistory(_m))
+	return &TenantConfigHistoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TenantConfigHistoryClient) UpdateOneID(id uint32) *TenantConfigHistoryUpdateOne {
+	mutation := newTenantConfigHistoryMutation(c.config, OpUpdateOne, withTenantConfigHistoryID(id))
+	return &TenantConfigHistoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TenantConfigHistory.
+func (c *TenantConfigHistoryClient) Delete() *TenantConfigHistoryDelete {
+	mutation := newTenantConfigHistoryMutation(c.config, OpDelete)
+	return &TenantConfigHistoryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TenantConfigHistoryClient) DeleteOne(_m *TenantConfigHistory) *TenantConfigHistoryDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TenantConfigHistoryClient) DeleteOneID(id uint32) *TenantConfigHistoryDeleteOne {
+	builder := c.Delete().Where(tenantconfighistory.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TenantConfigHistoryDeleteOne{builder}
+}
+
+// Query returns a query builder for TenantConfigHistory.
+func (c *TenantConfigHistoryClient) Query() *TenantConfigHistoryQuery {
+	return &TenantConfigHistoryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTenantConfigHistory},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TenantConfigHistory entity by its id.
+func (c *TenantConfigHistoryClient) Get(ctx context.Context, id uint32) (*TenantConfigHistory, error) {
+	return c.Query().Where(tenantconfighistory.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TenantConfigHistoryClient) GetX(ctx context.Context, id uint32) *TenantConfigHistory {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TenantConfigHistoryClient) Hooks() []Hook {
+	hooks := c.hooks.TenantConfigHistory
+	return append(hooks[:len(hooks):len(hooks)], tenantconfighistory.Hooks[:]...)
+}
+
+// Interceptors returns the client interceptors.
+func (c *TenantConfigHistoryClient) Interceptors() []Interceptor {
+	return c.inters.TenantConfigHistory
+}
+
+func (c *TenantConfigHistoryClient) mutate(ctx context.Context, m *TenantConfigHistoryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TenantConfigHistoryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TenantConfigHistoryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TenantConfigHistoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TenantConfigHistoryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TenantConfigHistory mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
 		Consumer, FinanceAccount, FinanceTransaction, FreightTemplate, LoginLog,
-		LogisticsTracking, MediaFile, PaymentOrder, SMSLog []ent.Hook
+		LogisticsTracking, MediaFile, PaymentOrder, SMSLog, TenantConfig,
+		TenantConfigHistory []ent.Hook
 	}
 	inters struct {
 		Consumer, FinanceAccount, FinanceTransaction, FreightTemplate, LoginLog,
-		LogisticsTracking, MediaFile, PaymentOrder, SMSLog []ent.Interceptor
+		LogisticsTracking, MediaFile, PaymentOrder, SMSLog, TenantConfig,
+		TenantConfigHistory []ent.Interceptor
 	}
 )

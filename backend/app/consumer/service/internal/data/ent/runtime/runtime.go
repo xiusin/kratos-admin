@@ -14,6 +14,8 @@ import (
 	"go-wind-admin/app/consumer/service/internal/data/ent/paymentorder"
 	"go-wind-admin/app/consumer/service/internal/data/ent/schema"
 	"go-wind-admin/app/consumer/service/internal/data/ent/smslog"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfig"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfighistory"
 
 	"entgo.io/ent"
 	"entgo.io/ent/privacy"
@@ -346,7 +348,7 @@ func init() {
 	// logisticstracking.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	logisticstracking.IDValidator = logisticstrackingDescID.Validators[0].(func(uint32) error)
 	mediafileMixin := schema.MediaFile{}.Mixin()
-	mediafile.Policy = privacy.NewPolicies(mediafileMixin[2], schema.MediaFile{})
+	mediafile.Policy = privacy.NewPolicies(mediafileMixin[3], schema.MediaFile{})
 	mediafile.Hooks[0] = func(next ent.Mutator) ent.Mutator {
 		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
 			if err := mediafile.Policy.EvalMutation(ctx, m); err != nil {
@@ -357,26 +359,68 @@ func init() {
 	}
 	mediafileMixinFields0 := mediafileMixin[0].Fields()
 	_ = mediafileMixinFields0
-	mediafileMixinFields2 := mediafileMixin[2].Fields()
-	_ = mediafileMixinFields2
+	mediafileMixinFields3 := mediafileMixin[3].Fields()
+	_ = mediafileMixinFields3
 	mediafileFields := schema.MediaFile{}.Fields()
 	_ = mediafileFields
 	// mediafileDescTenantID is the schema descriptor for tenant_id field.
-	mediafileDescTenantID := mediafileMixinFields2[0].Descriptor()
+	mediafileDescTenantID := mediafileMixinFields3[0].Descriptor()
 	// mediafile.DefaultTenantID holds the default value on creation for the tenant_id field.
 	mediafile.DefaultTenantID = mediafileDescTenantID.Default.(uint32)
 	// mediafileDescFileName is the schema descriptor for file_name field.
 	mediafileDescFileName := mediafileFields[1].Descriptor()
 	// mediafile.FileNameValidator is a validator for the "file_name" field. It is called by the builders before save.
-	mediafile.FileNameValidator = mediafileDescFileName.Validators[0].(func(string) error)
+	mediafile.FileNameValidator = func() func(string) error {
+		validators := mediafileDescFileName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(file_name string) error {
+			for _, fn := range fns {
+				if err := fn(file_name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// mediafileDescFileFormat is the schema descriptor for file_format field.
 	mediafileDescFileFormat := mediafileFields[3].Descriptor()
 	// mediafile.FileFormatValidator is a validator for the "file_format" field. It is called by the builders before save.
-	mediafile.FileFormatValidator = mediafileDescFileFormat.Validators[0].(func(string) error)
+	mediafile.FileFormatValidator = func() func(string) error {
+		validators := mediafileDescFileFormat.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(file_format string) error {
+			for _, fn := range fns {
+				if err := fn(file_format); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// mediafileDescFileURL is the schema descriptor for file_url field.
 	mediafileDescFileURL := mediafileFields[5].Descriptor()
 	// mediafile.FileURLValidator is a validator for the "file_url" field. It is called by the builders before save.
-	mediafile.FileURLValidator = mediafileDescFileURL.Validators[0].(func(string) error)
+	mediafile.FileURLValidator = func() func(string) error {
+		validators := mediafileDescFileURL.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(file_url string) error {
+			for _, fn := range fns {
+				if err := fn(file_url); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// mediafileDescThumbnailURL is the schema descriptor for thumbnail_url field.
 	mediafileDescThumbnailURL := mediafileFields[6].Descriptor()
 	// mediafile.ThumbnailURLValidator is a validator for the "thumbnail_url" field. It is called by the builders before save.
@@ -384,11 +428,39 @@ func init() {
 	// mediafileDescOssBucket is the schema descriptor for oss_bucket field.
 	mediafileDescOssBucket := mediafileFields[7].Descriptor()
 	// mediafile.OssBucketValidator is a validator for the "oss_bucket" field. It is called by the builders before save.
-	mediafile.OssBucketValidator = mediafileDescOssBucket.Validators[0].(func(string) error)
+	mediafile.OssBucketValidator = func() func(string) error {
+		validators := mediafileDescOssBucket.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(oss_bucket string) error {
+			for _, fn := range fns {
+				if err := fn(oss_bucket); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// mediafileDescOssKey is the schema descriptor for oss_key field.
 	mediafileDescOssKey := mediafileFields[8].Descriptor()
 	// mediafile.OssKeyValidator is a validator for the "oss_key" field. It is called by the builders before save.
-	mediafile.OssKeyValidator = mediafileDescOssKey.Validators[0].(func(string) error)
+	mediafile.OssKeyValidator = func() func(string) error {
+		validators := mediafileDescOssKey.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(oss_key string) error {
+			for _, fn := range fns {
+				if err := fn(oss_key); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// mediafileDescIsDeleted is the schema descriptor for is_deleted field.
 	mediafileDescIsDeleted := mediafileFields[9].Descriptor()
 	// mediafile.DefaultIsDeleted holds the default value on creation for the is_deleted field.
@@ -491,6 +563,136 @@ func init() {
 	smslogDescID := smslogMixinFields0[0].Descriptor()
 	// smslog.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	smslog.IDValidator = smslogDescID.Validators[0].(func(uint32) error)
+	tenantconfigMixin := schema.TenantConfig{}.Mixin()
+	tenantconfig.Policy = privacy.NewPolicies(tenantconfigMixin[3], schema.TenantConfig{})
+	tenantconfig.Hooks[0] = func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			if err := tenantconfig.Policy.EvalMutation(ctx, m); err != nil {
+				return nil, err
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
+	tenantconfigMixinFields0 := tenantconfigMixin[0].Fields()
+	_ = tenantconfigMixinFields0
+	tenantconfigMixinFields3 := tenantconfigMixin[3].Fields()
+	_ = tenantconfigMixinFields3
+	tenantconfigFields := schema.TenantConfig{}.Fields()
+	_ = tenantconfigFields
+	// tenantconfigDescTenantID is the schema descriptor for tenant_id field.
+	tenantconfigDescTenantID := tenantconfigMixinFields3[0].Descriptor()
+	// tenantconfig.DefaultTenantID holds the default value on creation for the tenant_id field.
+	tenantconfig.DefaultTenantID = tenantconfigDescTenantID.Default.(uint32)
+	// tenantconfigDescConfigKey is the schema descriptor for config_key field.
+	tenantconfigDescConfigKey := tenantconfigFields[0].Descriptor()
+	// tenantconfig.ConfigKeyValidator is a validator for the "config_key" field. It is called by the builders before save.
+	tenantconfig.ConfigKeyValidator = func() func(string) error {
+		validators := tenantconfigDescConfigKey.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(config_key string) error {
+			for _, fn := range fns {
+				if err := fn(config_key); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// tenantconfigDescConfigValue is the schema descriptor for config_value field.
+	tenantconfigDescConfigValue := tenantconfigFields[1].Descriptor()
+	// tenantconfig.ConfigValueValidator is a validator for the "config_value" field. It is called by the builders before save.
+	tenantconfig.ConfigValueValidator = tenantconfigDescConfigValue.Validators[0].(func(string) error)
+	// tenantconfigDescConfigType is the schema descriptor for config_type field.
+	tenantconfigDescConfigType := tenantconfigFields[2].Descriptor()
+	// tenantconfig.DefaultConfigType holds the default value on creation for the config_type field.
+	tenantconfig.DefaultConfigType = tenantconfigDescConfigType.Default.(string)
+	// tenantconfig.ConfigTypeValidator is a validator for the "config_type" field. It is called by the builders before save.
+	tenantconfig.ConfigTypeValidator = tenantconfigDescConfigType.Validators[0].(func(string) error)
+	// tenantconfigDescDescription is the schema descriptor for description field.
+	tenantconfigDescDescription := tenantconfigFields[3].Descriptor()
+	// tenantconfig.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	tenantconfig.DescriptionValidator = tenantconfigDescDescription.Validators[0].(func(string) error)
+	// tenantconfigDescCategory is the schema descriptor for category field.
+	tenantconfigDescCategory := tenantconfigFields[4].Descriptor()
+	// tenantconfig.CategoryValidator is a validator for the "category" field. It is called by the builders before save.
+	tenantconfig.CategoryValidator = tenantconfigDescCategory.Validators[0].(func(string) error)
+	// tenantconfigDescIsEncrypted is the schema descriptor for is_encrypted field.
+	tenantconfigDescIsEncrypted := tenantconfigFields[5].Descriptor()
+	// tenantconfig.DefaultIsEncrypted holds the default value on creation for the is_encrypted field.
+	tenantconfig.DefaultIsEncrypted = tenantconfigDescIsEncrypted.Default.(bool)
+	// tenantconfigDescIsActive is the schema descriptor for is_active field.
+	tenantconfigDescIsActive := tenantconfigFields[6].Descriptor()
+	// tenantconfig.DefaultIsActive holds the default value on creation for the is_active field.
+	tenantconfig.DefaultIsActive = tenantconfigDescIsActive.Default.(bool)
+	// tenantconfigDescValidationRule is the schema descriptor for validation_rule field.
+	tenantconfigDescValidationRule := tenantconfigFields[7].Descriptor()
+	// tenantconfig.ValidationRuleValidator is a validator for the "validation_rule" field. It is called by the builders before save.
+	tenantconfig.ValidationRuleValidator = tenantconfigDescValidationRule.Validators[0].(func(string) error)
+	// tenantconfigDescID is the schema descriptor for id field.
+	tenantconfigDescID := tenantconfigMixinFields0[0].Descriptor()
+	// tenantconfig.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	tenantconfig.IDValidator = tenantconfigDescID.Validators[0].(func(uint32) error)
+	tenantconfighistoryMixin := schema.TenantConfigHistory{}.Mixin()
+	tenantconfighistory.Policy = privacy.NewPolicies(tenantconfighistoryMixin[2], schema.TenantConfigHistory{})
+	tenantconfighistory.Hooks[0] = func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			if err := tenantconfighistory.Policy.EvalMutation(ctx, m); err != nil {
+				return nil, err
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
+	tenantconfighistoryMixinFields0 := tenantconfighistoryMixin[0].Fields()
+	_ = tenantconfighistoryMixinFields0
+	tenantconfighistoryMixinFields2 := tenantconfighistoryMixin[2].Fields()
+	_ = tenantconfighistoryMixinFields2
+	tenantconfighistoryFields := schema.TenantConfigHistory{}.Fields()
+	_ = tenantconfighistoryFields
+	// tenantconfighistoryDescTenantID is the schema descriptor for tenant_id field.
+	tenantconfighistoryDescTenantID := tenantconfighistoryMixinFields2[0].Descriptor()
+	// tenantconfighistory.DefaultTenantID holds the default value on creation for the tenant_id field.
+	tenantconfighistory.DefaultTenantID = tenantconfighistoryDescTenantID.Default.(uint32)
+	// tenantconfighistoryDescConfigKey is the schema descriptor for config_key field.
+	tenantconfighistoryDescConfigKey := tenantconfighistoryFields[1].Descriptor()
+	// tenantconfighistory.ConfigKeyValidator is a validator for the "config_key" field. It is called by the builders before save.
+	tenantconfighistory.ConfigKeyValidator = func() func(string) error {
+		validators := tenantconfighistoryDescConfigKey.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(config_key string) error {
+			for _, fn := range fns {
+				if err := fn(config_key); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// tenantconfighistoryDescOldValue is the schema descriptor for old_value field.
+	tenantconfighistoryDescOldValue := tenantconfighistoryFields[2].Descriptor()
+	// tenantconfighistory.OldValueValidator is a validator for the "old_value" field. It is called by the builders before save.
+	tenantconfighistory.OldValueValidator = tenantconfighistoryDescOldValue.Validators[0].(func(string) error)
+	// tenantconfighistoryDescNewValue is the schema descriptor for new_value field.
+	tenantconfighistoryDescNewValue := tenantconfighistoryFields[3].Descriptor()
+	// tenantconfighistory.NewValueValidator is a validator for the "new_value" field. It is called by the builders before save.
+	tenantconfighistory.NewValueValidator = tenantconfighistoryDescNewValue.Validators[0].(func(string) error)
+	// tenantconfighistoryDescChangeReason is the schema descriptor for change_reason field.
+	tenantconfighistoryDescChangeReason := tenantconfighistoryFields[5].Descriptor()
+	// tenantconfighistory.ChangeReasonValidator is a validator for the "change_reason" field. It is called by the builders before save.
+	tenantconfighistory.ChangeReasonValidator = tenantconfighistoryDescChangeReason.Validators[0].(func(string) error)
+	// tenantconfighistoryDescChangedByName is the schema descriptor for changed_by_name field.
+	tenantconfighistoryDescChangedByName := tenantconfighistoryFields[7].Descriptor()
+	// tenantconfighistory.ChangedByNameValidator is a validator for the "changed_by_name" field. It is called by the builders before save.
+	tenantconfighistory.ChangedByNameValidator = tenantconfighistoryDescChangedByName.Validators[0].(func(string) error)
+	// tenantconfighistoryDescID is the schema descriptor for id field.
+	tenantconfighistoryDescID := tenantconfighistoryMixinFields0[0].Descriptor()
+	// tenantconfighistory.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	tenantconfighistory.IDValidator = tenantconfighistoryDescID.Validators[0].(func(uint32) error)
 }
 
 const (
