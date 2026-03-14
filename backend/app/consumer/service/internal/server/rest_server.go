@@ -58,6 +58,7 @@ func NewRestServer(
 	wechatService *service.WechatService,
 	mediaService *service.MediaService,
 	logisticsService *service.LogisticsService,
+	freightService *service.FreightService,
 ) (*khttp.Server, error) {
 	cfg := ctx.GetConfig()
 
@@ -81,6 +82,7 @@ func NewRestServer(
 	consumerV1.RegisterWechatServiceHTTPServer(srv, wechatService)
 	consumerV1.RegisterMediaServiceHTTPServer(srv, mediaService)
 	consumerV1.RegisterLogisticsServiceHTTPServer(srv, logisticsService)
+	consumerV1.RegisterFreightServiceHTTPServer(srv, freightService)
 
 	return srv, nil
 }

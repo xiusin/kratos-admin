@@ -26,5 +26,5 @@ var ProviderSet = wire.NewSet(
 	service.NewWechatService,
 	service.NewMediaService,
 	service.NewLogisticsService,
-	// service.NewFreightService,
+	service.NewFreightService,
 )

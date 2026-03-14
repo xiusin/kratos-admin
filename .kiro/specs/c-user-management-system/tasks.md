@@ -567,8 +567,8 @@
     - **Property 42: 物流状态变更事件**
     - **Validates: Requirements 8.8, 11.5**
 
-- [ ] 14. Freight Service实现(运费计算服务)
-  - [ ] 14.1 实现FreightTemplateRepo数据层
+- [x] 14. Freight Service实现(运费计算服务)
+  - [x] 14.1 实现FreightTemplateRepo数据层
     - 实现Create方法(创建运费模板)
     - 实现Get方法(查询运费模板)
     - 实现Update方法(更新运费模板)
@@ -576,7 +576,7 @@
     - 实现多租户过滤
     - _Requirements: 9.5_
 
-  - [ ] 14.2 实现FreightService服务层 - 运费计算
+  - [x] 14.2 实现FreightService服务层 - 运费计算
     - 实现CalculateFreight方法(计算运费)
     - 实现按重量计算(首重+续重阶梯定价)
     - 实现按距离计算(根据省市区计算距离)
@@ -585,7 +585,7 @@
     - 实现运费精度保证(decimal类型)
     - _Requirements: 9.1-9.4, 9.6-9.10_
 
-  - [ ] 14.3 实现FreightService服务层 - 模板管理
+  - [x] 14.3 实现FreightService服务层 - 模板管理
     - 实现CreateFreightTemplate方法(创建运费模板)
     - 实现UpdateFreightTemplate方法(更新运费模板)
     - 实现GetFreightTemplate方法(查询运费模板)
