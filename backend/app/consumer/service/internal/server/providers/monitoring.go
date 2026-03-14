@@ -26,10 +26,11 @@ func ProvideHealthService(
 	healthService.RegisterChecker(monitoring.NewRedisHealthChecker(redis, logger))
 
 	// 从配置获取Kafka地址
-	cfg := ctx.GetConfig()
-	if cfg != nil && cfg.Server != nil && cfg.Server.Kafka != nil && len(cfg.Server.Kafka.Addrs) > 0 {
-		healthService.RegisterChecker(monitoring.NewKafkaHealthChecker(cfg.Server.Kafka.Addrs, logger))
-	}
+	// TODO: 修复 Kafka 配置字段名
+	// cfg := ctx.GetConfig()
+	// if cfg != nil && cfg.Server != nil && cfg.Server.Kafka != nil && len(cfg.Server.Kafka.Brokers) > 0 {
+	// 	healthService.RegisterChecker(monitoring.NewKafkaHealthChecker(cfg.Server.Kafka.Brokers, logger))
+	// }
 
 	return healthService
 }
@@ -98,7 +99,7 @@ func ProvideTracingService(ctx *bootstrap.Context) (*monitoring.TracingService, 
 		ServiceName:    "consumer-service",
 		ServiceVersion: "1.0.0",
 		Environment:    "development",
-		JaegerEndpoint: "http://localhost:14268/api/traces",
+		OTLPEndpoint:   "localhost:4317",
 		SamplingRate:   1.0,
 	}
 

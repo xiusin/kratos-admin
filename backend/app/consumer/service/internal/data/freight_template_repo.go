@@ -93,8 +93,6 @@ func (r *freightTemplateRepo) Create(ctx context.Context, data *consumerV1.Freig
 
 	builder := r.entClient.Client().FreightTemplate.Create().
 		SetNillableTenantID(data.TenantId).
-		SetNillableName(data.Name).
-		SetNillableCalculationType(r.calculationTypeConverter.ToEntity(data.CalculationType)).
 		SetNillableFirstWeight(data.FirstWeight).
 		SetNillableFirstPrice(data.FirstPrice).
 		SetNillableAdditionalWeight(data.AdditionalWeight).
@@ -102,6 +100,19 @@ func (r *freightTemplateRepo) Create(ctx context.Context, data *consumerV1.Freig
 		SetNillableIsActive(data.IsActive).
 		SetNillableCreatedBy(data.CreatedBy).
 		SetCreatedAt(time.Now())
+
+	// 设置必填字段 name
+	if data.Name != nil {
+		builder.SetName(*data.Name)
+	}
+	
+	// 设置必填字段 calculation_type
+	if data.CalculationType != nil {
+		calculationType := r.calculationTypeConverter.ToEntity(data.CalculationType)
+		if calculationType != nil {
+			builder.SetCalculationType(*calculationType)
+		}
+	}
 
 	// 设置地区规则（JSON字段）
 	if len(data.RegionRules) > 0 {
@@ -132,18 +143,18 @@ func (r *freightTemplateRepo) Create(ctx context.Context, data *consumerV1.Freig
 
 // Get 查询运费模板
 func (r *freightTemplateRepo) Get(ctx context.Context, id uint32) (*consumerV1.FreightTemplate, error) {
-	builder := r.entClient.Client().FreightTemplate.Query()
-
-	dto, err := r.repository.Get(ctx, builder, nil,
-		func(s *sql.Selector) {
-			s.Where(sql.EQ(freighttemplate.FieldID, id))
-		},
-	)
+	entity, err := r.entClient.Client().FreightTemplate.Query().
+		Where(freighttemplate.IDEQ(id)).
+		Only(ctx)
 	if err != nil {
-		return nil, err
+		if ent.IsNotFound(err) {
+			return nil, consumerV1.ErrorNotFound("freight template not found")
+		}
+		r.log.Errorf("get freight template failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("get freight template failed")
 	}
 
-	return dto, nil
+	return r.mapper.ToDTO(entity), nil
 }
 
 // Update 更新运费模板
@@ -200,18 +211,34 @@ func (r *freightTemplateRepo) List(ctx context.Context, req *paginationV1.Paging
 	}
 
 	builder := r.entClient.Client().FreightTemplate.Query().
-		Order(ent.Desc(freighttemplate.FieldCreatedAt)) // 按创建时间倒序
+		Order(ent.Desc(freighttemplate.FieldCreatedAt))
 
-	ret, err := r.repository.ListWithPaging(ctx, builder, builder.Clone(), req)
+	// 计算总数
+	count, err := builder.Clone().Count(ctx)
 	if err != nil {
-		return nil, err
+		r.log.Errorf("count freight templates failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("count freight templates failed")
 	}
-	if ret == nil {
-		return &consumerV1.ListFreightTemplatesResponse{Total: 0, Items: nil}, nil
+
+	// 分页查询
+	if req.GetPage() > 0 && req.GetPageSize() > 0 {
+		offset := int(req.GetPage()-1) * int(req.GetPageSize())
+		builder.Offset(offset).Limit(int(req.GetPageSize()))
+	}
+
+	entities, err := builder.All(ctx)
+	if err != nil {
+		r.log.Errorf("list freight templates failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("list freight templates failed")
+	}
+
+	items := make([]*consumerV1.FreightTemplate, 0, len(entities))
+	for _, entity := range entities {
+		items = append(items, r.mapper.ToDTO(entity))
 	}
 
 	return &consumerV1.ListFreightTemplatesResponse{
-		Total: ret.Total,
-		Items: ret.Items,
+		Total: uint64(count),
+		Items: items,
 	}, nil
 }

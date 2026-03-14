@@ -106,7 +106,10 @@ func (r *financeTransactionRepo) Create(ctx context.Context, data *consumerV1.Fi
 		builder.SetTransactionNo(*data.TransactionNo)
 	}
 	if data.TransactionType != nil {
-		builder.SetTransactionType(r.transactionTypeConverter.ToEntity(data.TransactionType))
+		transactionType := r.transactionTypeConverter.ToEntity(data.TransactionType)
+		if transactionType != nil {
+			builder.SetTransactionType(*transactionType)
+		}
 	}
 	if data.Amount != nil {
 		builder.SetAmount(*data.Amount)
@@ -147,11 +150,6 @@ func (r *financeTransactionRepo) List(ctx context.Context, req *consumerV1.ListT
 	// 应用筛选条件
 	predicates := []predicate.FinanceTransaction{}
 
-	// 租户ID筛选
-	if req.TenantId != nil {
-		predicates = append(predicates, financetransaction.TenantIDEQ(*req.TenantId))
-	}
-
 	// 用户ID筛选
 	if req.ConsumerId != nil {
 		predicates = append(predicates, financetransaction.ConsumerIDEQ(*req.ConsumerId))
@@ -159,7 +157,10 @@ func (r *financeTransactionRepo) List(ctx context.Context, req *consumerV1.ListT
 
 	// 交易类型筛选
 	if req.TransactionType != nil {
-		predicates = append(predicates, financetransaction.TransactionTypeEQ(r.transactionTypeConverter.ToEntity(req.TransactionType)))
+		transactionType := r.transactionTypeConverter.ToEntity(req.TransactionType)
+		if transactionType != nil {
+			predicates = append(predicates, financetransaction.TransactionTypeEQ(*transactionType))
+		}
 	}
 
 	// 时间范围筛选
@@ -177,23 +178,42 @@ func (r *financeTransactionRepo) List(ctx context.Context, req *consumerV1.ListT
 	// 按创建时间倒序排列
 	builder = builder.Order(ent.Desc(financetransaction.FieldCreatedAt))
 
-	// 分页查询
-	pagingReq := &paginationV1.PagingRequest{
-		Page:     req.Page,
-		PageSize: req.PageSize,
+	// 计算总数
+	total, err := builder.Clone().Count(ctx)
+	if err != nil {
+		r.log.Errorf("count transactions failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("count transactions failed")
 	}
 
-	ret, err := r.repository.ListWithPaging(ctx, builder, builder.Clone(), pagingReq)
-	if err != nil {
-		return nil, err
+	// 分页查询
+	var offset, limit int
+	if req.Page != nil && req.PageSize != nil {
+		offset = int((*req.Page - 1) * *req.PageSize)
+		limit = int(*req.PageSize)
+	} else {
+		offset = 0
+		limit = 20 // 默认每页20条
 	}
-	if ret == nil {
-		return &consumerV1.ListTransactionsResponse{Total: 0, Items: nil}, nil
+
+	entities, err := builder.
+		Offset(offset).
+		Limit(limit).
+		All(ctx)
+
+	if err != nil {
+		r.log.Errorf("list transactions failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("list transactions failed")
+	}
+
+	// 转换为 DTO
+	items := make([]*consumerV1.FinanceTransaction, 0, len(entities))
+	for _, entity := range entities {
+		items = append(items, r.mapper.ToDTO(entity))
 	}
 
 	return &consumerV1.ListTransactionsResponse{
-		Total: ret.Total,
-		Items: ret.Items,
+		Total: uint64(total),
+		Items: items,
 	}, nil
 }
 
@@ -209,16 +229,15 @@ func (r *financeTransactionRepo) Export(ctx context.Context, req *consumerV1.Exp
 	// 应用筛选条件（与List方法相同）
 	predicates := []predicate.FinanceTransaction{}
 
-	if req.TenantId != nil {
-		predicates = append(predicates, financetransaction.TenantIDEQ(*req.TenantId))
-	}
-
 	if req.ConsumerId != nil {
 		predicates = append(predicates, financetransaction.ConsumerIDEQ(*req.ConsumerId))
 	}
 
 	if req.TransactionType != nil {
-		predicates = append(predicates, financetransaction.TransactionTypeEQ(r.transactionTypeConverter.ToEntity(req.TransactionType)))
+		transactionType := r.transactionTypeConverter.ToEntity(req.TransactionType)
+		if transactionType != nil {
+			predicates = append(predicates, financetransaction.TransactionTypeEQ(*transactionType))
+		}
 	}
 
 	if req.StartTime != nil {

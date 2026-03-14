@@ -86,14 +86,33 @@ func (r *loginLogRepo) Create(ctx context.Context, data *consumerV1.LoginLog) er
 
 	builder := r.entClient.Client().LoginLog.Create().
 		SetNillableTenantID(data.TenantId).
-		SetNillableConsumerID(data.ConsumerId).
-		SetNillablePhone(data.Phone).
-		SetNillableLoginType(r.loginTypeConverter.ToEntity(data.LoginType)).
 		SetNillableSuccess(data.Success).
 		SetNillableFailReason(data.FailReason).
-		SetNillableIPAddress(data.IpAddress).
 		SetNillableUserAgent(data.UserAgent).
 		SetNillableDeviceType(data.DeviceType)
+
+	// 设置必填字段 consumer_id
+	if data.ConsumerId != nil {
+		builder.SetConsumerID(*data.ConsumerId)
+	}
+	
+	// 设置必填字段 phone
+	if data.Phone != nil {
+		builder.SetPhone(*data.Phone)
+	}
+	
+	// 设置必填字段 ip_address
+	if data.IpAddress != nil {
+		builder.SetIPAddress(*data.IpAddress)
+	}
+	
+	// 设置必填字段 login_type
+	if data.LoginType != nil {
+		loginType := r.loginTypeConverter.ToEntity(data.LoginType)
+		if loginType != nil {
+			builder.SetLoginType(*loginType)
+		}
+	}
 
 	// 设置登录时间
 	if data.LoginAt != nil {
@@ -116,39 +135,53 @@ func (r *loginLogRepo) List(ctx context.Context, req *paginationV1.PagingRequest
 		return nil, consumerV1.ErrorBadRequest("invalid parameter")
 	}
 
-	builder := r.entClient.Client().LoginLog.Query()
+	builder := r.entClient.Client().LoginLog.Query().
+		Order(ent.Desc(loginlog.FieldLoginAt))
 
-	ret, err := r.repository.ListWithPaging(ctx, builder, builder.Clone(), req)
+	// 计算总数
+	count, err := builder.Clone().Count(ctx)
 	if err != nil {
-		return nil, err
-	}
-	if ret == nil {
-		return &consumerV1.ListLoginLogsResponse{Total: 0, Items: nil}, nil
+		r.log.Errorf("count login logs failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("count login logs failed")
 	}
 
-	// 敏感数据脱敏
-	for _, item := range ret.Items {
+	// 分页查询
+	if req.GetPage() > 0 && req.GetPageSize() > 0 {
+		offset := int(req.GetPage()-1) * int(req.GetPageSize())
+		builder.Offset(offset).Limit(int(req.GetPageSize()))
+	}
+
+	entities, err := builder.All(ctx)
+	if err != nil {
+		r.log.Errorf("list login logs failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("list login logs failed")
+	}
+
+	items := make([]*consumerV1.LoginLog, 0, len(entities))
+	for _, entity := range entities {
+		dto := r.mapper.ToDTO(entity)
+		
+		// 敏感数据脱敏
 		// 手机号脱敏：保留前3位和后4位
-		if item.Phone != nil && len(*item.Phone) >= 11 {
-			phone := *item.Phone
+		if dto.Phone != nil && len(*dto.Phone) >= 11 {
+			phone := *dto.Phone
 			masked := phone[:3] + "****" + phone[len(phone)-4:]
-			item.Phone = &masked
+			dto.Phone = &masked
 		}
 
 		// IP地址脱敏：只保留前两段
-		if item.IpAddress != nil && len(*item.IpAddress) > 0 {
-			// 简单处理：将最后一段替换为 *
-			// 例如：192.168.1.100 -> 192.168.*.*
-			ip := *item.IpAddress
-			// 这里可以使用更复杂的IP解析逻辑
+		if dto.IpAddress != nil && len(*dto.IpAddress) > 0 {
+			ip := *dto.IpAddress
 			masked := maskIPAddress(ip)
-			item.IpAddress = &masked
+			dto.IpAddress = &masked
 		}
+		
+		items = append(items, dto)
 	}
 
 	return &consumerV1.ListLoginLogsResponse{
-		Total: ret.Total,
-		Items: ret.Items,
+		Total: uint64(count),
+		Items: items,
 	}, nil
 }
 

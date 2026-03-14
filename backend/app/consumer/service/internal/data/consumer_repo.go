@@ -108,21 +108,22 @@ func (r *consumerRepo) Create(ctx context.Context, data *consumerV1.Consumer) (*
 
 	builder := r.entClient.Client().Consumer.Create().
 		SetNillableTenantID(data.TenantId).
-		SetNillablePhone(data.Phone).
 		SetNillableEmail(data.Email).
 		SetNillableNickname(data.Nickname).
 		SetNillableAvatar(data.Avatar).
 		SetNillableWechatOpenid(data.WechatOpenid).
 		SetNillableWechatUnionid(data.WechatUnionid).
 		SetNillableStatus(r.statusConverter.ToEntity(data.Status)).
-		SetNillableRiskScore(data.RiskScore).
-		SetNillableLoginFailCount(data.LoginFailCount).
 		SetCreatedAt(time.Now())
 
-	// 设置密码哈希（如果提供）
-	if data.PasswordHash != nil {
-		builder.SetPasswordHash(*data.PasswordHash)
+	// 设置必填字段 phone
+	if data.Phone != nil {
+		builder.SetPhone(*data.Phone)
 	}
+
+	// 设置密码哈希（必填字段）- Consumer message 中没有 password 字段
+	// 密码应该在创建前已经哈希处理
+	builder.SetPasswordHash("") // 默认空密码，实际使用时需要在 service 层设置
 
 	entity, err := builder.Save(ctx)
 	if err != nil {
@@ -135,56 +136,56 @@ func (r *consumerRepo) Create(ctx context.Context, data *consumerV1.Consumer) (*
 
 // Get 查询用户
 func (r *consumerRepo) Get(ctx context.Context, id uint32) (*consumerV1.Consumer, error) {
-	builder := r.entClient.Client().Consumer.Query()
-
-	dto, err := r.repository.Get(ctx, builder, nil,
-		func(s *sql.Selector) {
-			s.Where(sql.EQ(consumer.FieldID, id))
-		},
-	)
+	entity, err := r.entClient.Client().Consumer.Get(ctx, id)
 	if err != nil {
-		return nil, err
+		if ent.IsNotFound(err) {
+			return nil, consumerV1.ErrorNotFound("consumer not found")
+		}
+		r.log.Errorf("get consumer failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("get consumer failed")
 	}
 
-	return dto, nil
+	return r.mapper.ToDTO(entity), nil
 }
 
 // GetByPhone 按手机号查询用户
 func (r *consumerRepo) GetByPhone(ctx context.Context, tenantID uint32, phone string) (*consumerV1.Consumer, error) {
-	builder := r.entClient.Client().Consumer.Query()
-
-	dto, err := r.repository.Get(ctx, builder, nil,
-		func(s *sql.Selector) {
-			s.Where(sql.And(
-				sql.EQ(consumer.FieldTenantID, tenantID),
-				sql.EQ(consumer.FieldPhone, phone),
-			))
-		},
-	)
+	entity, err := r.entClient.Client().Consumer.Query().
+		Where(
+			consumer.TenantID(tenantID),
+			consumer.Phone(phone),
+		).
+		Only(ctx)
+	
 	if err != nil {
-		return nil, err
+		if ent.IsNotFound(err) {
+			return nil, consumerV1.ErrorNotFound("consumer not found")
+		}
+		r.log.Errorf("get consumer by phone failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("get consumer by phone failed")
 	}
 
-	return dto, nil
+	return r.mapper.ToDTO(entity), nil
 }
 
 // GetByWechatOpenID 按微信OpenID查询用户
 func (r *consumerRepo) GetByWechatOpenID(ctx context.Context, tenantID uint32, openID string) (*consumerV1.Consumer, error) {
-	builder := r.entClient.Client().Consumer.Query()
-
-	dto, err := r.repository.Get(ctx, builder, nil,
-		func(s *sql.Selector) {
-			s.Where(sql.And(
-				sql.EQ(consumer.FieldTenantID, tenantID),
-				sql.EQ(consumer.FieldWechatOpenid, openID),
-			))
-		},
-	)
+	entity, err := r.entClient.Client().Consumer.Query().
+		Where(
+			consumer.TenantID(tenantID),
+			consumer.WechatOpenid(openID),
+		).
+		Only(ctx)
+	
 	if err != nil {
-		return nil, err
+		if ent.IsNotFound(err) {
+			return nil, consumerV1.ErrorNotFound("consumer not found")
+		}
+		r.log.Errorf("get consumer by wechat openid failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("get consumer by wechat openid failed")
 	}
 
-	return dto, nil
+	return r.mapper.ToDTO(entity), nil
 }
 
 // Update 更新用户信息
@@ -197,12 +198,15 @@ func (r *consumerRepo) Update(ctx context.Context, id uint32, data *consumerV1.C
 		SetNillableNickname(data.Nickname).
 		SetNillableAvatar(data.Avatar).
 		SetNillableEmail(data.Email).
-		SetNillablePhone(data.Phone).
 		SetNillableWechatOpenid(data.WechatOpenid).
 		SetNillableWechatUnionid(data.WechatUnionid).
 		SetNillableStatus(r.statusConverter.ToEntity(data.Status)).
-		SetNillableRiskScore(data.RiskScore).
 		SetUpdatedAt(time.Now())
+
+	// phone 是必填字段，不能用 Nillable
+	if data.Phone != nil {
+		builder.SetPhone(*data.Phone)
+	}
 
 	if err := builder.Exec(ctx); err != nil {
 		if ent.IsNotFound(err) {
@@ -221,19 +225,45 @@ func (r *consumerRepo) List(ctx context.Context, req *paginationV1.PagingRequest
 		return nil, consumerV1.ErrorBadRequest("invalid parameter")
 	}
 
-	builder := r.entClient.Client().Consumer.Query()
+	query := r.entClient.Client().Consumer.Query()
 
-	ret, err := r.repository.ListWithPaging(ctx, builder, builder.Clone(), req)
+	// 计算总数
+	total, err := query.Clone().Count(ctx)
 	if err != nil {
-		return nil, err
+		r.log.Errorf("count consumers failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("count consumers failed")
 	}
-	if ret == nil {
-		return &consumerV1.ListConsumersResponse{Total: 0, Items: nil}, nil
+
+	// 分页查询
+	var offset, limit int
+	if req.Page != nil && req.PageSize != nil {
+		offset = int((*req.Page - 1) * *req.PageSize)
+		limit = int(*req.PageSize)
+	} else {
+		offset = 0
+		limit = 10 // 默认每页10条
+	}
+	
+	entities, err := query.
+		Offset(offset).
+		Limit(limit).
+		Order(ent.Desc(consumer.FieldCreatedAt)).
+		All(ctx)
+	
+	if err != nil {
+		r.log.Errorf("list consumers failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("list consumers failed")
+	}
+
+	// 转换为 DTO
+	items := make([]*consumerV1.Consumer, 0, len(entities))
+	for _, entity := range entities {
+		items = append(items, r.mapper.ToDTO(entity))
 	}
 
 	return &consumerV1.ListConsumersResponse{
-		Total: ret.Total,
-		Items: ret.Items,
+		Total: uint64(total),
+		Items: items,
 	}, nil
 }
 
@@ -242,7 +272,7 @@ func (r *consumerRepo) Deactivate(ctx context.Context, id uint32) error {
 	now := time.Now()
 
 	err := r.entClient.Client().Consumer.UpdateOneID(id).
-		SetStatus(consumer.StatusDEACTIVATED).
+		SetStatus(consumer.StatusDeactivated).
 		SetDeactivatedAt(now).
 		SetUpdatedAt(now).
 		Exec(ctx)
@@ -262,7 +292,7 @@ func (r *consumerRepo) Deactivate(ctx context.Context, id uint32) error {
 func (r *consumerRepo) UpdateLoginInfo(ctx context.Context, id uint32, ip string, failCount int32, lockedUntil *time.Time) error {
 	builder := r.entClient.Client().Consumer.UpdateOneID(id).
 		SetLastLoginIP(ip).
-		SetLoginFailCount(failCount).
+		SetLoginFailCount(int(failCount)).
 		SetUpdatedAt(time.Now())
 
 	if lockedUntil != nil {

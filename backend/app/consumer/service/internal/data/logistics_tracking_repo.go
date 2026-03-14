@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"entgo.io/ent/dialect/sql"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
 
@@ -96,11 +95,25 @@ func (r *logisticsTrackingRepo) Create(ctx context.Context, data *consumerV1.Log
 
 	builder := r.entClient.Client().LogisticsTracking.Create().
 		SetNillableTenantID(data.TenantId).
-		SetNillableTrackingNo(data.TrackingNo).
-		SetNillableCourierCompany(data.CourierCompany).
 		SetNillableStatus(r.statusConverter.ToEntity(data.Status)).
-		SetNillableLastUpdatedAt(data.LastUpdatedAt.AsTime()).
 		SetCreatedAt(time.Now())
+
+	// 设置必填字段 tracking_no
+	if data.TrackingNo != nil {
+		builder.SetTrackingNo(*data.TrackingNo)
+	}
+	
+	// 设置必填字段 courier_company
+	if data.CourierCompany != nil {
+		builder.SetCourierCompany(*data.CourierCompany)
+	}
+	
+	// 设置 last_updated_at
+	if data.LastUpdatedAt != nil {
+		builder.SetLastUpdatedAt(data.LastUpdatedAt.AsTime())
+	} else {
+		builder.SetLastUpdatedAt(time.Now())
+	}
 
 	// 设置物流轨迹（JSON字段）
 	if len(data.TrackingInfo) > 0 {
@@ -122,18 +135,18 @@ func (r *logisticsTrackingRepo) Create(ctx context.Context, data *consumerV1.Log
 
 // Get 查询物流跟踪
 func (r *logisticsTrackingRepo) Get(ctx context.Context, id uint64) (*consumerV1.LogisticsTracking, error) {
-	builder := r.entClient.Client().LogisticsTracking.Query()
-
-	dto, err := r.repository.Get(ctx, builder, nil,
-		func(s *sql.Selector) {
-			s.Where(sql.EQ(logisticstracking.FieldID, id))
-		},
-	)
+	entity, err := r.entClient.Client().LogisticsTracking.Query().
+		Where(logisticstracking.ID(uint32(id))).
+		Only(ctx)
 	if err != nil {
-		return nil, err
+		if ent.IsNotFound(err) {
+			return nil, consumerV1.ErrorNotFound("logistics tracking not found")
+		}
+		r.log.Errorf("get logistics tracking failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("get logistics tracking failed")
 	}
 
-	return dto, nil
+	return r.mapper.ToDTO(entity), nil
 }
 
 // GetByTrackingNo 按运单号查询
@@ -142,24 +155,21 @@ func (r *logisticsTrackingRepo) GetByTrackingNo(ctx context.Context, tenantID ui
 		return nil, consumerV1.ErrorBadRequest("tracking_no is required")
 	}
 
-	builder := r.entClient.Client().LogisticsTracking.Query()
-
-	dto, err := r.repository.Get(ctx, builder, nil,
-		func(s *sql.Selector) {
-			s.Where(sql.And(
-				sql.EQ(logisticstracking.FieldTenantID, tenantID),
-				sql.EQ(logisticstracking.FieldTrackingNo, trackingNo),
-			))
-		},
-	)
+	entity, err := r.entClient.Client().LogisticsTracking.Query().
+		Where(
+			logisticstracking.TenantIDEQ(tenantID),
+			logisticstracking.TrackingNoEQ(trackingNo),
+		).
+		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, nil // 不存在返回nil，不报错
 		}
-		return nil, err
+		r.log.Errorf("get logistics tracking by tracking_no failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("get logistics tracking failed")
 	}
 
-	return dto, nil
+	return r.mapper.ToDTO(entity), nil
 }
 
 // Update 更新物流信息
@@ -168,9 +178,13 @@ func (r *logisticsTrackingRepo) Update(ctx context.Context, id uint64, data *con
 		return consumerV1.ErrorBadRequest("invalid parameter")
 	}
 
-	builder := r.entClient.Client().LogisticsTracking.UpdateOneID(id).
-		SetNillableStatus(r.statusConverter.ToEntity(data.Status)).
-		SetNillableLastUpdatedAt(data.LastUpdatedAt.AsTime())
+	builder := r.entClient.Client().LogisticsTracking.UpdateOneID(uint32(id)).
+		SetNillableStatus(r.statusConverter.ToEntity(data.Status))
+
+	// 设置 last_updated_at
+	if data.LastUpdatedAt != nil {
+		builder.SetLastUpdatedAt(data.LastUpdatedAt.AsTime())
+	}
 
 	// 更新物流轨迹（JSON字段）
 	if len(data.TrackingInfo) > 0 {
@@ -200,18 +214,34 @@ func (r *logisticsTrackingRepo) List(ctx context.Context, req *paginationV1.Pagi
 	}
 
 	builder := r.entClient.Client().LogisticsTracking.Query().
-		Order(ent.Desc(logisticstracking.FieldCreatedAt)) // 按创建时间倒序
+		Order(ent.Desc(logisticstracking.FieldCreatedAt))
 
-	ret, err := r.repository.ListWithPaging(ctx, builder, builder.Clone(), req)
+	// 计算总数
+	count, err := builder.Clone().Count(ctx)
 	if err != nil {
-		return nil, err
+		r.log.Errorf("count logistics tracking failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("count logistics tracking failed")
 	}
-	if ret == nil {
-		return &consumerV1.ListLogisticsHistoryResponse{Total: 0, Items: nil}, nil
+
+	// 分页查询
+	if req.GetPage() > 0 && req.GetPageSize() > 0 {
+		offset := int(req.GetPage()-1) * int(req.GetPageSize())
+		builder.Offset(offset).Limit(int(req.GetPageSize()))
+	}
+
+	entities, err := builder.All(ctx)
+	if err != nil {
+		r.log.Errorf("list logistics tracking failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("list logistics tracking failed")
+	}
+
+	items := make([]*consumerV1.LogisticsTracking, 0, len(entities))
+	for _, entity := range entities {
+		items = append(items, r.mapper.ToDTO(entity))
 	}
 
 	return &consumerV1.ListLogisticsHistoryResponse{
-		Total: ret.Total,
-		Items: ret.Items,
+		Total: uint64(count),
+		Items: items,
 	}, nil
 }

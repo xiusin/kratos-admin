@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/tx7do/go-utils/password"
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
+	redisClient "github.com/tx7do/kratos-bootstrap/cache/redis"
 
 	"go-wind-admin/pkg/auth"
 	"go-wind-admin/pkg/eventbus"
@@ -24,23 +25,22 @@ import (
 // Data 数据层结构
 type Data struct {
 	db  *sql.Driver
-	rdb *redis.ClusterClient
+	rdb redis.UniversalClient
 	log *log.Helper
 }
 
 // NewData 创建数据层实例
 func NewData(ctx *bootstrap.Context) (*Data, func(), error) {
-	cfg := ctx.GetConfig()
 	logger := log.NewHelper(log.With(ctx.GetLogger(), "module", "data"))
 
 	// 初始化数据库连接
-	db, err := initDatabase(cfg, logger)
+	db, err := initDatabase(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	// 初始化 Redis 集群连接
-	rdb, err := initRedis(cfg, logger)
+	// 初始化 Redis 连接（使用 bootstrap 提供的方法）
+	rdb, err := initRedis(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -69,7 +69,10 @@ func NewData(ctx *bootstrap.Context) (*Data, func(), error) {
 }
 
 // initDatabase 初始化数据库连接
-func initDatabase(cfg *bootstrap.Config, logger *log.Helper) (*sql.Driver, error) {
+func initDatabase(ctx *bootstrap.Context) (*sql.Driver, error) {
+	cfg := ctx.GetConfig()
+	logger := ctx.NewLoggerHelper("database/consumer-service")
+	
 	if cfg == nil || cfg.Data == nil || cfg.Data.Database == nil {
 		return nil, nil
 	}
@@ -88,9 +91,15 @@ func initDatabase(cfg *bootstrap.Config, logger *log.Helper) (*sql.Driver, error
 
 	// 配置连接池
 	db := drv.DB()
-	db.SetMaxIdleConns(int(dbCfg.MaxIdleConnections))
-	db.SetMaxOpenConns(int(dbCfg.MaxOpenConnections))
-	db.SetConnMaxLifetime(dbCfg.ConnectionMaxLifetime.AsDuration())
+	if dbCfg.MaxIdleConnections != nil {
+		db.SetMaxIdleConns(int(*dbCfg.MaxIdleConnections))
+	}
+	if dbCfg.MaxOpenConnections != nil {
+		db.SetMaxOpenConns(int(*dbCfg.MaxOpenConnections))
+	}
+	if dbCfg.ConnectionMaxLifetime != nil {
+		db.SetConnMaxLifetime(dbCfg.ConnectionMaxLifetime.AsDuration())
+	}
 
 	// 测试连接
 	if err := db.Ping(); err != nil {
@@ -103,35 +112,31 @@ func initDatabase(cfg *bootstrap.Config, logger *log.Helper) (*sql.Driver, error
 	return drv, nil
 }
 
-// initRedis 初始化 Redis 集群连接
-func initRedis(cfg *bootstrap.Config, logger *log.Helper) (*redis.ClusterClient, error) {
-	if cfg == nil || cfg.Data == nil || cfg.Data.Redis == nil {
+// initRedis 初始化 Redis 连接
+func initRedis(ctx *bootstrap.Context) (redis.UniversalClient, error) {
+	cfg := ctx.GetConfig()
+	logger := ctx.NewLoggerHelper("redis/consumer-service")
+	
+	if cfg == nil || cfg.Data == nil {
 		return nil, nil
 	}
 
-	redisCfg := cfg.Data.Redis
-
-	// 创建 Redis 集群客户端
-	rdb := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs:        redisCfg.Addrs,
-		Password:     redisCfg.Password,
-		DialTimeout:  redisCfg.DialTimeout.AsDuration(),
-		ReadTimeout:  redisCfg.ReadTimeout.AsDuration(),
-		WriteTimeout: redisCfg.WriteTimeout.AsDuration(),
-		PoolSize:     int(redisCfg.PoolSize),
-		MinIdleConns: int(redisCfg.MinIdleConns),
-	})
+	// 使用 bootstrap 提供的 Redis 客户端创建方法
+	cli := redisClient.NewClient(cfg.Data, logger)
+	if cli == nil {
+		return nil, nil
+	}
 
 	// 测试连接
-	ctx := context.Background()
-	if err := rdb.Ping(ctx).Err(); err != nil {
+	pingCtx := context.Background()
+	if err := cli.Ping(pingCtx).Err(); err != nil {
 		logger.Errorf("failed to ping redis: %v", err)
 		return nil, err
 	}
 
-	logger.Info("redis cluster connected successfully")
+	logger.Info("redis connected successfully")
 
-	return rdb, nil
+	return cli, nil
 }
 
 // DB 获取数据库驱动
@@ -140,7 +145,7 @@ func (d *Data) DB() *sql.Driver {
 }
 
 // Redis 获取 Redis 客户端
-func (d *Data) Redis() *redis.ClusterClient {
+func (d *Data) Redis() redis.UniversalClient {
 	return d.rdb
 }
 
@@ -154,18 +159,20 @@ func NewPasswordCrypto() password.Crypto {
 }
 
 // NewJWTManager 创建JWT管理器
-func NewJWTManager(cfg *bootstrap.Config) *auth.JWTManager {
+func NewJWTManager(ctx *bootstrap.Context) *auth.JWTManager {
 	// 从配置读取JWT密钥，如果没有配置则使用默认值
 	secret := auth.DefaultJWTSecret
-	if cfg != nil && cfg.Server != nil && cfg.Server.Http != nil {
-		// 实际项目中应该从配置文件读取
-		// secret = cfg.Server.Http.JWTSecret
-	}
+	// TODO: 从配置文件读取 JWT secret
+	// cfg := ctx.GetConfig()
+	// if cfg != nil && cfg.Server != nil && cfg.Server.Rest != nil {
+	//     secret = cfg.Server.Rest.JWTSecret
+	// }
 	return auth.NewJWTManager(secret)
 }
 
 // NewSMSManager 创建短信管理器
-func NewSMSManager(cfg *bootstrap.Config, logger log.Logger) *sms.Manager {
+func NewSMSManager(ctx *bootstrap.Context) *sms.Manager {
+	logger := ctx.GetLogger()
 	// 从配置读取短信服务配置
 	// 实际项目中应该从配置文件读取
 	// 这里使用默认配置
@@ -190,7 +197,8 @@ func NewSMSManager(cfg *bootstrap.Config, logger log.Logger) *sms.Manager {
 }
 
 // NewWechatClient 创建微信支付客户端
-func NewWechatClient(cfg *bootstrap.Config, logger log.Logger) payment.Client {
+func NewWechatClient(ctx *bootstrap.Context) payment.Client {
+	logger := ctx.GetLogger()
 	// 从配置读取微信支付配置
 	// 实际项目中应该从配置文件读取
 	wechatConfig := &payment.Config{
@@ -211,7 +219,8 @@ func NewWechatClient(cfg *bootstrap.Config, logger log.Logger) payment.Client {
 }
 
 // NewOSSClient 创建OSS客户端
-func NewOSSClient(cfg *bootstrap.Config, logger log.Logger) oss.Client {
+func NewOSSClient(ctx *bootstrap.Context) oss.Client {
+	logger := ctx.GetLogger()
 	// 从配置读取OSS配置
 	// 实际项目中应该从配置文件读取
 	ossConfig := &oss.Config{
@@ -237,7 +246,8 @@ func NewEventBus(logger log.Logger) eventbus.EventBus {
 }
 
 // NewLogisticsClient 创建物流客户端
-func NewLogisticsClient(cfg *bootstrap.Config, logger log.Logger) logistics.Client {
+func NewLogisticsClient(ctx *bootstrap.Context) logistics.Client {
+	logger := ctx.GetLogger()
 	// 从配置读取物流配置
 	// 实际项目中应该从配置文件读取
 	logisticsConfig := &logistics.Config{

@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package consumer.service.v1;
+
+import "errors/errors.proto";
+
+// C端服务错误定义
+enum ConsumerErrorReason {
+    option (errors.default_code) = 500;
+
+    // 400
+    BAD_REQUEST = 0 [(errors.code) = 400]; // 错误请求
+    INVALID_PARAMETER = 1 [(errors.code) = 400]; // 参数无效
+    INVALID_PHONE = 2 [(errors.code) = 400]; // 手机号无效
+    INVALID_EMAIL = 3 [(errors.code) = 400]; // 邮箱无效
+    INVALID_VERIFICATION_CODE = 4 [(errors.code) = 400]; // 验证码无效
+
+    // 401
+    UNAUTHORIZED = 100 [(errors.code) = 401]; // 未授权
+    TOKEN_EXPIRED = 101 [(errors.code) = 401]; // token过期
+    TOKEN_INVALID = 102 [(errors.code) = 401]; // token无效
+    USER_DISABLED = 103 [(errors.code) = 401]; // 用户已禁用
+
+    // 403
+    FORBIDDEN = 300 [(errors.code) = 403]; // 禁止访问
+    INSUFFICIENT_PERMISSIONS = 301 [(errors.code) = 403]; // 权限不足
+
+    // 404
+    NOT_FOUND = 400 [(errors.code) = 404]; // 找不到资源
+    USER_NOT_FOUND = 401 [(errors.code) = 404]; // 用户不存在
+    CONFIG_NOT_FOUND = 402 [(errors.code) = 404]; // 配置不存在
+    MEDIA_NOT_FOUND = 403 [(errors.code) = 404]; // 媒体文件不存在
+
+    // 409
+    CONFLICT = 900 [(errors.code) = 409]; // 冲突
+    PHONE_ALREADY_EXISTS = 901 [(errors.code) = 409]; // 手机号已存在
+    EMAIL_ALREADY_EXISTS = 902 [(errors.code) = 409]; // 邮箱已存在
+    WECHAT_ALREADY_BOUND = 903 [(errors.code) = 409]; // 微信已绑定
+
+    // 422
+    UNPROCESSABLE_ENTITY = 1100 [(errors.code) = 422]; // 不可处理的实体
+    VALIDATION_FAILED = 1101 [(errors.code) = 422]; // 验证失败
+
+    // 429
+    TOO_MANY_REQUESTS = 1160 [(errors.code) = 429]; // 请求过多
+    SMS_LIMIT_EXCEEDED = 1161 [(errors.code) = 429]; // 短信发送超限
+
+    // 500
+    INTERNAL_SERVER_ERROR = 2000 [(errors.code) = 500]; // 内部服务器错误
+    DATABASE_ERROR = 2001 [(errors.code) = 500]; // 数据库错误
+    CACHE_ERROR = 2002 [(errors.code) = 500]; // 缓存错误
+
+    // 501
+    NOT_IMPLEMENTED = 2100 [(errors.code) = 501]; // 未实现
+    FEATURE_NOT_ENABLED = 2101 [(errors.code) = 501]; // 功能未启用
+
+    // 503
+    SERVICE_UNAVAILABLE = 2300 [(errors.code) = 503]; // 服务不可用
+    THIRD_PARTY_SERVICE_ERROR = 2301 [(errors.code) = 503]; // 第三方服务错误
+    WECHAT_API_ERROR = 2302 [(errors.code) = 503]; // 微信API错误
+    SMS_SERVICE_ERROR = 2303 [(errors.code) = 503]; // 短信服务错误
+    PAYMENT_SERVICE_ERROR = 2304 [(errors.code) = 503]; // 支付服务错误
+}

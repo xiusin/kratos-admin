@@ -2,6 +2,7 @@ package data
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -135,37 +136,36 @@ func (r *financeAccountRepo) Create(ctx context.Context, data *consumerV1.Financ
 
 // Get 查询账户
 func (r *financeAccountRepo) Get(ctx context.Context, id uint32) (*consumerV1.FinanceAccount, error) {
-	builder := r.entClient.Client().FinanceAccount.Query()
-
-	dto, err := r.repository.Get(ctx, builder, nil,
-		func(s *sql.Selector) {
-			s.Where(sql.EQ(financeaccount.FieldID, id))
-		},
-	)
+	entity, err := r.entClient.Client().FinanceAccount.Get(ctx, id)
 	if err != nil {
-		return nil, err
+		if ent.IsNotFound(err) {
+			return nil, consumerV1.ErrorNotFound("finance account not found")
+		}
+		r.log.Errorf("get finance account failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("get finance account failed")
 	}
 
-	return dto, nil
+	return r.mapper.ToDTO(entity), nil
 }
 
 // GetByConsumerID 按用户ID查询
 func (r *financeAccountRepo) GetByConsumerID(ctx context.Context, tenantID uint32, consumerID uint32) (*consumerV1.FinanceAccount, error) {
-	builder := r.entClient.Client().FinanceAccount.Query()
-
-	dto, err := r.repository.Get(ctx, builder, nil,
-		func(s *sql.Selector) {
-			s.Where(sql.And(
-				sql.EQ(financeaccount.FieldTenantID, tenantID),
-				sql.EQ(financeaccount.FieldConsumerID, consumerID),
-			))
-		},
-	)
+	entity, err := r.entClient.Client().FinanceAccount.Query().
+		Where(
+			financeaccount.TenantID(tenantID),
+			financeaccount.ConsumerID(consumerID),
+		).
+		Only(ctx)
+	
 	if err != nil {
-		return nil, err
+		if ent.IsNotFound(err) {
+			return nil, consumerV1.ErrorNotFound("finance account not found")
+		}
+		r.log.Errorf("get finance account by consumer id failed: %s", err.Error())
+		return nil, consumerV1.ErrorInternalServerError("get finance account by consumer id failed")
 	}
 
-	return dto, nil
+	return r.mapper.ToDTO(entity), nil
 }
 
 // UpdateBalance 更新余额（使用乐观锁）
