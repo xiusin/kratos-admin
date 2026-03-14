@@ -52,6 +52,9 @@ managed:
     - file_option: go_package
       path: resource/service/v1
       value: go-wind-admin/api/gen/go/resource/service/v1;resourcepb
+    - file_option: go_package
+      path: consumer/service/v1
+      value: go-wind-admin/api/gen/go/consumer/service/v1;consumerpb
 
 plugins:
   # generate go code
@@ -87,9 +90,9 @@ plugins:
       - paths=source_relative # use relative paths
       - lang=go
 
-  # generate redact code
-  - local: protoc-gen-redact
-    out: gen/go
-    opt:
-      - paths=source_relative # use relative paths
-      - lang=go
+  # generate redact code (temporarily disabled)
+  # - local: protoc-gen-redact
+  #   out: gen/go
+  #   opt:
+  #     - paths=source_relative # use relative paths
+  #     - lang=go

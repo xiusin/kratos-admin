@@ -1,0 +1,476 @@
+syntax = "proto3";
+
+package consumer.service.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+import "pagination/v1/pagination.proto";
+
+// C端用户服务
+service ConsumerService {
+  // 手机号注册
+  rpc RegisterByPhone (RegisterByPhoneRequest) returns (Consumer) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "registerByPhone"
+      tags: "Consumer"
+      summary: "手机号注册"
+      description: "使用手机号和验证码注册新用户"
+    };
+  }
+
+  // 手机号登录
+  rpc LoginByPhone (LoginByPhoneRequest) returns (LoginResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "loginByPhone"
+      tags: "Consumer"
+      summary: "手机号登录"
+      description: "使用手机号和密码登录"
+    };
+  }
+
+  // 微信登录
+  rpc LoginByWechat (LoginByWechatRequest) returns (LoginResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "loginByWechat"
+      tags: "Consumer"
+      summary: "微信登录"
+      description: "使用微信授权码登录"
+    };
+  }
+
+  // 获取用户信息
+  rpc GetConsumer (GetConsumerRequest) returns (Consumer) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "getConsumer"
+      tags: "Consumer"
+      summary: "获取用户信息"
+      description: "查询用户详细信息"
+    };
+  }
+
+  // 更新用户信息
+  rpc UpdateConsumer (UpdateConsumerRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "updateConsumer"
+      tags: "Consumer"
+      summary: "更新用户信息"
+      description: "更新用户个人信息"
+    };
+  }
+
+  // 更新手机号
+  rpc UpdatePhone (UpdatePhoneRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "updatePhone"
+      tags: "Consumer"
+      summary: "更新手机号"
+      description: "更新用户手机号，需要验证码"
+    };
+  }
+
+  // 更新邮箱
+  rpc UpdateEmail (UpdateEmailRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "updateEmail"
+      tags: "Consumer"
+      summary: "更新邮箱"
+      description: "更新用户邮箱，需要验证"
+    };
+  }
+
+  // 上传头像
+  rpc UploadAvatar (UploadAvatarRequest) returns (UploadAvatarResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "uploadAvatar"
+      tags: "Consumer"
+      summary: "上传头像"
+      description: "上传用户头像"
+    };
+  }
+
+  // 注销账户
+  rpc DeactivateAccount (DeactivateAccountRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "deactivateAccount"
+      tags: "Consumer"
+      summary: "注销账户"
+      description: "注销用户账户"
+    };
+  }
+
+  // 查询登录日志
+  rpc ListLoginLogs (pagination.PagingRequest) returns (ListLoginLogsResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listLoginLogs"
+      tags: "Consumer"
+      summary: "查询登录日志"
+      description: "分页查询用户登录日志"
+    };
+  }
+
+  // 查询用户列表（管理员）
+  rpc ListConsumers (pagination.PagingRequest) returns (ListConsumersResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listConsumers"
+      tags: "Consumer"
+      summary: "查询用户列表"
+      description: "管理员查询用户列表"
+    };
+  }
+}
+
+// C端用户
+message Consumer {
+  // 用户状态
+  enum Status {
+    NORMAL = 0;       // 正常
+    LOCKED = 1;       // 锁定
+    DEACTIVATED = 2;  // 已注销
+  }
+
+  optional uint32 id = 1 [
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "用户ID"}
+  ];
+
+  optional uint32 tenant_id = 2 [
+    json_name = "tenantId",
+    (gnostic.openapi.v3.property) = {description: "租户ID"}
+  ];
+
+  optional string phone = 3 [
+    json_name = "phone",
+    (gnostic.openapi.v3.property) = {description: "手机号"}
+  ];
+
+  optional string email = 4 [
+    json_name = "email",
+    (gnostic.openapi.v3.property) = {description: "邮箱"}
+  ];
+
+  optional string nickname = 5 [
+    json_name = "nickname",
+    (gnostic.openapi.v3.property) = {description: "昵称"}
+  ];
+
+  optional string avatar = 6 [
+    json_name = "avatar",
+    (gnostic.openapi.v3.property) = {description: "头像URL"}
+  ];
+
+  optional string wechat_openid = 7 [
+    json_name = "wechatOpenid",
+    (gnostic.openapi.v3.property) = {description: "微信OpenID"}
+  ];
+
+  optional string wechat_unionid = 8 [
+    json_name = "wechatUnionid",
+    (gnostic.openapi.v3.property) = {description: "微信UnionID"}
+  ];
+
+  optional Status status = 9 [
+    json_name = "status",
+    (gnostic.openapi.v3.property) = {description: "状态"}
+  ];
+
+  optional int32 risk_score = 10 [
+    json_name = "riskScore",
+    (gnostic.openapi.v3.property) = {description: "风险评分 0-100"}
+  ];
+
+  optional int32 login_fail_count = 11 [
+    json_name = "loginFailCount",
+    (gnostic.openapi.v3.property) = {description: "登录失败次数"}
+  ];
+
+  optional google.protobuf.Timestamp locked_until = 12 [
+    json_name = "lockedUntil",
+    (gnostic.openapi.v3.property) = {description: "锁定截止时间"}
+  ];
+
+  optional google.protobuf.Timestamp last_login_at = 13 [
+    json_name = "lastLoginAt",
+    (gnostic.openapi.v3.property) = {description: "最后登录时间"}
+  ];
+
+  optional string last_login_ip = 14 [
+    json_name = "lastLoginIp",
+    (gnostic.openapi.v3.property) = {description: "最后登录IP"}
+  ];
+
+  optional google.protobuf.Timestamp deactivated_at = 15 [
+    json_name = "deactivatedAt",
+    (gnostic.openapi.v3.property) = {description: "注销时间"}
+  ];
+
+  optional google.protobuf.Timestamp created_at = 100 [
+    json_name = "createdAt",
+    (gnostic.openapi.v3.property) = {description: "创建时间"}
+  ];
+
+  optional google.protobuf.Timestamp updated_at = 101 [
+    json_name = "updatedAt",
+    (gnostic.openapi.v3.property) = {description: "更新时间"}
+  ];
+}
+
+// 手机号注册 - 请求
+message RegisterByPhoneRequest {
+  string phone = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {min_len: 11, max_len: 20},
+    json_name = "phone",
+    (gnostic.openapi.v3.property) = {description: "手机号"}
+  ];
+
+  string verification_code = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {len: 6, pattern: "^[0-9]{6}$"},
+    json_name = "verificationCode",
+    (gnostic.openapi.v3.property) = {description: "验证码"}
+  ];
+
+  string password = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {min_len: 8, max_len: 32},
+    json_name = "password",
+    (gnostic.openapi.v3.property) = {description: "密码"}
+  ];
+
+  optional string nickname = 4 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "nickname",
+    (gnostic.openapi.v3.property) = {description: "昵称"}
+  ];
+}
+
+// 手机号登录 - 请求
+message LoginByPhoneRequest {
+  string phone = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {min_len: 11, max_len: 20},
+    json_name = "phone",
+    (gnostic.openapi.v3.property) = {description: "手机号"}
+  ];
+
+  string password = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {min_len: 8, max_len: 32},
+    json_name = "password",
+    (gnostic.openapi.v3.property) = {description: "密码"}
+  ];
+}
+
+// 微信登录 - 请求
+message LoginByWechatRequest {
+  string code = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "code",
+    (gnostic.openapi.v3.property) = {description: "微信授权码"}
+  ];
+}
+
+// 登录响应
+message LoginResponse {
+  string access_token = 1 [
+    json_name = "accessToken",
+    (gnostic.openapi.v3.property) = {description: "访问令牌"}
+  ];
+
+  string refresh_token = 2 [
+    json_name = "refreshToken",
+    (gnostic.openapi.v3.property) = {description: "刷新令牌"}
+  ];
+
+  int64 expires_in = 3 [
+    json_name = "expiresIn",
+    (gnostic.openapi.v3.property) = {description: "过期时间（秒）"}
+  ];
+
+  Consumer consumer = 4 [
+    json_name = "consumer",
+    (gnostic.openapi.v3.property) = {description: "用户信息"}
+  ];
+}
+
+// 获取用户信息 - 请求
+message GetConsumerRequest {
+  optional uint32 id = 1 [
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "用户ID"}
+  ];
+}
+
+// 更新用户信息 - 请求
+message UpdateConsumerRequest {
+  optional string nickname = 1 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "nickname",
+    (gnostic.openapi.v3.property) = {description: "昵称"}
+  ];
+
+  optional string avatar = 2 [
+    (validate.rules).string = {max_len: 500},
+    json_name = "avatar",
+    (gnostic.openapi.v3.property) = {description: "头像URL"}
+  ];
+}
+
+// 更新手机号 - 请求
+message UpdatePhoneRequest {
+  string new_phone = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {min_len: 11, max_len: 20},
+    json_name = "newPhone",
+    (gnostic.openapi.v3.property) = {description: "新手机号"}
+  ];
+
+  string verification_code = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {len: 6, pattern: "^[0-9]{6}$"},
+    json_name = "verificationCode",
+    (gnostic.openapi.v3.property) = {description: "验证码"}
+  ];
+}
+
+// 更新邮箱 - 请求
+message UpdateEmailRequest {
+  string new_email = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string.email = true,
+    json_name = "newEmail",
+    (gnostic.openapi.v3.property) = {description: "新邮箱"}
+  ];
+
+  string verification_code = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {len: 6, pattern: "^[0-9]{6}$"},
+    json_name = "verificationCode",
+    (gnostic.openapi.v3.property) = {description: "验证码"}
+  ];
+}
+
+// 上传头像 - 请求
+message UploadAvatarRequest {
+  oneof source {
+    string image_base64 = 1 [
+      json_name = "imageBase64",
+      (gnostic.openapi.v3.property) = {description: "图片的Base64编码"}
+    ];
+
+    string image_url = 2 [
+      json_name = "imageUrl",
+      (gnostic.openapi.v3.property) = {description: "图片的URL地址"}
+    ];
+  }
+}
+
+// 上传头像 - 响应
+message UploadAvatarResponse {
+  string url = 1 [
+    json_name = "url",
+    (gnostic.openapi.v3.property) = {description: "头像URL"}
+  ];
+}
+
+// 注销账户 - 请求
+message DeactivateAccountRequest {
+  string password = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "password",
+    (gnostic.openapi.v3.property) = {description: "密码确认"}
+  ];
+}
+
+// 登录日志
+message LoginLog {
+  // 登录方式
+  enum LoginType {
+    PHONE = 0;   // 手机号登录
+    WECHAT = 1;  // 微信登录
+  }
+
+  optional uint64 id = 1 [
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "日志ID"}
+  ];
+
+  optional uint32 tenant_id = 2 [
+    json_name = "tenantId",
+    (gnostic.openapi.v3.property) = {description: "租户ID"}
+  ];
+
+  optional uint32 consumer_id = 3 [
+    json_name = "consumerId",
+    (gnostic.openapi.v3.property) = {description: "用户ID"}
+  ];
+
+  optional string phone = 4 [
+    json_name = "phone",
+    (gnostic.openapi.v3.property) = {description: "手机号"}
+  ];
+
+  optional LoginType login_type = 5 [
+    json_name = "loginType",
+    (gnostic.openapi.v3.property) = {description: "登录方式"}
+  ];
+
+  optional bool success = 6 [
+    json_name = "success",
+    (gnostic.openapi.v3.property) = {description: "是否成功"}
+  ];
+
+  optional string fail_reason = 7 [
+    json_name = "failReason",
+    (gnostic.openapi.v3.property) = {description: "失败原因"}
+  ];
+
+  optional string ip_address = 8 [
+    json_name = "ipAddress",
+    (gnostic.openapi.v3.property) = {description: "IP地址"}
+  ];
+
+  optional string user_agent = 9 [
+    json_name = "userAgent",
+    (gnostic.openapi.v3.property) = {description: "User Agent"}
+  ];
+
+  optional string device_type = 10 [
+    json_name = "deviceType",
+    (gnostic.openapi.v3.property) = {description: "设备类型"}
+  ];
+
+  optional google.protobuf.Timestamp login_at = 11 [
+    json_name = "loginAt",
+    (gnostic.openapi.v3.property) = {description: "登录时间"}
+  ];
+}
+
+// 查询登录日志 - 响应
+message ListLoginLogsResponse {
+  repeated LoginLog items = 1 [
+    json_name = "items",
+    (gnostic.openapi.v3.property) = {description: "登录日志列表"}
+  ];
+
+  uint64 total = 2 [
+    json_name = "total",
+    (gnostic.openapi.v3.property) = {description: "总数"}
+  ];
+}
+
+// 查询用户列表 - 响应
+message ListConsumersResponse {
+  repeated Consumer items = 1 [
+    json_name = "items",
+    (gnostic.openapi.v3.property) = {description: "用户列表"}
+  ];
+
+  uint64 total = 2 [
+    json_name = "total",
+    (gnostic.openapi.v3.property) = {description: "总数"}
+  ];
+}

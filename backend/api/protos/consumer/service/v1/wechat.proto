@@ -1,0 +1,256 @@
+syntax = "proto3";
+
+package consumer.service.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+
+// 微信服务
+service WechatService {
+  // 获取微信授权URL
+  rpc GetAuthURL (GetAuthURLRequest) returns (GetAuthURLResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "getAuthURL"
+      tags: "Wechat"
+      summary: "获取微信授权URL"
+      description: "获取微信OAuth授权URL"
+    };
+  }
+
+  // 微信授权回调
+  rpc AuthCallback (AuthCallbackRequest) returns (AuthCallbackResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "authCallback"
+      tags: "Wechat"
+      summary: "微信授权回调"
+      description: "处理微信授权回调"
+    };
+  }
+
+  // 获取微信用户信息
+  rpc GetWechatUserInfo (GetWechatUserInfoRequest) returns (WechatUserInfo) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "getWechatUserInfo"
+      tags: "Wechat"
+      summary: "获取微信用户信息"
+      description: "获取微信用户基本信息"
+    };
+  }
+
+  // 发送模板消息
+  rpc SendTemplateMessage (SendTemplateMessageRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "sendTemplateMessage"
+      tags: "Wechat"
+      summary: "发送模板消息"
+      description: "发送微信公众号模板消息"
+    };
+  }
+
+  // 小程序登录
+  rpc MiniProgramLogin (MiniProgramLoginRequest) returns (MiniProgramLoginResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "miniProgramLogin"
+      tags: "Wechat"
+      summary: "小程序登录"
+      description: "微信小程序登录"
+    };
+  }
+}
+
+// 获取微信授权URL - 请求
+message GetAuthURLRequest {
+  string redirect_uri = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {max_len: 500},
+    json_name = "redirectUri",
+    (gnostic.openapi.v3.property) = {description: "授权回调地址"}
+  ];
+
+  optional string state = 2 [
+    (validate.rules).string = {max_len: 128},
+    json_name = "state",
+    (gnostic.openapi.v3.property) = {description: "状态参数"}
+  ];
+
+  optional string scope = 3 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "scope",
+    (gnostic.openapi.v3.property) = {description: "授权作用域（snsapi_base/snsapi_userinfo）"}
+  ];
+}
+
+// 获取微信授权URL - 响应
+message GetAuthURLResponse {
+  string auth_url = 1 [
+    json_name = "authUrl",
+    (gnostic.openapi.v3.property) = {description: "微信授权URL"}
+  ];
+}
+
+// 微信授权回调 - 请求
+message AuthCallbackRequest {
+  string code = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "code",
+    (gnostic.openapi.v3.property) = {description: "微信授权码"}
+  ];
+
+  optional string state = 2 [
+    json_name = "state",
+    (gnostic.openapi.v3.property) = {description: "状态参数"}
+  ];
+}
+
+// 微信授权回调 - 响应
+message AuthCallbackResponse {
+  string openid = 1 [
+    json_name = "openid",
+    (gnostic.openapi.v3.property) = {description: "微信OpenID"}
+  ];
+
+  optional string unionid = 2 [
+    json_name = "unionid",
+    (gnostic.openapi.v3.property) = {description: "微信UnionID"}
+  ];
+
+  string access_token = 3 [
+    json_name = "accessToken",
+    (gnostic.openapi.v3.property) = {description: "访问令牌"}
+  ];
+
+  int64 expires_in = 4 [
+    json_name = "expiresIn",
+    (gnostic.openapi.v3.property) = {description: "过期时间（秒）"}
+  ];
+}
+
+// 获取微信用户信息 - 请求
+message GetWechatUserInfoRequest {
+  string openid = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "openid",
+    (gnostic.openapi.v3.property) = {description: "微信OpenID"}
+  ];
+}
+
+// 微信用户信息
+message WechatUserInfo {
+  string openid = 1 [
+    json_name = "openid",
+    (gnostic.openapi.v3.property) = {description: "微信OpenID"}
+  ];
+
+  optional string unionid = 2 [
+    json_name = "unionid",
+    (gnostic.openapi.v3.property) = {description: "微信UnionID"}
+  ];
+
+  optional string nickname = 3 [
+    json_name = "nickname",
+    (gnostic.openapi.v3.property) = {description: "昵称"}
+  ];
+
+  optional string headimgurl = 4 [
+    json_name = "headimgurl",
+    (gnostic.openapi.v3.property) = {description: "头像URL"}
+  ];
+
+  optional int32 sex = 5 [
+    json_name = "sex",
+    (gnostic.openapi.v3.property) = {description: "性别（0未知，1男，2女）"}
+  ];
+
+  optional string country = 6 [
+    json_name = "country",
+    (gnostic.openapi.v3.property) = {description: "国家"}
+  ];
+
+  optional string province = 7 [
+    json_name = "province",
+    (gnostic.openapi.v3.property) = {description: "省份"}
+  ];
+
+  optional string city = 8 [
+    json_name = "city",
+    (gnostic.openapi.v3.property) = {description: "城市"}
+  ];
+}
+
+// 发送模板消息 - 请求
+message SendTemplateMessageRequest {
+  string openid = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "openid",
+    (gnostic.openapi.v3.property) = {description: "接收者OpenID"}
+  ];
+
+  string template_id = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "templateId",
+    (gnostic.openapi.v3.property) = {description: "模板ID"}
+  ];
+
+  map<string, TemplateData> data = 3 [
+    json_name = "data",
+    (gnostic.openapi.v3.property) = {description: "模板数据"}
+  ];
+
+  optional string url = 4 [
+    (validate.rules).string = {max_len: 500},
+    json_name = "url",
+    (gnostic.openapi.v3.property) = {description: "跳转URL"}
+  ];
+
+  optional string miniprogram_appid = 5 [
+    json_name = "miniprogramAppid",
+    (gnostic.openapi.v3.property) = {description: "小程序AppID"}
+  ];
+
+  optional string miniprogram_pagepath = 6 [
+    json_name = "miniprogramPagepath",
+    (gnostic.openapi.v3.property) = {description: "小程序页面路径"}
+  ];
+}
+
+// 模板数据
+message TemplateData {
+  string value = 1 [
+    json_name = "value",
+    (gnostic.openapi.v3.property) = {description: "数据值"}
+  ];
+
+  optional string color = 2 [
+    json_name = "color",
+    (gnostic.openapi.v3.property) = {description: "颜色"}
+  ];
+}
+
+// 小程序登录 - 请求
+message MiniProgramLoginRequest {
+  string code = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "code",
+    (gnostic.openapi.v3.property) = {description: "小程序登录凭证"}
+  ];
+}
+
+// 小程序登录 - 响应
+message MiniProgramLoginResponse {
+  string openid = 1 [
+    json_name = "openid",
+    (gnostic.openapi.v3.property) = {description: "微信OpenID"}
+  ];
+
+  optional string unionid = 2 [
+    json_name = "unionid",
+    (gnostic.openapi.v3.property) = {description: "微信UnionID"}
+  ];
+
+  string session_key = 3 [
+    json_name = "sessionKey",
+    (gnostic.openapi.v3.property) = {description: "会话密钥"}
+  ];
+}

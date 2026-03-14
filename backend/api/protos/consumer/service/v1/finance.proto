@@ -1,0 +1,345 @@
+syntax = "proto3";
+
+package consumer.service.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+import "pagination/v1/pagination.proto";
+
+// 财务服务
+service FinanceService {
+  // 获取账户余额
+  rpc GetAccount (GetAccountRequest) returns (FinanceAccount) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "getAccount"
+      tags: "Finance"
+      summary: "获取账户余额"
+      description: "查询用户财务账户余额"
+    };
+  }
+
+  // 充值
+  rpc Recharge (RechargeRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "recharge"
+      tags: "Finance"
+      summary: "充值"
+      description: "用户账户充值"
+    };
+  }
+
+  // 申请提现
+  rpc Withdraw (WithdrawRequest) returns (WithdrawResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "withdraw"
+      tags: "Finance"
+      summary: "申请提现"
+      description: "用户申请提现"
+    };
+  }
+
+  // 审核提现
+  rpc ApproveWithdraw (ApproveWithdrawRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "approveWithdraw"
+      tags: "Finance"
+      summary: "审核提现"
+      description: "管理员审核提现申请"
+    };
+  }
+
+  // 查询财务流水
+  rpc ListTransactions (ListTransactionsRequest) returns (ListTransactionsResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listTransactions"
+      tags: "Finance"
+      summary: "查询财务流水"
+      description: "分页查询财务流水记录"
+    };
+  }
+
+  // 导出财务流水
+  rpc ExportTransactions (ExportTransactionsRequest) returns (ExportTransactionsResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "exportTransactions"
+      tags: "Finance"
+      summary: "导出财务流水"
+      description: "导出财务流水为CSV文件"
+    };
+  }
+}
+
+// 财务账户
+message FinanceAccount {
+  optional uint32 id = 1 [
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "账户ID"}
+  ];
+
+  optional uint32 tenant_id = 2 [
+    json_name = "tenantId",
+    (gnostic.openapi.v3.property) = {description: "租户ID"}
+  ];
+
+  optional uint32 consumer_id = 3 [
+    json_name = "consumerId",
+    (gnostic.openapi.v3.property) = {description: "用户ID"}
+  ];
+
+  optional string balance = 4 [
+    json_name = "balance",
+    (gnostic.openapi.v3.property) = {description: "账户余额（元）"}
+  ];
+
+  optional string frozen_balance = 5 [
+    json_name = "frozenBalance",
+    (gnostic.openapi.v3.property) = {description: "冻结余额（元）"}
+  ];
+
+  optional google.protobuf.Timestamp created_at = 100 [
+    json_name = "createdAt",
+    (gnostic.openapi.v3.property) = {description: "创建时间"}
+  ];
+
+  optional google.protobuf.Timestamp updated_at = 101 [
+    json_name = "updatedAt",
+    (gnostic.openapi.v3.property) = {description: "更新时间"}
+  ];
+}
+
+// 财务流水
+message FinanceTransaction {
+  // 交易类型
+  enum TransactionType {
+    RECHARGE = 0;  // 充值
+    CONSUME = 1;   // 消费
+    WITHDRAW = 2;  // 提现
+    REFUND = 3;    // 退款
+  }
+
+  optional uint64 id = 1 [
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "流水ID"}
+  ];
+
+  optional uint32 tenant_id = 2 [
+    json_name = "tenantId",
+    (gnostic.openapi.v3.property) = {description: "租户ID"}
+  ];
+
+  optional uint32 consumer_id = 3 [
+    json_name = "consumerId",
+    (gnostic.openapi.v3.property) = {description: "用户ID"}
+  ];
+
+  optional string transaction_no = 4 [
+    json_name = "transactionNo",
+    (gnostic.openapi.v3.property) = {description: "流水号"}
+  ];
+
+  optional TransactionType transaction_type = 5 [
+    json_name = "transactionType",
+    (gnostic.openapi.v3.property) = {description: "交易类型"}
+  ];
+
+  optional string amount = 6 [
+    json_name = "amount",
+    (gnostic.openapi.v3.property) = {description: "交易金额（元）"}
+  ];
+
+  optional string balance_before = 7 [
+    json_name = "balanceBefore",
+    (gnostic.openapi.v3.property) = {description: "交易前余额（元）"}
+  ];
+
+  optional string balance_after = 8 [
+    json_name = "balanceAfter",
+    (gnostic.openapi.v3.property) = {description: "交易后余额（元）"}
+  ];
+
+  optional string description = 9 [
+    json_name = "description",
+    (gnostic.openapi.v3.property) = {description: "交易描述"}
+  ];
+
+  optional string related_order_no = 10 [
+    json_name = "relatedOrderNo",
+    (gnostic.openapi.v3.property) = {description: "关联订单号"}
+  ];
+
+  optional uint32 operator_id = 11 [
+    json_name = "operatorId",
+    (gnostic.openapi.v3.property) = {description: "操作人ID"}
+  ];
+
+  optional google.protobuf.Timestamp created_at = 100 [
+    json_name = "createdAt",
+    (gnostic.openapi.v3.property) = {description: "创建时间"}
+  ];
+}
+
+// 获取账户余额 - 请求
+message GetAccountRequest {
+  optional uint32 consumer_id = 1 [
+    json_name = "consumerId",
+    (gnostic.openapi.v3.property) = {description: "用户ID（不传则查询当前用户）"}
+  ];
+}
+
+// 充值 - 请求
+message RechargeRequest {
+  string amount = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "amount",
+    (gnostic.openapi.v3.property) = {description: "充值金额（元）"}
+  ];
+
+  string payment_order_no = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "paymentOrderNo",
+    (gnostic.openapi.v3.property) = {description: "支付订单号"}
+  ];
+}
+
+// 申请提现 - 请求
+message WithdrawRequest {
+  string amount = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "amount",
+    (gnostic.openapi.v3.property) = {description: "提现金额（元）"}
+  ];
+
+  optional string bank_account = 2 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "bankAccount",
+    (gnostic.openapi.v3.property) = {description: "银行账号"}
+  ];
+
+  optional string bank_name = 3 [
+    (validate.rules).string = {max_len: 100},
+    json_name = "bankName",
+    (gnostic.openapi.v3.property) = {description: "开户银行"}
+  ];
+
+  optional string account_name = 4 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "accountName",
+    (gnostic.openapi.v3.property) = {description: "账户名"}
+  ];
+}
+
+// 申请提现 - 响应
+message WithdrawResponse {
+  string withdraw_no = 1 [
+    json_name = "withdrawNo",
+    (gnostic.openapi.v3.property) = {description: "提现单号"}
+  ];
+
+  string status = 2 [
+    json_name = "status",
+    (gnostic.openapi.v3.property) = {description: "提现状态"}
+  ];
+}
+
+// 审核提现 - 请求
+message ApproveWithdrawRequest {
+  string withdraw_no = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "withdrawNo",
+    (gnostic.openapi.v3.property) = {description: "提现单号"}
+  ];
+
+  bool approved = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "approved",
+    (gnostic.openapi.v3.property) = {description: "是否通过"}
+  ];
+
+  optional string reject_reason = 3 [
+    (validate.rules).string = {max_len: 200},
+    json_name = "rejectReason",
+    (gnostic.openapi.v3.property) = {description: "拒绝原因"}
+  ];
+}
+
+// 查询财务流水 - 请求
+message ListTransactionsRequest {
+  optional uint32 consumer_id = 1 [
+    json_name = "consumerId",
+    (gnostic.openapi.v3.property) = {description: "用户ID（不传则查询当前用户）"}
+  ];
+
+  optional FinanceTransaction.TransactionType transaction_type = 2 [
+    json_name = "transactionType",
+    (gnostic.openapi.v3.property) = {description: "交易类型"}
+  ];
+
+  optional google.protobuf.Timestamp start_time = 3 [
+    json_name = "startTime",
+    (gnostic.openapi.v3.property) = {description: "开始时间"}
+  ];
+
+  optional google.protobuf.Timestamp end_time = 4 [
+    json_name = "endTime",
+    (gnostic.openapi.v3.property) = {description: "结束时间"}
+  ];
+
+  optional uint32 page = 10 [
+    json_name = "page",
+    (gnostic.openapi.v3.property) = {description: "页码"}
+  ];
+
+  optional uint32 page_size = 11 [
+    json_name = "pageSize",
+    (gnostic.openapi.v3.property) = {description: "每页数量"}
+  ];
+}
+
+// 查询财务流水 - 响应
+message ListTransactionsResponse {
+  repeated FinanceTransaction items = 1 [
+    json_name = "items",
+    (gnostic.openapi.v3.property) = {description: "财务流水列表"}
+  ];
+
+  uint64 total = 2 [
+    json_name = "total",
+    (gnostic.openapi.v3.property) = {description: "总数"}
+  ];
+}
+
+// 导出财务流水 - 请求
+message ExportTransactionsRequest {
+  optional uint32 consumer_id = 1 [
+    json_name = "consumerId",
+    (gnostic.openapi.v3.property) = {description: "用户ID（不传则导出当前用户）"}
+  ];
+
+  optional FinanceTransaction.TransactionType transaction_type = 2 [
+    json_name = "transactionType",
+    (gnostic.openapi.v3.property) = {description: "交易类型"}
+  ];
+
+  optional google.protobuf.Timestamp start_time = 3 [
+    json_name = "startTime",
+    (gnostic.openapi.v3.property) = {description: "开始时间"}
+  ];
+
+  optional google.protobuf.Timestamp end_time = 4 [
+    json_name = "endTime",
+    (gnostic.openapi.v3.property) = {description: "结束时间"}
+  ];
+}
+
+// 导出财务流水 - 响应
+message ExportTransactionsResponse {
+  string file_url = 1 [
+    json_name = "fileUrl",
+    (gnostic.openapi.v3.property) = {description: "CSV文件下载URL"}
+  ];
+}

@@ -209,7 +209,7 @@ func (s *SearchIndex) calculateScore(entry *IndexEntry, queryWords []string) flo
 }
 
 func (s *SearchIndex) extractSnippet(content string, queryWords []string) string {
-	lines := strings.Split(content, "\n")
+	_ = strings.Split(content, "\n") // lines variable not used yet
 	contentLower := strings.ToLower(content)
 
 	// 找到第一个匹配的位置

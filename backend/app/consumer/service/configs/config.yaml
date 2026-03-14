@@ -1,0 +1,230 @@
+# C端用户管理系统 - Consumer Service 配置文件
+# Consumer User Management System - Configuration File
+
+# 服务器配置
+server:
+  rest:
+    addr: ":8080"
+    timeout: 10s
+    enable_swagger: true
+    enable_pprof: true
+    cors:
+      headers:
+        - "X-Requested-With"
+        - "X-Request-ID"
+        - "Content-Type"
+        - "Authorization"
+      methods:
+        - "GET"
+        - "POST"
+        - "PUT"
+        - "DELETE"
+        - "HEAD"
+        - "OPTIONS"
+      origins:
+        - "*"
+    middleware:
+      enable_logging: true
+      enable_recovery: true
+      enable_tracing: true
+      enable_validate: true
+      enable_circuit_breaker: true
+      enable_metadata: true
+
+  # Kafka 事件总线配置
+  kafka:
+    addrs:
+      - "kafka:9092"
+    codec: "json"
+    enable_gracefully_shutdown: true
+    shutdown_timeout: 3s
+
+# 数据库配置
+data:
+  database:
+    # MySQL 主从配置
+    driver: "mysql"
+    # 主库连接
+    source: "root:*Abcd123456@tcp(mysql-master:3306)/consumer_db?parseTime=true&charset=utf8mb4&loc=Asia%2FShanghai"
+    # 从库连接（读写分离）
+    read_source: "root:*Abcd123456@tcp(mysql-slave:3306)/consumer_db?parseTime=true&charset=utf8mb4&loc=Asia%2FShanghai"
+    # 数据库迁移
+    migrate: true
+    debug: false
+    enable_trace: true
+    enable_metrics: true
+    # 连接池配置
+    max_idle_connections: 25
+    max_open_connections: 100
+    connection_max_lifetime: 300s
+
+  # Redis 集群配置
+  redis:
+    # 集群模式地址
+    addrs:
+      - "redis-cluster-0:6379"
+      - "redis-cluster-1:6379"
+      - "redis-cluster-2:6379"
+      - "redis-cluster-3:6379"
+      - "redis-cluster-4:6379"
+      - "redis-cluster-5:6379"
+    password: "*Abcd123456"
+    dial_timeout: 10s
+    read_timeout: 0.4s
+    write_timeout: 0.6s
+    pool_size: 100
+    min_idle_conns: 10
+
+# 日志配置
+logger:
+  level: "info"
+  format: "json"
+  output:
+    - "stdout"
+    - "file"
+  file:
+    path: "/var/log/consumer-service"
+    max_size: 100
+    max_backups: 10
+    max_age: 30
+    compress: true
+
+# 认证配置
+auth:
+  jwt:
+    secret: "your-jwt-secret-key-change-in-production"
+    expire: 7200  # 2小时
+    refresh_expire: 604800  # 7天
+
+# 限流配置
+rate_limit:
+  # 用户级别限流
+  user:
+    rate: 60  # 每分钟60次
+    burst: 10
+  # IP级别限流
+  ip:
+    rate: 100  # 每分钟100次
+    burst: 20
+
+# 第三方服务配置
+third_party:
+  # 短信服务配置
+  sms:
+    # 阿里云短信
+    aliyun:
+      access_key_id: "your-aliyun-access-key"
+      access_key_secret: "your-aliyun-access-secret"
+      sign_name: "your-sign-name"
+      template_code: "your-template-code"
+    # 腾讯云短信
+    tencent:
+      secret_id: "your-tencent-secret-id"
+      secret_key: "your-tencent-secret-key"
+      sdk_app_id: "your-sdk-app-id"
+      sign_name: "your-sign-name"
+      template_id: "your-template-id"
+  
+  # 支付服务配置
+  payment:
+    # 微信支付
+    wechat:
+      app_id: "your-wechat-app-id"
+      mch_id: "your-wechat-mch-id"
+      api_key: "your-wechat-api-key"
+      notify_url: "https://your-domain.com/api/payment/wechat/notify"
+    # 支付宝
+    alipay:
+      app_id: "your-alipay-app-id"
+      private_key: "your-alipay-private-key"
+      public_key: "your-alipay-public-key"
+      notify_url: "https://your-domain.com/api/payment/alipay/notify"
+    # 易宝支付
+    yeepay:
+      merchant_no: "your-yeepay-merchant-no"
+      app_key: "your-yeepay-app-key"
+      private_key: "your-yeepay-private-key"
+      notify_url: "https://your-domain.com/api/payment/yeepay/notify"
+  
+  # OSS 存储配置
+  oss:
+    # 阿里云 OSS
+    aliyun:
+      endpoint: "oss-cn-hangzhou.aliyuncs.com"
+      access_key_id: "your-aliyun-access-key"
+      access_key_secret: "your-aliyun-access-secret"
+      bucket: "your-bucket-name"
+    # 腾讯云 COS
+    tencent:
+      secret_id: "your-tencent-secret-id"
+      secret_key: "your-tencent-secret-key"
+      region: "ap-guangzhou"
+      bucket: "your-bucket-name"
+  
+  # 物流服务配置
+  logistics:
+    # 快递鸟
+    kdniao:
+      e_business_id: "your-kdniao-business-id"
+      app_key: "your-kdniao-app-key"
+      req_url: "https://api.kdniao.com/Ebusiness/EbusinessOrderHandle.aspx"
+  
+  # 微信服务配置
+  wechat:
+    # 公众号
+    official_account:
+      app_id: "your-wechat-official-app-id"
+      app_secret: "your-wechat-official-app-secret"
+    # 小程序
+    mini_program:
+      app_id: "your-wechat-mini-app-id"
+      app_secret: "your-wechat-mini-app-secret"
+
+# 业务配置
+business:
+  # 财务配置
+  finance:
+    # 提现限额
+    withdraw:
+      min_amount: 10.00  # 最小提现金额（元）
+      max_amount: 5000.00  # 单日最大提现金额（元）
+  
+  # 短信配置
+  sms:
+    # 验证码配置
+    verification_code:
+      length: 6  # 验证码长度
+      expire: 300  # 过期时间（秒）
+      rate_limit:
+        per_minute: 1  # 每分钟限制
+        per_day: 10  # 每天限制
+  
+  # 媒体文件配置
+  media:
+    # 图片配置
+    image:
+      max_size: 5242880  # 5MB
+      allowed_formats:
+        - "jpeg"
+        - "jpg"
+        - "png"
+        - "gif"
+    # 视频配置
+    video:
+      max_size: 104857600  # 100MB
+      allowed_formats:
+        - "mp4"
+        - "avi"
+        - "mov"
+    # 缩略图配置
+    thumbnail:
+      width: 200
+      height: 200
+  
+  # 物流配置
+  logistics:
+    cache_ttl: 1800  # 物流信息缓存时间（秒）
+  
+  # 支付配置
+  payment:
+    order_timeout: 1800  # 订单超时时间（秒）

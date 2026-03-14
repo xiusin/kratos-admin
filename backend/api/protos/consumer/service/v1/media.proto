@@ -1,0 +1,255 @@
+syntax = "proto3";
+
+package consumer.service.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+import "pagination/v1/pagination.proto";
+
+// 媒体服务
+service MediaService {
+  // 生成上传预签名URL
+  rpc GenerateUploadURL (GenerateUploadURLRequest) returns (GenerateUploadURLResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "generateUploadURL"
+      tags: "Media"
+      summary: "生成上传预签名URL"
+      description: "生成OSS预签名URL供前端直接上传"
+    };
+  }
+
+  // 确认上传完成
+  rpc ConfirmUpload (ConfirmUploadRequest) returns (MediaFile) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "confirmUpload"
+      tags: "Media"
+      summary: "确认上传完成"
+      description: "确认文件上传完成并保存元数据"
+    };
+  }
+
+  // 获取媒体文件
+  rpc GetMediaFile (GetMediaFileRequest) returns (MediaFile) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "getMediaFile"
+      tags: "Media"
+      summary: "获取媒体文件"
+      description: "查询媒体文件详情"
+    };
+  }
+
+  // 查询媒体文件列表
+  rpc ListMediaFiles (pagination.PagingRequest) returns (ListMediaFilesResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listMediaFiles"
+      tags: "Media"
+      summary: "查询媒体文件列表"
+      description: "分页查询媒体文件列表"
+    };
+  }
+
+  // 删除媒体文件
+  rpc DeleteMediaFile (DeleteMediaFileRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "deleteMediaFile"
+      tags: "Media"
+      summary: "删除媒体文件"
+      description: "软删除媒体文件"
+    };
+  }
+}
+
+// 媒体文件
+message MediaFile {
+  // 文件类型
+  enum FileType {
+    IMAGE = 0;  // 图片
+    VIDEO = 1;  // 视频
+  }
+
+  optional uint64 id = 1 [
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "文件ID"}
+  ];
+
+  optional uint32 tenant_id = 2 [
+    json_name = "tenantId",
+    (gnostic.openapi.v3.property) = {description: "租户ID"}
+  ];
+
+  optional uint32 consumer_id = 3 [
+    json_name = "consumerId",
+    (gnostic.openapi.v3.property) = {description: "上传者ID"}
+  ];
+
+  optional string file_name = 4 [
+    json_name = "fileName",
+    (gnostic.openapi.v3.property) = {description: "文件名"}
+  ];
+
+  optional FileType file_type = 5 [
+    json_name = "fileType",
+    (gnostic.openapi.v3.property) = {description: "文件类型"}
+  ];
+
+  optional string file_format = 6 [
+    json_name = "fileFormat",
+    (gnostic.openapi.v3.property) = {description: "文件格式（JPEG/PNG/GIF/MP4等）"}
+  ];
+
+  optional uint64 file_size = 7 [
+    json_name = "fileSize",
+    (gnostic.openapi.v3.property) = {description: "文件大小（字节）"}
+  ];
+
+  optional string file_url = 8 [
+    json_name = "fileUrl",
+    (gnostic.openapi.v3.property) = {description: "文件URL"}
+  ];
+
+  optional string thumbnail_url = 9 [
+    json_name = "thumbnailUrl",
+    (gnostic.openapi.v3.property) = {description: "缩略图URL"}
+  ];
+
+  optional string oss_bucket = 10 [
+    json_name = "ossBucket",
+    (gnostic.openapi.v3.property) = {description: "OSS Bucket"}
+  ];
+
+  optional string oss_key = 11 [
+    json_name = "ossKey",
+    (gnostic.openapi.v3.property) = {description: "OSS Key"}
+  ];
+
+  optional bool is_deleted = 12 [
+    json_name = "isDeleted",
+    (gnostic.openapi.v3.property) = {description: "是否删除"}
+  ];
+
+  optional google.protobuf.Timestamp created_at = 100 [
+    json_name = "createdAt",
+    (gnostic.openapi.v3.property) = {description: "创建时间"}
+  ];
+
+  optional google.protobuf.Timestamp deleted_at = 101 [
+    json_name = "deletedAt",
+    (gnostic.openapi.v3.property) = {description: "删除时间"}
+  ];
+}
+
+// 生成上传预签名URL - 请求
+message GenerateUploadURLRequest {
+  string file_name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {max_len: 255},
+    json_name = "fileName",
+    (gnostic.openapi.v3.property) = {description: "文件名"}
+  ];
+
+  MediaFile.FileType file_type = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "fileType",
+    (gnostic.openapi.v3.property) = {description: "文件类型"}
+  ];
+
+  string file_format = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {max_len: 20},
+    json_name = "fileFormat",
+    (gnostic.openapi.v3.property) = {description: "文件格式（JPEG/PNG/GIF/MP4等）"}
+  ];
+
+  uint64 file_size = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "fileSize",
+    (gnostic.openapi.v3.property) = {description: "文件大小（字节）"}
+  ];
+}
+
+// 生成上传预签名URL - 响应
+message GenerateUploadURLResponse {
+  string upload_url = 1 [
+    json_name = "uploadUrl",
+    (gnostic.openapi.v3.property) = {description: "预签名上传URL"}
+  ];
+
+  string file_key = 2 [
+    json_name = "fileKey",
+    (gnostic.openapi.v3.property) = {description: "文件Key（用于确认上传）"}
+  ];
+
+  int64 expires_in = 3 [
+    json_name = "expiresIn",
+    (gnostic.openapi.v3.property) = {description: "过期时间（秒）"}
+  ];
+}
+
+// 确认上传完成 - 请求
+message ConfirmUploadRequest {
+  string file_key = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "fileKey",
+    (gnostic.openapi.v3.property) = {description: "文件Key"}
+  ];
+
+  string file_name = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {max_len: 255},
+    json_name = "fileName",
+    (gnostic.openapi.v3.property) = {description: "文件名"}
+  ];
+
+  MediaFile.FileType file_type = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "fileType",
+    (gnostic.openapi.v3.property) = {description: "文件类型"}
+  ];
+
+  string file_format = 4 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {max_len: 20},
+    json_name = "fileFormat",
+    (gnostic.openapi.v3.property) = {description: "文件格式"}
+  ];
+
+  uint64 file_size = 5 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "fileSize",
+    (gnostic.openapi.v3.property) = {description: "文件大小（字节）"}
+  ];
+}
+
+// 获取媒体文件 - 请求
+message GetMediaFileRequest {
+  uint64 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "文件ID"}
+  ];
+}
+
+// 查询媒体文件列表 - 响应
+message ListMediaFilesResponse {
+  repeated MediaFile items = 1 [
+    json_name = "items",
+    (gnostic.openapi.v3.property) = {description: "媒体文件列表"}
+  ];
+
+  uint64 total = 2 [
+    json_name = "total",
+    (gnostic.openapi.v3.property) = {description: "总数"}
+  ];
+}
+
+// 删除媒体文件 - 请求
+message DeleteMediaFileRequest {
+  uint64 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "文件ID"}
+  ];
+}

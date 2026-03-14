@@ -134,14 +134,14 @@ func (h *errorHandler) HandleViolationError(ctx context.Context, violation Viola
 	constErr := &ConstitutionError{
 		ID:                    generateErrorID(),
 		Category:              ErrorCategoryViolation,
-		Message:               violation.Message,
+		Message:               violation.Description,
 		Details:               violation.Description,
-		File:                  violation.File,
-		Line:                  violation.Line,
+		File:                  violation.FilePath,
+		Line:                  violation.LineNumber,
 		Timestamp:             time.Now(),
-		ConstitutionReference: violation.RuleReference,
-		CodeSnippet:           violation.CodeSnippet,
-		FixSuggestions:        violation.FixSuggestions,
+		ConstitutionReference: violation.ConstitutionReference,
+		CodeSnippet:           "", // Not available in Violation struct
+		FixSuggestions:        []string{violation.Suggestion},
 		Metadata:              make(map[string]interface{}),
 	}
 

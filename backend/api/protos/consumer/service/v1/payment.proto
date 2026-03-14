@@ -1,0 +1,345 @@
+syntax = "proto3";
+
+package consumer.service.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+import "pagination/v1/pagination.proto";
+
+// 支付服务
+service PaymentService {
+  // 创建支付订单
+  rpc CreatePayment (CreatePaymentRequest) returns (CreatePaymentResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "createPayment"
+      tags: "Payment"
+      summary: "创建支付订单"
+      description: "创建支付订单并返回支付参数"
+    };
+  }
+
+  // 查询支付订单
+  rpc GetPayment (GetPaymentRequest) returns (PaymentOrder) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "getPayment"
+      tags: "Payment"
+      summary: "查询支付订单"
+      description: "根据订单号查询支付订单详情"
+    };
+  }
+
+  // 查询支付结果
+  rpc QueryPaymentStatus (QueryPaymentStatusRequest) returns (PaymentStatusResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "queryPaymentStatus"
+      tags: "Payment"
+      summary: "查询支付结果"
+      description: "查询支付订单的支付结果"
+    };
+  }
+
+  // 申请退款
+  rpc Refund (RefundRequest) returns (RefundResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "refund"
+      tags: "Payment"
+      summary: "申请退款"
+      description: "对已支付订单申请退款"
+    };
+  }
+
+  // 查询退款状态
+  rpc QueryRefundStatus (QueryRefundStatusRequest) returns (RefundStatusResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "queryRefundStatus"
+      tags: "Payment"
+      summary: "查询退款状态"
+      description: "查询退款申请的处理状态"
+    };
+  }
+
+  // 查询支付流水
+  rpc ListPayments (pagination.PagingRequest) returns (ListPaymentsResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listPayments"
+      tags: "Payment"
+      summary: "查询支付流水"
+      description: "分页查询支付流水记录"
+    };
+  }
+}
+
+// 支付订单
+message PaymentOrder {
+  // 支付方式
+  enum PaymentMethod {
+    WECHAT = 0;  // 微信支付
+    ALIPAY = 1;  // 支付宝
+    YEEPAY = 2;  // 易宝支付
+  }
+
+  // 支付类型
+  enum PaymentType {
+    APP = 0;     // APP支付
+    H5 = 1;      // H5支付
+    MINI = 2;    // 小程序支付
+    QRCODE = 3;  // 扫码支付
+  }
+
+  // 订单状态
+  enum Status {
+    PENDING = 0;   // 待支付
+    SUCCESS = 1;   // 支付成功
+    FAILED = 2;    // 支付失败
+    CLOSED = 3;    // 已关闭
+    REFUNDED = 4;  // 已退款
+  }
+
+  optional uint64 id = 1 [
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "订单ID"}
+  ];
+
+  optional uint32 tenant_id = 2 [
+    json_name = "tenantId",
+    (gnostic.openapi.v3.property) = {description: "租户ID"}
+  ];
+
+  optional string order_no = 3 [
+    json_name = "orderNo",
+    (gnostic.openapi.v3.property) = {description: "订单号"}
+  ];
+
+  optional uint32 consumer_id = 4 [
+    json_name = "consumerId",
+    (gnostic.openapi.v3.property) = {description: "用户ID"}
+  ];
+
+  optional PaymentMethod payment_method = 5 [
+    json_name = "paymentMethod",
+    (gnostic.openapi.v3.property) = {description: "支付方式"}
+  ];
+
+  optional PaymentType payment_type = 6 [
+    json_name = "paymentType",
+    (gnostic.openapi.v3.property) = {description: "支付类型"}
+  ];
+
+  optional string amount = 7 [
+    json_name = "amount",
+    (gnostic.openapi.v3.property) = {description: "支付金额（元）"}
+  ];
+
+  optional Status status = 8 [
+    json_name = "status",
+    (gnostic.openapi.v3.property) = {description: "订单状态"}
+  ];
+
+  optional string transaction_id = 9 [
+    json_name = "transactionId",
+    (gnostic.openapi.v3.property) = {description: "第三方交易号"}
+  ];
+
+  optional string callback_data = 10 [
+    json_name = "callbackData",
+    (gnostic.openapi.v3.property) = {description: "回调数据"}
+  ];
+
+  optional google.protobuf.Timestamp paid_at = 11 [
+    json_name = "paidAt",
+    (gnostic.openapi.v3.property) = {description: "支付时间"}
+  ];
+
+  optional google.protobuf.Timestamp closed_at = 12 [
+    json_name = "closedAt",
+    (gnostic.openapi.v3.property) = {description: "关闭时间"}
+  ];
+
+  optional google.protobuf.Timestamp expires_at = 13 [
+    json_name = "expiresAt",
+    (gnostic.openapi.v3.property) = {description: "过期时间"}
+  ];
+
+  optional google.protobuf.Timestamp created_at = 100 [
+    json_name = "createdAt",
+    (gnostic.openapi.v3.property) = {description: "创建时间"}
+  ];
+
+  optional google.protobuf.Timestamp updated_at = 101 [
+    json_name = "updatedAt",
+    (gnostic.openapi.v3.property) = {description: "更新时间"}
+  ];
+}
+
+// 创建支付订单 - 请求
+message CreatePaymentRequest {
+  PaymentOrder.PaymentMethod payment_method = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "paymentMethod",
+    (gnostic.openapi.v3.property) = {description: "支付方式"}
+  ];
+
+  PaymentOrder.PaymentType payment_type = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "paymentType",
+    (gnostic.openapi.v3.property) = {description: "支付类型"}
+  ];
+
+  string amount = 3 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "amount",
+    (gnostic.openapi.v3.property) = {description: "支付金额（元）"}
+  ];
+
+  optional string subject = 4 [
+    (validate.rules).string = {max_len: 256},
+    json_name = "subject",
+    (gnostic.openapi.v3.property) = {description: "订单标题"}
+  ];
+
+  optional string body = 5 [
+    (validate.rules).string = {max_len: 1000},
+    json_name = "body",
+    (gnostic.openapi.v3.property) = {description: "订单描述"}
+  ];
+
+  optional string notify_url = 6 [
+    (validate.rules).string = {max_len: 500},
+    json_name = "notifyUrl",
+    (gnostic.openapi.v3.property) = {description: "异步通知URL"}
+  ];
+
+  optional string return_url = 7 [
+    (validate.rules).string = {max_len: 500},
+    json_name = "returnUrl",
+    (gnostic.openapi.v3.property) = {description: "同步跳转URL"}
+  ];
+}
+
+// 创建支付订单 - 响应
+message CreatePaymentResponse {
+  string order_no = 1 [
+    json_name = "orderNo",
+    (gnostic.openapi.v3.property) = {description: "订单号"}
+  ];
+
+  string pay_info = 2 [
+    json_name = "payInfo",
+    (gnostic.openapi.v3.property) = {description: "支付参数（JSON字符串）"}
+  ];
+}
+
+// 查询支付订单 - 请求
+message GetPaymentRequest {
+  string order_no = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "orderNo",
+    (gnostic.openapi.v3.property) = {description: "订单号"}
+  ];
+}
+
+// 查询支付结果 - 请求
+message QueryPaymentStatusRequest {
+  string order_no = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "orderNo",
+    (gnostic.openapi.v3.property) = {description: "订单号"}
+  ];
+}
+
+// 查询支付结果 - 响应
+message PaymentStatusResponse {
+  PaymentOrder.Status status = 1 [
+    json_name = "status",
+    (gnostic.openapi.v3.property) = {description: "支付状态"}
+  ];
+
+  optional string transaction_id = 2 [
+    json_name = "transactionId",
+    (gnostic.openapi.v3.property) = {description: "第三方交易号"}
+  ];
+
+  optional google.protobuf.Timestamp paid_at = 3 [
+    json_name = "paidAt",
+    (gnostic.openapi.v3.property) = {description: "支付时间"}
+  ];
+}
+
+// 申请退款 - 请求
+message RefundRequest {
+  string order_no = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "orderNo",
+    (gnostic.openapi.v3.property) = {description: "订单号"}
+  ];
+
+  string refund_amount = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "refundAmount",
+    (gnostic.openapi.v3.property) = {description: "退款金额（元）"}
+  ];
+
+  optional string reason = 3 [
+    (validate.rules).string = {max_len: 200},
+    json_name = "reason",
+    (gnostic.openapi.v3.property) = {description: "退款原因"}
+  ];
+}
+
+// 申请退款 - 响应
+message RefundResponse {
+  string refund_no = 1 [
+    json_name = "refundNo",
+    (gnostic.openapi.v3.property) = {description: "退款单号"}
+  ];
+
+  string status = 2 [
+    json_name = "status",
+    (gnostic.openapi.v3.property) = {description: "退款状态"}
+  ];
+}
+
+// 查询退款状态 - 请求
+message QueryRefundStatusRequest {
+  string refund_no = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "refundNo",
+    (gnostic.openapi.v3.property) = {description: "退款单号"}
+  ];
+}
+
+// 查询退款状态 - 响应
+message RefundStatusResponse {
+  string status = 1 [
+    json_name = "status",
+    (gnostic.openapi.v3.property) = {description: "退款状态"}
+  ];
+
+  optional string refund_amount = 2 [
+    json_name = "refundAmount",
+    (gnostic.openapi.v3.property) = {description: "退款金额（元）"}
+  ];
+
+  optional google.protobuf.Timestamp refunded_at = 3 [
+    json_name = "refundedAt",
+    (gnostic.openapi.v3.property) = {description: "退款时间"}
+  ];
+}
+
+// 查询支付流水 - 响应
+message ListPaymentsResponse {
+  repeated PaymentOrder items = 1 [
+    json_name = "items",
+    (gnostic.openapi.v3.property) = {description: "支付订单列表"}
+  ];
+
+  uint64 total = 2 [
+    json_name = "total",
+    (gnostic.openapi.v3.property) = {description: "总数"}
+  ];
+}

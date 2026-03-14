@@ -21,7 +21,7 @@
 
 ## Tasks
 
-- [ ] 1. 项目结构和基础设施搭建
+- [x] 1. 项目结构和基础设施搭建
   - 创建Consumer服务目录结构(backend/app/consumer/service/)
   - 配置Wire依赖注入(cmd/server/wire.go)
   - 创建服务配置文件(configs/config.yaml)
@@ -31,8 +31,8 @@
   - 创建健康检查接口(/health, /ready)
   - _Requirements: 15.1, 15.2_
 
-- [ ] 2. Protobuf API定义
-  - [ ] 2.1 创建Consumer Service Protobuf定义
+- [x] 2. Protobuf API定义
+  - [x] 2.1 创建Consumer Service Protobuf定义
     - 定义ConsumerService接口(注册、登录、信息管理)
     - 定义Consumer消息类型(用户实体)
     - 定义请求响应消息(RegisterByPhoneRequest, LoginResponse等)
@@ -40,176 +40,176 @@
     - 添加验证规则(protoc-gen-validate)
     - _Requirements: 1.1-1.10, 2.1-2.8_
 
-  - [ ] 2.2 创建SMS Service Protobuf定义
+  - [x] 2.2 创建SMS Service Protobuf定义
     - 定义SMSService接口(发送验证码、验证、通知)
     - 定义短信相关消息类型
     - 添加OpenAPI注解和验证规则
     - _Requirements: 3.1-3.10_
 
-  - [ ] 2.3 创建Payment Service Protobuf定义
+  - [x] 2.3 创建Payment Service Protobuf定义
     - 定义PaymentService接口(创建订单、查询、退款)
     - 定义PaymentOrder消息类型
     - 添加OpenAPI注解和验证规则
     - _Requirements: 4.1-4.12_
 
 
-  - [ ] 2.4 创建Finance Service Protobuf定义
+  - [x] 2.4 创建Finance Service Protobuf定义
     - 定义FinanceService接口(余额、充值、提现、流水)
     - 定义FinanceAccount和FinanceTransaction消息类型
     - 添加OpenAPI注解和验证规则
     - _Requirements: 5.1-5.12_
 
-  - [ ] 2.5 创建Wechat Service Protobuf定义
+  - [x] 2.5 创建Wechat Service Protobuf定义
     - 定义WechatService接口(OAuth登录、用户信息、模板消息)
     - 定义微信相关消息类型
     - 添加OpenAPI注解和验证规则
     - _Requirements: 6.1-6.10_
 
-  - [ ] 2.6 创建Media Service Protobuf定义
+  - [x] 2.6 创建Media Service Protobuf定义
     - 定义MediaService接口(上传、查询、删除)
     - 定义MediaFile消息类型
     - 添加OpenAPI注解和验证规则
     - _Requirements: 7.1-7.13_
 
-  - [ ] 2.7 创建Logistics Service Protobuf定义
+  - [x] 2.7 创建Logistics Service Protobuf定义
     - 定义LogisticsService接口(查询、订阅)
     - 定义LogisticsTracking消息类型
     - 添加OpenAPI注解和验证规则
     - _Requirements: 8.1-8.10_
 
-  - [ ] 2.8 创建Freight Service Protobuf定义
+  - [x] 2.8 创建Freight Service Protobuf定义
     - 定义FreightService接口(计算运费、模板管理)
     - 定义FreightTemplate消息类型
     - 添加OpenAPI注解和验证规则
     - _Requirements: 9.1-9.10_
 
-  - [ ] 2.9 生成Protobuf代码
+  - [x] 2.9 生成Protobuf代码
     - 运行buf generate生成Go代码
     - 验证生成的gRPC服务接口
     - 验证生成的HTTP路由
     - _Requirements: All_
 
-- [ ] 3. Ent Schema定义和数据库迁移
-  - [ ] 3.1 创建Consumer Schema
+- [x] 3. Ent Schema定义和数据库迁移
+  - [x] 3.1 创建Consumer Schema
     - 定义Consumer实体(id, tenant_id, phone, email, nickname, avatar等)
     - 定义字段验证规则(手机号格式、邮箱格式)
     - 定义索引(tenant_id+phone唯一索引)
     - 定义枚举类型(Status: normal/locked/deactivated)
     - _Requirements: 2.1-2.8, 10.1-10.8_
 
-  - [ ] 3.2 创建LoginLog Schema
+  - [x] 3.2 创建LoginLog Schema
     - 定义LoginLog实体(id, tenant_id, consumer_id, phone, login_type等)
     - 定义索引(tenant_id+consumer_id+login_at)
     - 定义枚举类型(LoginType: phone/wechat)
     - _Requirements: 1.7, 12.1-12.8_
 
-  - [ ] 3.3 创建SMSLog Schema
+  - [x] 3.3 创建SMSLog Schema
     - 定义SMSLog实体(id, tenant_id, phone, sms_type, content, code等)
     - 定义索引(tenant_id+phone+sent_at)
     - 定义枚举类型(SMSType: verification/notification, Channel: aliyun/tencent)
     - _Requirements: 3.7, 3.10_
 
-  - [ ] 3.4 创建PaymentOrder Schema
+  - [x] 3.4 创建PaymentOrder Schema
     - 定义PaymentOrder实体(id, tenant_id, order_no, consumer_id, amount等)
     - 定义索引(tenant_id+order_no唯一索引, transaction_id索引)
     - 定义枚举类型(PaymentMethod, PaymentType, Status)
     - 使用decimal类型存储金额
     - _Requirements: 4.4, 4.12, 5.12_
 
-  - [ ] 3.5 创建FinanceAccount Schema
+  - [x] 3.5 创建FinanceAccount Schema
     - 定义FinanceAccount实体(id, tenant_id, consumer_id, balance, frozen_balance)
     - 定义索引(tenant_id+consumer_id唯一索引)
     - 使用decimal类型存储余额
     - _Requirements: 5.1, 5.9, 5.12_
 
-  - [ ] 3.6 创建FinanceTransaction Schema
+  - [x] 3.6 创建FinanceTransaction Schema
     - 定义FinanceTransaction实体(id, tenant_id, consumer_id, transaction_no等)
     - 定义索引(transaction_no唯一索引, tenant_id+consumer_id+created_at)
     - 定义枚举类型(TransactionType: recharge/consume/withdraw/refund)
     - 使用decimal类型存储金额
     - _Requirements: 5.7, 5.11, 5.12_
 
-  - [ ] 3.7 创建MediaFile Schema
+  - [x] 3.7 创建MediaFile Schema
     - 定义MediaFile实体(id, tenant_id, consumer_id, file_name, file_type等)
     - 定义索引(tenant_id+consumer_id+is_deleted)
     - 定义枚举类型(FileType: image/video)
     - 软删除支持(is_deleted字段)
     - _Requirements: 7.8, 7.9, 7.11_
 
-  - [ ] 3.8 创建LogisticsTracking Schema
+  - [x] 3.8 创建LogisticsTracking Schema
     - 定义LogisticsTracking实体(id, tenant_id, tracking_no, courier_company等)
     - 定义索引(tenant_id+tracking_no唯一索引)
     - 定义枚举类型(Status: pending/in_transit/delivering/delivered)
     - 使用JSON字段存储物流轨迹
     - _Requirements: 8.4, 8.5, 8.7_
 
-  - [ ] 3.9 创建FreightTemplate Schema
+  - [x] 3.9 创建FreightTemplate Schema
     - 定义FreightTemplate实体(id, tenant_id, name, calculation_type等)
     - 定义索引(tenant_id+is_active)
     - 定义枚举类型(CalculationType: by_weight/by_distance)
     - 使用JSON字段存储地区规则和包邮规则
     - _Requirements: 9.5, 9.6, 9.7_
 
-  - [ ] 3.10 生成Ent代码和数据库迁移
+  - [x] 3.10 生成Ent代码和数据库迁移
     - 运行go generate生成Ent代码
     - 创建数据库迁移文件
     - 验证Schema定义和索引
     - _Requirements: All_
 
-- [ ] 4. 基础设施层实现(pkg/)
-  - [ ] 4.1 实现短信服务工具(pkg/sms/)
+- [x] 4. 基础设施层实现(pkg/)
+  - [x] 4.1 实现短信服务工具(pkg/sms/)
     - 实现阿里云短信客户端(aliyun.go)
     - 实现腾讯云短信客户端(tencent.go)
     - 实现短信发送接口和故障转移逻辑
     - 实现短信模板管理
     - _Requirements: 3.1, 3.2, 3.6_
 
-  - [ ] 4.2 实现支付服务工具(pkg/payment/)
+  - [x] 4.2 实现支付服务工具(pkg/payment/)
     - 实现微信支付客户端(wechat.go)
     - 实现支付宝客户端(alipay.go)
     - 实现易宝支付客户端(yeepay.go)
     - 实现支付回调签名验证
     - _Requirements: 4.1, 4.2, 4.3, 4.9_
 
-  - [ ] 4.3 实现OSS存储工具(pkg/oss/)
+  - [x] 4.3 实现OSS存储工具(pkg/oss/)
     - 实现阿里云OSS客户端(aliyun.go)
     - 实现腾讯云COS客户端(tencent.go)
     - 实现预签名URL生成
     - 实现文件上传和删除
     - _Requirements: 7.5, 7.6, 7.7_
 
-  - [ ] 4.4 实现物流查询工具(pkg/logistics/)
+  - [x] 4.4 实现物流查询工具(pkg/logistics/)
     - 实现快递鸟API客户端(kdniao.go)
     - 实现物流信息查询和解析
     - 实现物流公司识别
     - _Requirements: 8.1, 8.2, 8.5_
 
-  - [ ] 4.5 实现多租户中间件(pkg/middleware/tenant.go)
+  - [x] 4.5 实现多租户中间件(pkg/middleware/tenant.go)
     - 实现租户上下文提取(从JWT或请求头)
     - 实现租户上下文注入
     - 实现租户隔离验证
     - _Requirements: 10.1-10.8_
 
-  - [ ] 4.6 实现JWT认证中间件(pkg/middleware/auth.go)
+  - [x] 4.6 实现JWT认证中间件(pkg/middleware/auth.go)
     - 实现JWT令牌生成和验证
     - 实现令牌过期检查
     - 实现刷新令牌机制
     - _Requirements: 13.1, 13.2, 13.3_
 
-  - [ ] 4.7 实现限流中间件(pkg/middleware/ratelimit.go)
+  - [x] 4.7 实现限流中间件(pkg/middleware/ratelimit.go)
     - 实现基于Redis的滑动窗口限流
     - 实现用户级别限流(每分钟60次)
     - 实现IP级别限流
     - _Requirements: 13.4, 13.5_
 
-  - [ ] 4.8 实现事件总线(pkg/eventbus/)
+  - [x] 4.8 实现事件总线(pkg/eventbus/)
     - 实现Kafka事件发布
     - 实现Kafka事件订阅
     - 实现事件重试机制(最多3次)
     - 实现死信队列
     - _Requirements: 11.1-11.9_
 
-- [ ] 5. Checkpoint - 基础设施验证
+- [x] 5. Checkpoint - 基础设施验证
   - 验证所有pkg工具编译通过
   - 验证中间件功能正常
   - 验证事件总线连接正常

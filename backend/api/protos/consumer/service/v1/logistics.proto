@@ -1,0 +1,220 @@
+syntax = "proto3";
+
+package consumer.service.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+import "pagination/v1/pagination.proto";
+
+// 物流服务
+service LogisticsService {
+  // 查询物流信息
+  rpc QueryLogistics (QueryLogisticsRequest) returns (LogisticsInfo) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "queryLogistics"
+      tags: "Logistics"
+      summary: "查询物流信息"
+      description: "根据运单号查询物流信息"
+    };
+  }
+
+  // 订阅物流状态
+  rpc SubscribeLogistics (SubscribeLogisticsRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "subscribeLogistics"
+      tags: "Logistics"
+      summary: "订阅物流状态"
+      description: "订阅物流状态变更通知"
+    };
+  }
+
+  // 查询物流历史
+  rpc ListLogisticsHistory (ListLogisticsHistoryRequest) returns (ListLogisticsHistoryResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listLogisticsHistory"
+      tags: "Logistics"
+      summary: "查询物流历史"
+      description: "分页查询物流查询历史记录"
+    };
+  }
+}
+
+// 物流跟踪
+message LogisticsTracking {
+  // 物流状态
+  enum Status {
+    PENDING = 0;      // 待揽收
+    IN_TRANSIT = 1;   // 运输中
+    DELIVERING = 2;   // 派送中
+    DELIVERED = 3;    // 已签收
+  }
+
+  optional uint64 id = 1 [
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "跟踪ID"}
+  ];
+
+  optional uint32 tenant_id = 2 [
+    json_name = "tenantId",
+    (gnostic.openapi.v3.property) = {description: "租户ID"}
+  ];
+
+  optional string tracking_no = 3 [
+    json_name = "trackingNo",
+    (gnostic.openapi.v3.property) = {description: "运单号"}
+  ];
+
+  optional string courier_company = 4 [
+    json_name = "courierCompany",
+    (gnostic.openapi.v3.property) = {description: "快递公司"}
+  ];
+
+  optional Status status = 5 [
+    json_name = "status",
+    (gnostic.openapi.v3.property) = {description: "物流状态"}
+  ];
+
+  repeated google.protobuf.Struct tracking_info = 6 [
+    json_name = "trackingInfo",
+    (gnostic.openapi.v3.property) = {description: "物流轨迹"}
+  ];
+
+  optional google.protobuf.Timestamp last_updated_at = 7 [
+    json_name = "lastUpdatedAt",
+    (gnostic.openapi.v3.property) = {description: "最后更新时间"}
+  ];
+
+  optional google.protobuf.Timestamp created_at = 100 [
+    json_name = "createdAt",
+    (gnostic.openapi.v3.property) = {description: "创建时间"}
+  ];
+}
+
+// 物流信息
+message LogisticsInfo {
+  string tracking_no = 1 [
+    json_name = "trackingNo",
+    (gnostic.openapi.v3.property) = {description: "运单号"}
+  ];
+
+  string courier_company = 2 [
+    json_name = "courierCompany",
+    (gnostic.openapi.v3.property) = {description: "快递公司"}
+  ];
+
+  LogisticsTracking.Status status = 3 [
+    json_name = "status",
+    (gnostic.openapi.v3.property) = {description: "物流状态"}
+  ];
+
+  repeated TrackingDetail tracking_details = 4 [
+    json_name = "trackingDetails",
+    (gnostic.openapi.v3.property) = {description: "物流轨迹详情"}
+  ];
+
+  optional google.protobuf.Timestamp last_updated_at = 5 [
+    json_name = "lastUpdatedAt",
+    (gnostic.openapi.v3.property) = {description: "最后更新时间"}
+  ];
+}
+
+// 物流轨迹详情
+message TrackingDetail {
+  optional google.protobuf.Timestamp time = 1 [
+    json_name = "time",
+    (gnostic.openapi.v3.property) = {description: "时间"}
+  ];
+
+  optional string location = 2 [
+    json_name = "location",
+    (gnostic.openapi.v3.property) = {description: "地点"}
+  ];
+
+  optional string description = 3 [
+    json_name = "description",
+    (gnostic.openapi.v3.property) = {description: "描述"}
+  ];
+
+  optional string status = 4 [
+    json_name = "status",
+    (gnostic.openapi.v3.property) = {description: "状态"}
+  ];
+}
+
+// 查询物流信息 - 请求
+message QueryLogisticsRequest {
+  string tracking_no = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {max_len: 100},
+    json_name = "trackingNo",
+    (gnostic.openapi.v3.property) = {description: "运单号"}
+  ];
+
+  optional string courier_company = 2 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "courierCompany",
+    (gnostic.openapi.v3.property) = {description: "快递公司（不传则自动识别）"}
+  ];
+}
+
+// 订阅物流状态 - 请求
+message SubscribeLogisticsRequest {
+  string tracking_no = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {max_len: 100},
+    json_name = "trackingNo",
+    (gnostic.openapi.v3.property) = {description: "运单号"}
+  ];
+
+  optional string courier_company = 2 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "courierCompany",
+    (gnostic.openapi.v3.property) = {description: "快递公司"}
+  ];
+
+  optional string notify_url = 3 [
+    (validate.rules).string = {max_len: 500},
+    json_name = "notifyUrl",
+    (gnostic.openapi.v3.property) = {description: "状态变更通知URL"}
+  ];
+}
+
+// 查询物流历史 - 请求
+message ListLogisticsHistoryRequest {
+  optional uint32 consumer_id = 1 [
+    json_name = "consumerId",
+    (gnostic.openapi.v3.property) = {description: "用户ID（不传则查询当前用户）"}
+  ];
+
+  optional LogisticsTracking.Status status = 2 [
+    json_name = "status",
+    (gnostic.openapi.v3.property) = {description: "物流状态"}
+  ];
+
+  optional uint32 page = 10 [
+    json_name = "page",
+    (gnostic.openapi.v3.property) = {description: "页码"}
+  ];
+
+  optional uint32 page_size = 11 [
+    json_name = "pageSize",
+    (gnostic.openapi.v3.property) = {description: "每页数量"}
+  ];
+}
+
+// 查询物流历史 - 响应
+message ListLogisticsHistoryResponse {
+  repeated LogisticsTracking items = 1 [
+    json_name = "items",
+    (gnostic.openapi.v3.property) = {description: "物流跟踪列表"}
+  ];
+
+  uint64 total = 2 [
+    json_name = "total",
+    (gnostic.openapi.v3.property) = {description: "总数"}
+  ];
+}

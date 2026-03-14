@@ -1,0 +1,360 @@
+syntax = "proto3";
+
+package consumer.service.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+import "pagination/v1/pagination.proto";
+
+// 运费计算服务
+service FreightService {
+  // 计算运费
+  rpc CalculateFreight (CalculateFreightRequest) returns (CalculateFreightResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "calculateFreight"
+      tags: "Freight"
+      summary: "计算运费"
+      description: "根据订单信息计算运费"
+    };
+  }
+
+  // 创建运费模板
+  rpc CreateFreightTemplate (CreateFreightTemplateRequest) returns (FreightTemplate) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "createFreightTemplate"
+      tags: "Freight"
+      summary: "创建运费模板"
+      description: "创建运费计算模板"
+    };
+  }
+
+  // 更新运费模板
+  rpc UpdateFreightTemplate (UpdateFreightTemplateRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "updateFreightTemplate"
+      tags: "Freight"
+      summary: "更新运费模板"
+      description: "更新运费计算模板"
+    };
+  }
+
+  // 查询运费模板
+  rpc GetFreightTemplate (GetFreightTemplateRequest) returns (FreightTemplate) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "getFreightTemplate"
+      tags: "Freight"
+      summary: "查询运费模板"
+      description: "查询运费模板详情"
+    };
+  }
+
+  // 查询运费模板列表
+  rpc ListFreightTemplates (pagination.PagingRequest) returns (ListFreightTemplatesResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listFreightTemplates"
+      tags: "Freight"
+      summary: "查询运费模板列表"
+      description: "分页查询运费模板列表"
+    };
+  }
+}
+
+// 运费模板
+message FreightTemplate {
+  // 计算方式
+  enum CalculationType {
+    BY_WEIGHT = 0;    // 按重量
+    BY_DISTANCE = 1;  // 按距离
+  }
+
+  optional uint32 id = 1 [
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "模板ID"}
+  ];
+
+  optional uint32 tenant_id = 2 [
+    json_name = "tenantId",
+    (gnostic.openapi.v3.property) = {description: "租户ID"}
+  ];
+
+  optional string name = 3 [
+    json_name = "name",
+    (gnostic.openapi.v3.property) = {description: "模板名称"}
+  ];
+
+  optional CalculationType calculation_type = 4 [
+    json_name = "calculationType",
+    (gnostic.openapi.v3.property) = {description: "计算方式"}
+  ];
+
+  optional string first_weight = 5 [
+    json_name = "firstWeight",
+    (gnostic.openapi.v3.property) = {description: "首重（kg）"}
+  ];
+
+  optional string first_price = 6 [
+    json_name = "firstPrice",
+    (gnostic.openapi.v3.property) = {description: "首重价格（元）"}
+  ];
+
+  optional string additional_weight = 7 [
+    json_name = "additionalWeight",
+    (gnostic.openapi.v3.property) = {description: "续重（kg）"}
+  ];
+
+  optional string additional_price = 8 [
+    json_name = "additionalPrice",
+    (gnostic.openapi.v3.property) = {description: "续重价格（元）"}
+  ];
+
+  repeated google.protobuf.Struct region_rules = 9 [
+    json_name = "regionRules",
+    (gnostic.openapi.v3.property) = {description: "地区规则"}
+  ];
+
+  repeated google.protobuf.Struct free_shipping_rules = 10 [
+    json_name = "freeShippingRules",
+    (gnostic.openapi.v3.property) = {description: "包邮规则"}
+  ];
+
+  optional bool is_active = 11 [
+    json_name = "isActive",
+    (gnostic.openapi.v3.property) = {description: "是否启用"}
+  ];
+
+  optional uint32 created_by = 100 [
+    json_name = "createdBy",
+    (gnostic.openapi.v3.property) = {description: "创建者ID"}
+  ];
+
+  optional uint32 updated_by = 101 [
+    json_name = "updatedBy",
+    (gnostic.openapi.v3.property) = {description: "更新者ID"}
+  ];
+
+  optional google.protobuf.Timestamp created_at = 200 [
+    json_name = "createdAt",
+    (gnostic.openapi.v3.property) = {description: "创建时间"}
+  ];
+
+  optional google.protobuf.Timestamp updated_at = 201 [
+    json_name = "updatedAt",
+    (gnostic.openapi.v3.property) = {description: "更新时间"}
+  ];
+}
+
+// 计算运费 - 请求
+message CalculateFreightRequest {
+  optional uint32 template_id = 1 [
+    json_name = "templateId",
+    (gnostic.openapi.v3.property) = {description: "运费模板ID（不传则使用默认模板）"}
+  ];
+
+  optional string weight = 2 [
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "weight",
+    (gnostic.openapi.v3.property) = {description: "重量（kg）"}
+  ];
+
+  optional string from_province = 3 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "fromProvince",
+    (gnostic.openapi.v3.property) = {description: "发货省份"}
+  ];
+
+  optional string from_city = 4 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "fromCity",
+    (gnostic.openapi.v3.property) = {description: "发货城市"}
+  ];
+
+  optional string from_district = 5 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "fromDistrict",
+    (gnostic.openapi.v3.property) = {description: "发货区县"}
+  ];
+
+  string to_province = 6 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {max_len: 50},
+    json_name = "toProvince",
+    (gnostic.openapi.v3.property) = {description: "收货省份"}
+  ];
+
+  string to_city = 7 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {max_len: 50},
+    json_name = "toCity",
+    (gnostic.openapi.v3.property) = {description: "收货城市"}
+  ];
+
+  optional string to_district = 8 [
+    (validate.rules).string = {max_len: 50},
+    json_name = "toDistrict",
+    (gnostic.openapi.v3.property) = {description: "收货区县"}
+  ];
+
+  optional string order_amount = 9 [
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "orderAmount",
+    (gnostic.openapi.v3.property) = {description: "订单金额（元，用于判断包邮）"}
+  ];
+}
+
+// 计算运费 - 响应
+message CalculateFreightResponse {
+  string freight = 1 [
+    json_name = "freight",
+    (gnostic.openapi.v3.property) = {description: "运费（元）"}
+  ];
+
+  bool is_free_shipping = 2 [
+    json_name = "isFreeShipping",
+    (gnostic.openapi.v3.property) = {description: "是否包邮"}
+  ];
+
+  optional string free_shipping_reason = 3 [
+    json_name = "freeShippingReason",
+    (gnostic.openapi.v3.property) = {description: "包邮原因"}
+  ];
+
+  optional string calculation_detail = 4 [
+    json_name = "calculationDetail",
+    (gnostic.openapi.v3.property) = {description: "计算详情"}
+  ];
+}
+
+// 创建运费模板 - 请求
+message CreateFreightTemplateRequest {
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (validate.rules).string = {max_len: 100},
+    json_name = "name",
+    (gnostic.openapi.v3.property) = {description: "模板名称"}
+  ];
+
+  FreightTemplate.CalculationType calculation_type = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "calculationType",
+    (gnostic.openapi.v3.property) = {description: "计算方式"}
+  ];
+
+  optional string first_weight = 3 [
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "firstWeight",
+    (gnostic.openapi.v3.property) = {description: "首重（kg）"}
+  ];
+
+  optional string first_price = 4 [
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "firstPrice",
+    (gnostic.openapi.v3.property) = {description: "首重价格（元）"}
+  ];
+
+  optional string additional_weight = 5 [
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "additionalWeight",
+    (gnostic.openapi.v3.property) = {description: "续重（kg）"}
+  ];
+
+  optional string additional_price = 6 [
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "additionalPrice",
+    (gnostic.openapi.v3.property) = {description: "续重价格（元）"}
+  ];
+
+  repeated google.protobuf.Struct region_rules = 7 [
+    json_name = "regionRules",
+    (gnostic.openapi.v3.property) = {description: "地区规则"}
+  ];
+
+  repeated google.protobuf.Struct free_shipping_rules = 8 [
+    json_name = "freeShippingRules",
+    (gnostic.openapi.v3.property) = {description: "包邮规则"}
+  ];
+}
+
+// 更新运费模板 - 请求
+message UpdateFreightTemplateRequest {
+  uint32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "模板ID"}
+  ];
+
+  optional string name = 2 [
+    (validate.rules).string = {max_len: 100},
+    json_name = "name",
+    (gnostic.openapi.v3.property) = {description: "模板名称"}
+  ];
+
+  optional FreightTemplate.CalculationType calculation_type = 3 [
+    json_name = "calculationType",
+    (gnostic.openapi.v3.property) = {description: "计算方式"}
+  ];
+
+  optional string first_weight = 4 [
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "firstWeight",
+    (gnostic.openapi.v3.property) = {description: "首重（kg）"}
+  ];
+
+  optional string first_price = 5 [
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "firstPrice",
+    (gnostic.openapi.v3.property) = {description: "首重价格（元）"}
+  ];
+
+  optional string additional_weight = 6 [
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "additionalWeight",
+    (gnostic.openapi.v3.property) = {description: "续重（kg）"}
+  ];
+
+  optional string additional_price = 7 [
+    (validate.rules).string = {pattern: "^[0-9]+(\\.[0-9]{1,2})?$"},
+    json_name = "additionalPrice",
+    (gnostic.openapi.v3.property) = {description: "续重价格（元）"}
+  ];
+
+  repeated google.protobuf.Struct region_rules = 8 [
+    json_name = "regionRules",
+    (gnostic.openapi.v3.property) = {description: "地区规则"}
+  ];
+
+  repeated google.protobuf.Struct free_shipping_rules = 9 [
+    json_name = "freeShippingRules",
+    (gnostic.openapi.v3.property) = {description: "包邮规则"}
+  ];
+
+  optional bool is_active = 10 [
+    json_name = "isActive",
+    (gnostic.openapi.v3.property) = {description: "是否启用"}
+  ];
+}
+
+// 查询运费模板 - 请求
+message GetFreightTemplateRequest {
+  uint32 id = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    json_name = "id",
+    (gnostic.openapi.v3.property) = {description: "模板ID"}
+  ];
+}
+
+// 查询运费模板列表 - 响应
+message ListFreightTemplatesResponse {
+  repeated FreightTemplate items = 1 [
+    json_name = "items",
+    (gnostic.openapi.v3.property) = {description: "运费模板列表"}
+  ];
+
+  uint64 total = 2 [
+    json_name = "total",
+    (gnostic.openapi.v3.property) = {description: "总数"}
+  ];
+}

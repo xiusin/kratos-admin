@@ -172,12 +172,7 @@ type FunctionSignature struct {
 	Documentation string   `json:"documentation"`
 }
 
-// DocumentationReport represents a documentation completeness report
-type DocumentationReport struct {
-	MissingDocs      []string `json:"missing_docs"`
-	OutdatedDocs     []string `json:"outdated_docs"`
-	InconsistentDocs []string `json:"inconsistent_docs"`
-}
+// DocumentationReport is defined in doc_syncer.go
 
 // TaskFilter represents filters for querying tasks
 type TaskFilter struct {
