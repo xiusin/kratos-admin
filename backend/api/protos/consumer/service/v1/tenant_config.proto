@@ -52,7 +52,7 @@ service TenantConfigService {
   }
 
   // 查询配置列表
-  rpc ListConfigs (pagination.v1.PagingRequest) returns (ListTenantConfigsResponse) {
+  rpc ListConfigs (pagination.PagingRequest) returns (ListTenantConfigsResponse) {
     option (gnostic.openapi.v3.operation) = {
       operation_id: "listTenantConfigs"
       tags: "TenantConfig"
@@ -178,7 +178,7 @@ message ListTenantConfigsByCategoryResponse {
 // 查询配置变更历史请求
 message ListTenantConfigHistoryRequest {
   optional uint32 config_id = 1 [(google.api.field_behavior) = REQUIRED];
-  optional pagination.v1.PagingRequest paging = 2;
+  optional pagination.PagingRequest paging = 2;
 }
 
 // 查询配置变更历史响应
