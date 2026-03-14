@@ -4,12 +4,20 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/redis/go-redis/v9"
+)
+
+// 错误定义
+var (
+	ErrRateLimitExceeded    = errors.New(429, "RATE_LIMIT_EXCEEDED", "rate limit exceeded: too many requests")
+	ErrRateLimitCheckFailed = errors.InternalServer("RATE_LIMIT_CHECK_FAILED", "rate limit check failed")
 )
 
 // RateLimitConfig 限流配置
@@ -65,11 +73,11 @@ func RateLimit(cfg *RateLimitConfig, logger log.Logger) middleware.Middleware {
 					allowed, err := checkRateLimit(ctx, cfg, "user:"+userID, cfg.UserRatePerMinute)
 					if err != nil {
 						l.Errorf("rate limit check failed: %v", err)
-						return nil, fmt.Errorf("rate limit check failed")
+						return nil, ErrRateLimitCheckFailed
 					}
 					if !allowed {
 						l.Warnf("user rate limit exceeded: user_id=%s", userID)
-						return nil, fmt.Errorf("rate limit exceeded: too many requests")
+						return nil, ErrRateLimitExceeded
 					}
 				}
 			}
@@ -81,11 +89,11 @@ func RateLimit(cfg *RateLimitConfig, logger log.Logger) middleware.Middleware {
 					allowed, err := checkRateLimit(ctx, cfg, "ip:"+clientIP, cfg.IPRatePerMinute)
 					if err != nil {
 						l.Errorf("rate limit check failed: %v", err)
-						return nil, fmt.Errorf("rate limit check failed")
+						return nil, ErrRateLimitCheckFailed
 					}
 					if !allowed {
 						l.Warnf("ip rate limit exceeded: ip=%s", clientIP)
-						return nil, fmt.Errorf("rate limit exceeded: too many requests")
+						return nil, ErrRateLimitExceeded
 					}
 				}
 			}
@@ -137,10 +145,10 @@ func checkRateLimit(ctx context.Context, cfg *RateLimitConfig, key string, maxRe
 
 // getUserIDFromContext 从上下文中获取用户ID
 func getUserIDFromContext(ctx context.Context) string {
-	// 这里需要根据实际的认证中间件实现来获取用户ID
-	// 例如：
-	// tokenPayload := auth.FromContext(ctx)
-	// return strconv.FormatUint(tokenPayload.UserID, 10)
+	// 尝试从auth中间件注入的上下文中获取用户ID
+	if userID := GetUserID(ctx); userID != 0 {
+		return strconv.FormatUint(uint64(userID), 10)
+	}
 
 	return ""
 }
@@ -149,7 +157,11 @@ func getUserIDFromContext(ctx context.Context) string {
 func getClientIP(tr transport.Transporter) string {
 	// 尝试从X-Forwarded-For获取
 	if ip := tr.RequestHeader().Get("X-Forwarded-For"); ip != "" {
-		return ip
+		// X-Forwarded-For可能包含多个IP，取第一个
+		ips := strings.Split(ip, ",")
+		if len(ips) > 0 {
+			return strings.TrimSpace(ips[0])
+		}
 	}
 
 	// 尝试从X-Real-IP获取
@@ -157,14 +169,8 @@ func getClientIP(tr transport.Transporter) string {
 		return ip
 	}
 
-	// 从RemoteAddr获取
-	// 注意：这里需要根据实际的transport实现来获取
-	// 例如：
-	// if httpTr, ok := tr.(*http.Transport); ok {
-	//     return httpTr.Request().RemoteAddr
-	// }
-
-	return ""
+	// 从上下文获取
+	return GetIPAddress(context.Background())
 }
 
 // RateLimitByKey 按指定key限流

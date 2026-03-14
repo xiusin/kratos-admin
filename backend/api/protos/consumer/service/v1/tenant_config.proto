@@ -1,0 +1,197 @@
+syntax = "proto3";
+
+package consumer.service.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+import "pagination/v1/pagination.proto";
+
+// 租户配置服务
+service TenantConfigService {
+  // 获取配置
+  rpc GetConfig (GetTenantConfigRequest) returns (TenantConfig) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "getTenantConfig"
+      tags: "TenantConfig"
+      summary: "获取配置"
+      description: "查询租户配置"
+    };
+  }
+
+  // 创建配置
+  rpc CreateConfig (CreateTenantConfigRequest) returns (TenantConfig) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "createTenantConfig"
+      tags: "TenantConfig"
+      summary: "创建配置"
+      description: "创建租户配置"
+    };
+  }
+
+  // 更新配置
+  rpc UpdateConfig (UpdateTenantConfigRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "updateTenantConfig"
+      tags: "TenantConfig"
+      summary: "更新配置"
+      description: "更新租户配置（支持热更新）"
+    };
+  }
+
+  // 删除配置
+  rpc DeleteConfig (DeleteTenantConfigRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "deleteTenantConfig"
+      tags: "TenantConfig"
+      summary: "删除配置"
+      description: "删除租户配置"
+    };
+  }
+
+  // 查询配置列表
+  rpc ListConfigs (pagination.v1.PagingRequest) returns (ListTenantConfigsResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listTenantConfigs"
+      tags: "TenantConfig"
+      summary: "查询配置列表"
+      description: "分页查询租户配置列表"
+    };
+  }
+
+  // 按分类查询配置
+  rpc ListConfigsByCategory (ListTenantConfigsByCategoryRequest) returns (ListTenantConfigsByCategoryResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listTenantConfigsByCategory"
+      tags: "TenantConfig"
+      summary: "按分类查询配置"
+      description: "按分类查询租户配置"
+    };
+  }
+
+  // 查询配置变更历史
+  rpc ListConfigHistory (ListTenantConfigHistoryRequest) returns (ListTenantConfigHistoriesResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listTenantConfigHistory"
+      tags: "TenantConfig"
+      summary: "查询配置变更历史"
+      description: "查询配置变更历史记录"
+    };
+  }
+
+  // 回滚配置
+  rpc RollbackConfig (RollbackTenantConfigRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "rollbackTenantConfig"
+      tags: "TenantConfig"
+      summary: "回滚配置"
+      description: "回滚配置到历史版本"
+    };
+  }
+}
+
+// 租户配置
+message TenantConfig {
+  optional uint32 id = 1;
+  optional uint32 tenant_id = 2;
+  optional string config_key = 3 [(validate.rules).string = {min_len: 1, max_len: 100}];
+  optional string config_value = 4 [(validate.rules).string.max_len = 2000];
+  optional string config_type = 5; // string/int/bool/json/encrypted
+  optional string description = 6 [(validate.rules).string.max_len = 500];
+  optional string category = 7; // sms/payment/wechat/media/logistics/freight/system
+  optional bool is_encrypted = 8;
+  optional bool is_active = 9;
+  optional string validation_rule = 10 [(validate.rules).string.max_len = 500];
+  optional uint32 created_by = 11;
+  optional uint32 updated_by = 12;
+  optional google.protobuf.Timestamp created_at = 13;
+  optional google.protobuf.Timestamp updated_at = 14;
+}
+
+// 租户配置变更历史
+message TenantConfigHistory {
+  enum ChangeType {
+    CREATE = 0;
+    UPDATE = 1;
+    DELETE = 2;
+    ROLLBACK = 3;
+  }
+
+  optional uint32 id = 1;
+  optional uint32 tenant_id = 2;
+  optional uint32 config_id = 3;
+  optional string config_key = 4;
+  optional string old_value = 5;
+  optional string new_value = 6;
+  optional ChangeType change_type = 7;
+  optional string change_reason = 8;
+  optional uint32 changed_by = 9;
+  optional string changed_by_name = 10;
+  optional google.protobuf.Timestamp created_at = 11;
+}
+
+// 获取配置请求
+message GetTenantConfigRequest {
+  optional string config_key = 1 [(validate.rules).string.min_len = 1];
+}
+
+// 创建配置请求
+message CreateTenantConfigRequest {
+  optional TenantConfig data = 1 [(google.api.field_behavior) = REQUIRED];
+  optional string change_reason = 2;
+  optional string changed_by_name = 3;
+}
+
+// 更新配置请求
+message UpdateTenantConfigRequest {
+  optional uint32 id = 1 [(google.api.field_behavior) = REQUIRED];
+  optional TenantConfig data = 2 [(google.api.field_behavior) = REQUIRED];
+  optional string change_reason = 3;
+  optional string changed_by_name = 4;
+}
+
+// 删除配置请求
+message DeleteTenantConfigRequest {
+  optional uint32 id = 1 [(google.api.field_behavior) = REQUIRED];
+  optional string change_reason = 2;
+  optional string changed_by_name = 3;
+}
+
+// 查询配置列表响应
+message ListTenantConfigsResponse {
+  optional uint32 total = 1;
+  repeated TenantConfig items = 2;
+}
+
+// 按分类查询配置请求
+message ListTenantConfigsByCategoryRequest {
+  optional string category = 1 [(validate.rules).string.min_len = 1];
+}
+
+// 按分类查询配置响应
+message ListTenantConfigsByCategoryResponse {
+  repeated TenantConfig items = 1;
+}
+
+// 查询配置变更历史请求
+message ListTenantConfigHistoryRequest {
+  optional uint32 config_id = 1 [(google.api.field_behavior) = REQUIRED];
+  optional pagination.v1.PagingRequest paging = 2;
+}
+
+// 查询配置变更历史响应
+message ListTenantConfigHistoriesResponse {
+  optional uint32 total = 1;
+  repeated TenantConfigHistory items = 2;
+}
+
+// 回滚配置请求
+message RollbackTenantConfigRequest {
+  optional uint32 config_id = 1 [(google.api.field_behavior) = REQUIRED];
+  optional uint32 history_id = 2 [(google.api.field_behavior) = REQUIRED];
+  optional string rollback_value = 3;
+  optional string change_reason = 4;
+  optional string changed_by_name = 5;
+}
