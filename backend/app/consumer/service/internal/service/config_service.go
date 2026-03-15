@@ -13,6 +13,7 @@ import (
 	consumerV1 "go-wind-admin/api/gen/go/consumer/service/v1"
 	"go-wind-admin/app/consumer/service/internal/data"
 	"go-wind-admin/app/consumer/service/internal/data/ent"
+	"go-wind-admin/app/consumer/service/internal/data/ent/predicate"
 	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfig"
 )
 
@@ -81,22 +82,17 @@ func (s *ConfigService) ListConfigs(ctx context.Context, req *consumerV1.ListCon
 	tenantID := uint32(1) // 临时硬编码
 
 	// 构建查询条件
-	var predicates []func(*ent.TenantConfigQuery)
+	var predicates []predicate.TenantConfig
 
 	// 按配置类型过滤
 	if req.GetConfigType() != consumerV1.ConfigType_CONFIG_TYPE_UNSPECIFIED {
 		configType := s.toEntConfigType(req.GetConfigType())
-		predicates = append(predicates, func(q *ent.TenantConfigQuery) {
-			q.Where(tenantconfig.ConfigType(configType))
-		})
+		predicates = append(predicates, tenantconfig.ConfigTypeEQ(configType))
 	}
 
 	// 按是否启用过滤
 	if req.IsActive != nil {
-		isActive := req.GetIsActive()
-		predicates = append(predicates, func(q *ent.TenantConfigQuery) {
-			q.Where(tenantconfig.IsActive(isActive))
-		})
+		predicates = append(predicates, tenantconfig.IsActiveEQ(req.GetIsActive()))
 	}
 
 	// 分页参数
@@ -112,18 +108,13 @@ func (s *ConfigService) ListConfigs(ctx context.Context, req *consumerV1.ListCon
 		pageSize = 100
 	}
 
-	// 转换为 predicate.TenantConfig
-	var entPredicates []func(*ent.TenantConfigQuery)
-	for _, p := range predicates {
-		entPredicates = append(entPredicates, p)
-	}
-
 	// 查询配置列表
-	configs, total, err := s.configRepo.List(ctx, tenantID, page, pageSize, entPredicates...)
+	configs, total, err := s.configRepo.List(ctx, tenantID, page, pageSize, predicates...)
 	if err != nil {
 		s.log.Errorf("list configs failed: %v", err)
 		return nil, errors.InternalServer("INTERNAL_ERROR", "failed to list configs")
 	}
+	_ = total // TODO: 返回总数给前端
 
 	// 转换为Proto格式
 	items := make([]*consumerV1.TenantConfig, 0, len(configs))
@@ -132,12 +123,8 @@ func (s *ConfigService) ListConfigs(ctx context.Context, req *consumerV1.ListCon
 	}
 
 	return &consumerV1.ListConfigsResponse{
-		Items: items,
-		Paging: &paginationV1.PagingResponse{
-			Page:     int32(page),
-			PageSize: int32(pageSize),
-			Total:    int32(total),
-		},
+		Items:  items,
+		Paging: &paginationV1.PagingResponse{},
 	}, nil
 }
 
@@ -310,17 +297,17 @@ func (s *ConfigService) toProtoConfigType(configType tenantconfig.ConfigType) *c
 	switch configType {
 	case tenantconfig.ConfigTypeSMS:
 		result = consumerV1.ConfigType_SMS
-	case tenantconfig.ConfigTypePAYMENT:
+	case tenantconfig.ConfigTypePayment:
 		result = consumerV1.ConfigType_PAYMENT
 	case tenantconfig.ConfigTypeOSS:
 		result = consumerV1.ConfigType_OSS
-	case tenantconfig.ConfigTypeWECHAT:
+	case tenantconfig.ConfigTypeWechat:
 		result = consumerV1.ConfigType_WECHAT
-	case tenantconfig.ConfigTypeLOGISTICS:
+	case tenantconfig.ConfigTypeLogistics:
 		result = consumerV1.ConfigType_LOGISTICS
-	case tenantconfig.ConfigTypeFREIGHT:
+	case tenantconfig.ConfigTypeFreight:
 		result = consumerV1.ConfigType_FREIGHT
-	case tenantconfig.ConfigTypeSYSTEM:
+	case tenantconfig.ConfigTypeSystem:
 		result = consumerV1.ConfigType_SYSTEM
 	default:
 		result = consumerV1.ConfigType_CONFIG_TYPE_UNSPECIFIED
@@ -334,18 +321,18 @@ func (s *ConfigService) toEntConfigType(configType consumerV1.ConfigType) tenant
 	case consumerV1.ConfigType_SMS:
 		return tenantconfig.ConfigTypeSMS
 	case consumerV1.ConfigType_PAYMENT:
-		return tenantconfig.ConfigTypePAYMENT
+		return tenantconfig.ConfigTypePayment
 	case consumerV1.ConfigType_OSS:
 		return tenantconfig.ConfigTypeOSS
 	case consumerV1.ConfigType_WECHAT:
-		return tenantconfig.ConfigTypeWECHAT
+		return tenantconfig.ConfigTypeWechat
 	case consumerV1.ConfigType_LOGISTICS:
-		return tenantconfig.ConfigTypeLOGISTICS
+		return tenantconfig.ConfigTypeLogistics
 	case consumerV1.ConfigType_FREIGHT:
-		return tenantconfig.ConfigTypeFREIGHT
+		return tenantconfig.ConfigTypeFreight
 	case consumerV1.ConfigType_SYSTEM:
-		return tenantconfig.ConfigTypeSYSTEM
+		return tenantconfig.ConfigTypeSystem
 	default:
-		return tenantconfig.ConfigTypeSYSTEM
+		return tenantconfig.ConfigTypeSystem
 	}
 }
