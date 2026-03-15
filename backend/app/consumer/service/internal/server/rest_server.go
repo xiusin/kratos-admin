@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -16,9 +17,11 @@ import (
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
 	"github.com/tx7do/kratos-bootstrap/rpc"
 
+	auditV1 "go-wind-admin/api/gen/go/audit/service/v1"
 	"go-wind-admin/app/consumer/service/internal/service"
 	pkgMiddleware "go-wind-admin/pkg/middleware"
 	"go-wind-admin/pkg/middleware/auth"
+	applogging "go-wind-admin/pkg/middleware/logging"
 )
 
 // HealthResponse 健康检查响应
@@ -35,14 +38,35 @@ func NewRestMiddleware(
 ) []middleware.Middleware {
 	var ms []middleware.Middleware
 
-	// 日志中间件
+	// 日志中间件（Kratos 基础日志）
 	ms = append(ms, logging.Server(ctx.GetLogger()))
 
-	// 恢复中间件
+	// 恢复中间件（panic 恢复）
 	ms = append(ms, recovery.Recovery())
 
-	// 验证中间件
+	// API 审计日志中间件（记录所有API调用）
+	ms = append(ms, applogging.Server(
+		applogging.WithWriteApiLogFunc(func(ctx context.Context, data *auditV1.ApiAuditLog) error {
+			// Consumer Service 使用日志输出，不写入数据库
+			// 生产环境可以配置日志收集系统（如 ELK、Loki）来收集和分析日志
+			logger := ctx.Value("logger")
+			if logger != nil {
+				// TODO: 格式化输出审计日志
+				// 包含：用户ID、租户ID、IP、操作、路径、状态码、响应时间等
+			}
+			return nil
+		}),
+		// Consumer Service 不需要登录日志（登录由 Admin Service 处理）
+		applogging.WithWriteLoginLogFunc(nil),
+	))
+
+	// 验证中间件（Protobuf 字段验证）
 	ms = append(ms, validate.Validator())
+
+	// 安全防护中间件（XSS、SQL注入、IP黑名单、HTTPS重定向）
+	securityCfg := pkgMiddleware.DefaultSecurityConfig()
+	securityCfg.EnableHTTPSRedirect = false // 开发环境关闭，生产环境建议开启
+	ms = append(ms, pkgMiddleware.Security(securityCfg, ctx.GetLogger()))
 
 	// 限流中间件配置
 	rateLimitCfg := &pkgMiddleware.RateLimitConfig{
