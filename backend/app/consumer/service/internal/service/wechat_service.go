@@ -61,34 +61,10 @@ func NewWechatService(
 	rdb *redis.Client,
 	eventBus eventbus.EventBus,
 ) *WechatService {
-	cfg := ctx.GetConfig()
-	
-	// 从配置文件读取微信配置
+	// TODO: 从配置文件读取微信配置
 	// 配置路径：third_party.wechat.official_account
 	appID := "your-wechat-official-app-id"
 	appSecret := "your-wechat-official-app-secret"
-	
-	// 尝试从配置文件读取
-	if cfg != nil && cfg.ThirdParty != nil && cfg.ThirdParty.Wechat != nil {
-		// 优先使用公众号配置
-		if cfg.ThirdParty.Wechat.OfficialAccount != nil {
-			if cfg.ThirdParty.Wechat.OfficialAccount.AppId != "" {
-				appID = cfg.ThirdParty.Wechat.OfficialAccount.AppId
-			}
-			if cfg.ThirdParty.Wechat.OfficialAccount.AppSecret != "" {
-				appSecret = cfg.ThirdParty.Wechat.OfficialAccount.AppSecret
-			}
-		}
-		// 如果没有公众号配置，尝试使用小程序配置
-		if appID == "your-wechat-official-app-id" && cfg.ThirdParty.Wechat.MiniProgram != nil {
-			if cfg.ThirdParty.Wechat.MiniProgram.AppId != "" {
-				appID = cfg.ThirdParty.Wechat.MiniProgram.AppId
-			}
-			if cfg.ThirdParty.Wechat.MiniProgram.AppSecret != "" {
-				appSecret = cfg.ThirdParty.Wechat.MiniProgram.AppSecret
-			}
-		}
-	}
 	
 	logger := ctx.NewLoggerHelper("wechat/service/consumer-service")
 	logger.Infof("Wechat service initialized with AppID: %s", appID)

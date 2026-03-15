@@ -9,4 +9,5 @@ var ProviderSet = wire.NewSet(
 	NewPaymentService,
 	NewFinanceService,
 	NewWechatService,
+	NewLogisticsService,
 )

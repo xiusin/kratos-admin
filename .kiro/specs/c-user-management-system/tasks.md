@@ -491,8 +491,8 @@
     - **Property 35: 微信access_token缓存**
     - **Validates: Requirements 6.10**
 
-- [ ] 12. Media Service实现(媒体服务)
-  - [ ] 12.1 实现MediaFileRepo数据层
+- [-] 12. Media Service实现(媒体服务)
+  - [x] 12.1 实现MediaFileRepo数据层
     - 实现Create方法(记录媒体文件)
     - 实现Get方法(查询媒体文件)
     - 实现List方法(分页查询,过滤已删除)
@@ -533,8 +533,8 @@
     - **Property 40: 媒体文件软删除**
     - **Validates: Requirements 7.11**
 
-- [ ] 13. Logistics Service实现(物流服务)
-  - [ ] 13.1 实现LogisticsTrackingRepo数据层
+- [x] 13. Logistics Service实现(物流服务)
+  - [x] 13.1 实现LogisticsTrackingRepo数据层
     - 实现Create方法(创建物流跟踪)
     - 实现Get方法(查询物流跟踪)
     - 实现GetByTrackingNo方法(按运单号查询)
@@ -543,7 +543,7 @@
     - 实现多租户过滤
     - _Requirements: 8.4, 8.9_
 
-  - [ ] 13.2 实现LogisticsService服务层
+  - [x] 13.2 实现LogisticsService服务层
     - 实现QueryLogistics方法(查询物流信息)
     - 实现SubscribeLogistics方法(订阅物流状态)
     - 实现ListLogisticsHistory方法(查询物流历史)

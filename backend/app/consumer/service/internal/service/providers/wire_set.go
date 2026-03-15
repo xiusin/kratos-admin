@@ -24,8 +24,7 @@ var ProviderSet = wire.NewSet(
 	service.NewPaymentService,
 	service.NewFinanceService,
 	service.NewWechatService,
+	service.NewLogisticsService,
 	// TODO: 添加其他 Service providers
-	// service.NewMediaService,
-	// service.NewLogisticsService,
 	// service.NewFreightService,
 )

@@ -12,6 +12,8 @@ import (
 	"go-wind-admin/app/consumer/service/internal/service"
 	"go-wind-admin/pkg/eventbus"
 	"go-wind-admin/pkg/jwt"
+	"go-wind-admin/pkg/logistics"
+	"go-wind-admin/pkg/oss"
 	"go-wind-admin/pkg/payment"
 	"go-wind-admin/pkg/sms"
 )
@@ -102,6 +104,44 @@ func NewEntClient(ctx *bootstrap.Context) (*entCrud.EntClient[*ent.Client], func
 	return data.NewEntClient(ctx)
 }
 
+// NewOSSClient 创建OSS客户端
+func NewOSSClient(ctx *bootstrap.Context) (oss.Client, error) {
+	// TODO: 从配置文件读取配置
+	// 这里默认使用阿里云OSS作为示例
+	cfg := &oss.Config{
+		Provider:        oss.ProviderAliyun,
+		Endpoint:        "oss-cn-hangzhou.aliyuncs.com",
+		AccessKeyID:     "your-access-key-id",
+		AccessKeySecret: "your-access-key-secret",
+		BucketName:      "your-bucket-name",
+		Region:          "cn-hangzhou",
+	}
+
+	client, err := oss.NewClient(cfg, ctx.GetLogger())
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// NewLogisticsClient 创建物流客户端
+func NewLogisticsClient(ctx *bootstrap.Context) (logistics.Client, error) {
+	// TODO: 从配置文件读取配置
+	// 这里默认使用快递鸟作为示例
+	cfg := &logistics.Config{
+		AppID:  "your-kdniao-app-id",
+		AppKey: "your-kdniao-app-key",
+	}
+
+	client, err := logistics.NewClient(cfg, ctx.GetLogger())
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
 // PkgProviderSet pkg层的依赖注入集合
 var PkgProviderSet = wire.NewSet(
 	jwt.NewJWTHelper,
@@ -110,4 +150,6 @@ var PkgProviderSet = wire.NewSet(
 	NewPaymentClient,
 	NewRedisClient,
 	NewEntClient,
+	NewOSSClient,
+	NewLogisticsClient,
 )

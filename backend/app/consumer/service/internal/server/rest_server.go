@@ -53,6 +53,7 @@ func NewRestServer(
 	paymentService *service.PaymentService,
 	financeService *service.FinanceService,
 	wechatService *service.WechatService,
+	logisticsService *service.LogisticsService,
 ) (*khttp.Server, error) {
 	cfg := ctx.GetConfig()
 
@@ -82,8 +83,9 @@ func NewRestServer(
 	// TODO: 注册 Logistics Service
 	// TODO: 注册 Freight Service
 
-	// 暂时保留 wechatService 参数，避免编译错误
+	// 暂时保留参数，避免编译错误
 	_ = wechatService
+	_ = logisticsService
 
 	// 注册微信事件回调接口
 	registerWechatCallback(srv, wechatService, ctx)

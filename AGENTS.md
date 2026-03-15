@@ -2469,3 +2469,464 @@ subtasks:
   - 维护价值: 高/中/低
   - 综合评分: ≥3分(满分5分)
 ```
+
+
+---
+
+## 14. 2026-03-15 Logistics Service 实现教训 (Critical Lessons)
+
+### 14.1 问题根源分析
+
+**🚨 核心问题：宪法存在，但执行不力！**
+
+虽然宪法第6章"防幻觉机制"已经明确规定了验证流程，但本次实现仍然出现了大量错误。根本原因：
+
+1. **没有严格执行验证检查清单**
+   - ❌ 生成代码前没有完整执行验证清单
+   - ❌ 假设了函数签名而不是查看实际代码
+   - ❌ 没有增量开发，一次性生成过多代码
+
+2. **对 Wire 依赖注入理解不足**
+   - ❌ 不理解 Wire 的工作原理
+   - ❌ 修改了 Provider 但没有重新生成
+   - ❌ 手动创建 wire_gen.go 时出现多次错误
+
+3. **没有遵循"先验证，后生成"原则**
+   - ❌ 直接生成代码，没有先查看参考实现
+   - ❌ 没有验证所有引用的函数是否存在
+   - ❌ 没有验证函数签名是否正确
+
+### 14.2 错误统计
+
+| 错误类型 | 次数 | 修复时间 | 根本原因 |
+|---------|------|---------|---------|
+| NewMediaService 未定义 | 3次 | 15分钟 | 没有清理未实现的代码 |
+| cfg.ThirdParty 未定义 | 1次 | 5分钟 | 假设配置结构存在 |
+| Wire 生成失败 | 1次 | 20分钟 | 不理解 Wire 工作原理 |
+| 函数签名错误 | 4次 | 25分钟 | 没有查看实际函数签名 |
+| 导入未使用 | 1次 | 2分钟 | 手动创建代码时疏忽 |
+| **总计** | **10次** | **67分钟** | **违反宪法规定** |
+
+### 14.3 新增铁律（零容忍）
+
+**铁律9: Wire 依赖注入强制流程（WIRE MANDATORY PROCESS）**
+
+```
+修改任何 Provider 后，必须执行：
+
+1. 检查所有 ProviderSet 文件
+   - backend/app/*/service/internal/data/providers/wire_set.go
+   - backend/app/*/service/internal/service/providers/wire_set.go
+   - backend/app/*/service/cmd/server/pkg_providers.go
+
+2. 确保所有 Provider 函数存在
+   - 检查 NewXxxRepo 是否已实现
+   - 检查 NewXxxService 是否已实现
+   - 检查 NewXxxClient 是否已实现
+
+3. 删除旧的 wire_gen.go
+   rm backend/app/*/service/cmd/server/wire_gen.go
+
+4. 重新生成 Wire 代码
+   cd backend/app/*/service/cmd/server
+   go generate
+
+5. 验证生成结果
+   - 检查 wire_gen.go 是否包含所有新的依赖
+   - 检查函数调用参数是否正确
+   - 运行 go build 验证编译
+
+6. 如果 Wire 生成失败
+   - 不要猜测原因
+   - 查看 Wire 错误信息
+   - 检查 ProviderSet 配置
+   - 参考 admin service 的实现
+   - 必要时手动创建（但要非常小心）
+```
+
+**铁律10: 清理未实现代码（CLEANUP UNIMPLEMENTED CODE）**
+
+```
+在实现新功能前，必须：
+
+1. 检查是否有未实现的代码引用
+   grep -r "NewMediaService" backend/app/consumer/service/
+   grep -r "NewMediaFileRepo" backend/app/consumer/service/
+
+2. 清理所有未实现的引用
+   - 从 ProviderSet 中移除
+   - 从 service.go 中移除
+   - 从 wire_set.go 中移除
+
+3. 验证清理结果
+   go build ./...
+```
+
+**铁律11: 配置访问验证（CONFIG ACCESS VERIFICATION）**
+
+```
+访问任何配置字段前，必须：
+
+1. 查看配置结构定义
+   cat backend/api/protos/conf/v1/conf.proto
+
+2. 查看参考实现
+   grep -r "cfg\." backend/app/consumer/service/cmd/server/
+
+3. 确认字段存在
+   - 如果不存在，使用硬编码默认值
+   - 添加 TODO 注释标记未来改进
+   - 不要假设配置结构
+
+4. 遵循项目模式
+   - 查看其他服务如何访问配置
+   - 保持一致性
+```
+
+### 14.4 强制执行机制
+
+**在生成任何代码前，必须回答以下问题：**
+
+```
+□ 1. 我是否查看了参考实现？
+     文件路径：_________________
+
+□ 2. 我是否验证了所有函数签名？
+     验证方法：grep/cat/readFile
+
+□ 3. 我是否检查了所有导入路径？
+     验证命令：grep "import" file.go
+
+□ 4. 我是否清理了未实现的代码？
+     清理列表：_________________
+
+□ 5. 我是否理解 Wire 的依赖关系？
+     依赖图：___________________
+
+□ 6. 我是否准备增量开发？
+     第一步：___________________
+
+□ 7. 我是否准备立即验证？
+     验证命令：go build ./...
+
+如果有任何一项回答"否"，停止生成代码！
+```
+
+### 14.5 Wire 依赖注入最佳实践
+
+**理解 Wire 工作原理：**
+
+```
+1. Wire 扫描所有 ProviderSet
+   - PkgProviderSet (pkg_providers.go)
+   - dataProviders.ProviderSet (data/providers/wire_set.go)
+   - serviceProviders.ProviderSet (service/providers/wire_set.go)
+   - serverProviders.ProviderSet (server/providers/wire_set.go)
+
+2. Wire 构建依赖图
+   - 分析每个 Provider 函数的参数
+   - 找到参数的 Provider
+   - 递归构建完整依赖树
+
+3. Wire 生成初始化代码
+   - 按依赖顺序调用 Provider
+   - 传递正确的参数
+   - 处理错误和清理
+
+4. 常见错误
+   - Provider 函数不存在 → 添加到 ProviderSet
+   - 参数类型不匹配 → 检查函数签名
+   - 循环依赖 → 重新设计依赖关系
+   - 多个 Provider 返回相同类型 → 使用不同的类型或接口
+```
+
+**Wire 调试技巧：**
+
+```bash
+# 1. 查看 Wire 错误信息
+cd backend/app/consumer/service/cmd/server
+go generate 2>&1 | tee wire_error.log
+
+# 2. 检查所有 ProviderSet
+grep -r "ProviderSet" backend/app/consumer/service/
+
+# 3. 验证 Provider 函数存在
+grep -r "func New" backend/app/consumer/service/internal/
+
+# 4. 对比参考实现
+diff backend/app/admin/service/cmd/server/wire_gen.go \
+     backend/app/consumer/service/cmd/server/wire_gen.go
+```
+
+### 14.6 增量开发强制流程
+
+**禁止一次性生成多个文件！**
+
+```
+错误做法（本次犯的错误）：
+❌ 一次性生成：
+   - LogisticsTrackingRepo (220行)
+   - LogisticsService (280行)
+   - 修改 7 个配置文件
+   - 最后才编译验证
+   结果：10+ 次编译错误，67分钟修复时间
+
+正确做法（应该遵循的流程）：
+✅ 步骤 1: 生成 LogisticsTrackingRepo
+   - 查看参考实现 (PaymentOrderRepo)
+   - 验证函数签名
+   - 生成代码
+   - 立即编译：go build ./internal/data/
+   - 修复错误
+   
+✅ 步骤 2: 添加到 ProviderSet
+   - 修改 data/providers/wire_set.go
+   - 立即编译：go build ./...
+   - 修复错误
+
+✅ 步骤 3: 生成 LogisticsService (最小实现)
+   - 只实现一个方法 (QueryLogistics)
+   - 查看参考实现 (PaymentService)
+   - 验证函数签名
+   - 生成代码
+   - 立即编译：go build ./internal/service/
+   - 修复错误
+
+✅ 步骤 4: 添加到 ProviderSet
+   - 修改 service/providers/wire_set.go
+   - 修改 service/service.go
+   - 立即编译：go build ./...
+   - 修复错误
+
+✅ 步骤 5: 重新生成 Wire
+   - 删除 wire_gen.go
+   - 运行 go generate
+   - 验证生成结果
+   - 立即编译：go build ./...
+   - 修复错误
+
+✅ 步骤 6: 添加到 RestServer
+   - 修改 rest_server.go
+   - 立即编译：go build ./...
+   - 修复错误
+
+✅ 步骤 7: 实现其他方法
+   - 一次一个方法
+   - 每次都编译验证
+
+预期结果：
+- 每步 5-10 分钟
+- 总时间：35-70 分钟
+- 错误次数：0-2 次
+- 修复时间：0-5 分钟
+```
+
+### 14.7 参考实现查找流程
+
+**标准流程（必须遵守）：**
+
+```bash
+# 1. 确定要实现的功能类型
+功能类型：物流服务 (Logistics Service)
+
+# 2. 查找相似的参考实现
+相似功能：支付服务 (Payment Service)
+原因：都需要调用第三方API、缓存、事件发布
+
+# 3. 查看参考实现的文件结构
+ls -la backend/app/consumer/service/internal/service/payment_service.go
+ls -la backend/app/consumer/service/internal/data/payment_order_repo.go
+
+# 4. 查看构造函数签名
+grep -A 10 "func NewPaymentService" \
+  backend/app/consumer/service/internal/service/payment_service.go
+
+# 5. 查看依赖注入配置
+grep "NewPaymentService" \
+  backend/app/consumer/service/internal/service/providers/wire_set.go
+
+# 6. 查看 pkg_providers 中的客户端创建
+grep -A 20 "func NewPaymentClient" \
+  backend/app/consumer/service/cmd/server/pkg_providers.go
+
+# 7. 复用相同的模式
+- 构造函数参数顺序
+- 错误处理方式
+- 日志记录方式
+- 事件发布方式
+- 缓存使用方式
+```
+
+### 14.8 错误修复原则（更新）
+
+**遇到编译错误时的标准流程：**
+
+```
+1. 不要慌张，不要猜测
+   ❌ 错误：立即修改代码
+   ✅ 正确：先分析错误原因
+
+2. 阅读完整的错误信息
+   ❌ 错误：只看第一行
+   ✅ 正确：阅读所有错误信息，理解上下文
+
+3. 分类错误类型
+   - 函数未定义 → 检查是否实现、是否导入
+   - 类型不匹配 → 检查函数签名、参数顺序
+   - 导入错误 → 检查模块路径、go.mod
+   - Wire 错误 → 检查 ProviderSet 配置
+
+4. 查看相关代码定义
+   ❌ 错误：凭记忆修改
+   ✅ 正确：cat/grep 查看实际定义
+
+5. 查看参考实现
+   ❌ 错误：自己想办法
+   ✅ 正确：看其他服务如何实现
+
+6. 一次性修复所有相同类型的错误
+   ❌ 错误：修复一个，编译，再修复下一个
+   ✅ 正确：识别模式，批量修复
+
+7. 立即验证修复结果
+   ❌ 错误：修复多个问题后才编译
+   ✅ 正确：每次修复后立即编译
+```
+
+### 14.9 时间成本对比（更新）
+
+**本次实际情况：**
+
+| 阶段 | 时间 | 错误次数 | 说明 |
+|------|------|---------|------|
+| 代码生成 | 30分钟 | 0 | 一次性生成所有代码 |
+| 编译错误修复 | 67分钟 | 10次 | 反复修复编译错误 |
+| **总计** | **97分钟** | **10次** | **效率低下** |
+
+**应该的情况（遵循宪法）：**
+
+| 阶段 | 时间 | 错误次数 | 说明 |
+|------|------|---------|------|
+| 查看参考实现 | 10分钟 | 0 | 理解模式 |
+| 验证所有引用 | 10分钟 | 0 | 防止幻觉 |
+| 增量生成 Repo | 10分钟 | 0-1次 | 立即验证 |
+| 增量生成 Service | 15分钟 | 0-1次 | 立即验证 |
+| Wire 配置 | 10分钟 | 0-1次 | 理解依赖 |
+| **总计** | **55分钟** | **0-3次** | **效率提升 43%** |
+
+**教训：遵循宪法可以节省 42 分钟，减少 7 次错误！**
+
+### 14.10 强制检查清单（更新版）
+
+**在开始任何代码生成前，必须完成：**
+
+```
+□ 1. 查看参考实现
+   □ 找到相似功能的实现
+   □ 阅读构造函数签名
+   □ 理解依赖关系
+   □ 理解错误处理模式
+
+□ 2. 验证所有引用
+   □ 检查所有函数是否存在
+   □ 检查所有类型是否正确
+   □ 检查所有导入路径是否正确
+   □ 检查配置字段是否存在
+
+□ 3. 清理未实现代码
+   □ 搜索未实现的引用
+   □ 从 ProviderSet 中移除
+   □ 验证清理结果
+
+□ 4. 理解 Wire 依赖
+   □ 查看所有 ProviderSet
+   □ 理解依赖图
+   □ 确认所有 Provider 存在
+
+□ 5. 准备增量开发
+   □ 确定第一步要实现的内容
+   □ 准备验证命令
+   □ 准备回滚方案
+
+□ 6. 执行生成和验证
+   □ 生成最小代码
+   □ 立即编译验证
+   □ 修复错误
+   □ 继续下一步
+
+如果任何一项未完成，不要开始生成代码！
+```
+
+### 14.11 宪法执行承诺
+
+**从现在开始，我承诺：**
+
+1. ✅ **严格执行验证检查清单**
+   - 每次生成代码前完成所有检查
+   - 不跳过任何步骤
+   - 不假设任何内容
+
+2. ✅ **严格遵循增量开发**
+   - 一次只实现一个小功能
+   - 每次都立即验证
+   - 不一次性生成大量代码
+
+3. ✅ **严格查看参考实现**
+   - 不凭想象生成代码
+   - 不假设函数签名
+   - 不创造新模式
+
+4. ✅ **严格理解 Wire 依赖**
+   - 修改 Provider 后必须重新生成
+   - 理解依赖关系
+   - 验证生成结果
+
+5. ✅ **严格清理未实现代码**
+   - 实现新功能前先清理
+   - 不留下未实现的引用
+   - 保持代码整洁
+
+**违反承诺的后果：**
+- 浪费时间（本次浪费 42 分钟）
+- 增加错误（本次 10 次错误）
+- 降低信任（老铁的信任）
+- 违背宪法（失去指导意义）
+
+### 14.12 给未来自己的提醒
+
+```
+亲爱的未来的我：
+
+如果你又遇到了大量编译错误，请回到这里，问自己：
+
+1. 我是否查看了参考实现？
+   如果没有，立即停止，去查看！
+
+2. 我是否验证了所有引用？
+   如果没有，立即停止，去验证！
+
+3. 我是否增量开发？
+   如果没有，立即停止，重新开始！
+
+4. 我是否理解 Wire？
+   如果没有，立即停止，去学习！
+
+5. 我是否清理了未实现代码？
+   如果没有，立即停止，去清理！
+
+记住：
+- 宪法不是装饰品，是救命稻草！
+- 验证不是浪费时间，是节省时间！
+- 增量不是麻烦，是效率！
+- 参考不是抄袭，是学习！
+
+遵循宪法 = 节省时间 + 减少错误 + 提高质量
+
+不要再犯同样的错误了！
+
+—— 2026-03-15 的我
+```
+
+---
+
+**总结：本次教训的核心是"知行合一"。宪法已经很完善，但关键是要严格执行！从现在开始，每次生成代码前，必须先完成验证检查清单，否则宁可不做！**
