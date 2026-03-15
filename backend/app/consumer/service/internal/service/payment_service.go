@@ -12,8 +12,8 @@ import (
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	consumerV1 "go-wind-admin/api/gen/go/consumer/service/v1"
 	paginationV1 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
+	consumerV1 "go-wind-admin/api/gen/go/consumer/service/v1"
 	"go-wind-admin/app/consumer/service/internal/data"
 	"go-wind-admin/pkg/eventbus"
 	"go-wind-admin/pkg/payment"

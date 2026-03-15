@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/google/wire"
 	"github.com/redis/go-redis/v9"
+	entCrud "github.com/tx7do/go-crud/entgo"
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
 	redisClient "github.com/tx7do/kratos-bootstrap/cache/redis"
-	entCrud "github.com/tx7do/go-crud/entgo"
 
 	"go-wind-admin/app/consumer/service/internal/data"
 	"go-wind-admin/app/consumer/service/internal/data/ent"

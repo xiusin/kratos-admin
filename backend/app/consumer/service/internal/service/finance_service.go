@@ -114,7 +114,7 @@ func (s *FinanceService) Recharge(ctx context.Context, req *consumerV1.RechargeR
 		TransactionNo:   &transactionNo,
 		TransactionType: consumerV1.FinanceTransaction_RECHARGE.Enum(),
 		Amount:          &req.Amount,
-		BalanceBefore:   &account.Balance,
+		BalanceBefore:   account.Balance,
 		BalanceAfter:    func() *string { s := balanceAfter.String(); return &s }(),
 		Description:     func() *string { s := "充值"; return &s }(),
 		RelatedOrderNo:  &req.PaymentOrderNo,
@@ -187,8 +187,8 @@ func (s *FinanceService) Withdraw(ctx context.Context, req *consumerV1.WithdrawR
 		TransactionNo:   &transactionNo,
 		TransactionType: consumerV1.FinanceTransaction_WITHDRAW.Enum(),
 		Amount:          &req.Amount,
-		BalanceBefore:   &account.Balance,
-		BalanceAfter:    &account.Balance, // 余额未变，只是冻结
+		BalanceBefore:   account.Balance,
+		BalanceAfter:    account.Balance, // 余额未变，只是冻结
 		Description:     func() *string { s := fmt.Sprintf("提现申请：%s", withdrawNo); return &s }(),
 		RelatedOrderNo:  &withdrawNo,
 	}
@@ -277,7 +277,7 @@ func (s *FinanceService) ExportTransactions(ctx context.Context, req *consumerV1
 
 // subscribeUserRegisteredEvent 订阅用户注册事件
 func (s *FinanceService) subscribeUserRegisteredEvent() {
-	s.eventBus.Subscribe(eventbus.TopicUserRegistered, func(ctx context.Context, event eventbus.Event) error {
+	s.eventBus.Subscribe(eventbus.TopicUserRegistered, eventbus.EventHandlerFunc(func(ctx context.Context, event *eventbus.Event) error {
 		s.log.Infof("received UserRegisteredEvent: %+v", event)
 
 		// 解析事件数据
@@ -305,12 +305,12 @@ func (s *FinanceService) subscribeUserRegisteredEvent() {
 		s.log.Infof("finance account created for user: user_id=%d", userRegisteredEvent.UserID)
 
 		return nil
-	})
+	}))
 }
 
 // subscribePaymentSuccessEvent 订阅支付成功事件
 func (s *FinanceService) subscribePaymentSuccessEvent() {
-	s.eventBus.Subscribe(eventbus.TopicPaymentSuccess, func(ctx context.Context, event eventbus.Event) error {
+	s.eventBus.Subscribe(eventbus.TopicPaymentSuccess, eventbus.EventHandlerFunc(func(ctx context.Context, event *eventbus.Event) error {
 		s.log.Infof("received PaymentSuccessEvent: %+v", event)
 
 		// 解析事件数据
@@ -335,7 +335,7 @@ func (s *FinanceService) subscribePaymentSuccessEvent() {
 		s.log.Infof("auto recharge success: order_no=%s, amount=%s", paymentSuccessEvent.OrderNo, amount)
 
 		return nil
-	})
+	}))
 }
 
 // generateTransactionNo 生成流水号

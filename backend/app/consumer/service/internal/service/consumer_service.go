@@ -12,8 +12,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	consumerV1 "go-wind-admin/api/gen/go/consumer/service/v1"
 	paginationV1 "github.com/tx7do/go-crud/api/gen/go/pagination/v1"
+	consumerV1 "go-wind-admin/api/gen/go/consumer/service/v1"
 	"go-wind-admin/app/consumer/service/internal/data"
 	"go-wind-admin/pkg/eventbus"
 	"go-wind-admin/pkg/jwt"
@@ -135,33 +135,33 @@ func (s *ConsumerService) LoginByPhone(ctx context.Context, req *consumerV1.Logi
 	// TODO: 验证密码 - password_hash 不在 proto 中，需要重构数据层来支持密码验证
 	// 暂时跳过密码验证
 	/*
-	if err := s.verifyPassword(consumer.GetPasswordHash(), req.GetPassword()); err != nil {
-		s.log.Warnf("password verification failed for phone=%s", req.GetPhone())
+		if err := s.verifyPassword(consumer.GetPasswordHash(), req.GetPassword()); err != nil {
+			s.log.Warnf("password verification failed for phone=%s", req.GetPhone())
 
-		// 增加登录失败次数
-		if err := s.consumerRepo.IncrementLoginFailCount(ctx, consumer.GetId()); err != nil {
-			s.log.Errorf("increment login fail count failed: %v", err)
-		}
-
-		// 检查是否需要锁定账户（连续5次失败）
-		if consumer.GetLoginFailCount() >= 4 { // 已经失败4次，这次是第5次
-			lockedUntil := time.Now().Add(15 * time.Minute)
-			if err := s.consumerRepo.LockAccount(ctx, consumer.GetId(), lockedUntil); err != nil {
-				s.log.Errorf("lock account failed: %v", err)
-			} else {
-				s.log.Warnf("account locked due to 5 consecutive failed login attempts: consumer_id=%d", consumer.GetId())
+			// 增加登录失败次数
+			if err := s.consumerRepo.IncrementLoginFailCount(ctx, consumer.GetId()); err != nil {
+				s.log.Errorf("increment login fail count failed: %v", err)
 			}
-		}
 
-		// 更新风险评分
-		newRiskScore := s.calculateRiskScore(consumer, false)
-		if err := s.consumerRepo.UpdateRiskScore(ctx, consumer.GetId(), newRiskScore); err != nil {
-			s.log.Errorf("update risk score failed: %v", err)
-		}
+			// 检查是否需要锁定账户（连续5次失败）
+			if consumer.GetLoginFailCount() >= 4 { // 已经失败4次，这次是第5次
+				lockedUntil := time.Now().Add(15 * time.Minute)
+				if err := s.consumerRepo.LockAccount(ctx, consumer.GetId(), lockedUntil); err != nil {
+					s.log.Errorf("lock account failed: %v", err)
+				} else {
+					s.log.Warnf("account locked due to 5 consecutive failed login attempts: consumer_id=%d", consumer.GetId())
+				}
+			}
 
-		s.recordLoginLog(ctx, consumer.GetId(), req.GetPhone(), consumerV1.LoginLog_PHONE, false, "invalid password", "")
-		return nil, errors.Unauthorized("UNAUTHORIZED", "invalid phone or password")
-	}
+			// 更新风险评分
+			newRiskScore := s.calculateRiskScore(consumer, false)
+			if err := s.consumerRepo.UpdateRiskScore(ctx, consumer.GetId(), newRiskScore); err != nil {
+				s.log.Errorf("update risk score failed: %v", err)
+			}
+
+			s.recordLoginLog(ctx, consumer.GetId(), req.GetPhone(), consumerV1.LoginLog_PHONE, false, "invalid password", "")
+			return nil, errors.Unauthorized("UNAUTHORIZED", "invalid phone or password")
+		}
 	*/
 
 	// 登录成功，重置登录失败次数
@@ -411,17 +411,17 @@ func (s *ConsumerService) DeactivateAccount(ctx context.Context, req *consumerV1
 	// 暂时跳过密码验证和用户查询
 	_ = req // 暂时忽略请求参数
 	/*
-	// 获取用户信息
-	consumer, err := s.consumerRepo.Get(ctx, currentUserID)
-	if err != nil {
-		s.log.Errorf("get consumer failed: %v", err)
-		return nil, err
-	}
+		// 获取用户信息
+		consumer, err := s.consumerRepo.Get(ctx, currentUserID)
+		if err != nil {
+			s.log.Errorf("get consumer failed: %v", err)
+			return nil, err
+		}
 
-	if err := s.verifyPassword(consumer.GetPasswordHash(), req.GetPassword()); err != nil {
-		s.log.Warnf("password verification failed for deactivate account: id=%d", currentUserID)
-		return nil, errors.Unauthorized("UNAUTHORIZED", "invalid password")
-	}
+		if err := s.verifyPassword(consumer.GetPasswordHash(), req.GetPassword()); err != nil {
+			s.log.Warnf("password verification failed for deactivate account: id=%d", currentUserID)
+			return nil, errors.Unauthorized("UNAUTHORIZED", "invalid password")
+		}
 	*/
 
 	// 注销账户

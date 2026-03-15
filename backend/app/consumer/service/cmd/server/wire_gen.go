@@ -58,7 +58,10 @@ func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
 		return nil, nil, err
 	}
 	paymentService := service.NewPaymentService(context, paymentOrderRepo, paymentClient, eventBus)
-	httpServer, err := server.NewRestServer(context, consumerService, smsService, paymentService)
+	financeAccountRepo := data.NewFinanceAccountRepo(context, entClient)
+	financeTransactionRepo := data.NewFinanceTransactionRepo(context, entClient)
+	financeService := service.NewFinanceService(context, financeAccountRepo, financeTransactionRepo, eventBus)
+	httpServer, err := server.NewRestServer(context, consumerService, smsService, paymentService, financeService)
 	if err != nil {
 		cleanup2()
 		cleanup()
