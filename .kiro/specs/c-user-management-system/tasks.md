@@ -491,7 +491,7 @@
     - **Property 35: 微信access_token缓存**
     - **Validates: Requirements 6.10**
 
-- [-] 12. Media Service实现(媒体服务)
+- [x] 12. Media Service实现(媒体服务)
   - [x] 12.1 实现MediaFileRepo数据层
     - 实现Create方法(记录媒体文件)
     - 实现Get方法(查询媒体文件)
@@ -500,7 +500,7 @@
     - 实现多租户过滤
     - _Requirements: 7.9, 7.11_
 
-  - [ ] 12.2 实现MediaService服务层
+  - [x] 12.2 实现MediaService服务层
     - 实现GenerateUploadURL方法(生成预签名URL)
     - 实现ConfirmUpload方法(确认上传完成)
     - 实现GetMediaFile方法(获取媒体文件)

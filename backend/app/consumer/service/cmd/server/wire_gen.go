@@ -28,80 +28,61 @@ import (
 //   - func(): 应用关闭时的清理函数 / func(): cleanup function to run on shutdown
 //   - error: 构建过程中可能发生的错误 / error: possible construction error
 func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
-	// JWT Helper
-	jwtHelper := jwt.NewJWTHelper(context)
-
-	// Event Bus
+	entClient, cleanup, err := NewEntClient(context)
+	if err != nil {
+		return nil, nil, err
+	}
+	consumerRepo := data.NewConsumerRepo(context, entClient)
+	loginLogRepo := data.NewLoginLogRepo(context, entClient)
 	eventBus := NewEventBus(context)
-
-	// SMS Clients
-	smsClients, err := NewSMSClients(context)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Payment Client
-	paymentClient, err := NewPaymentClient(context)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Redis Client
-	client, cleanup, err := NewRedisClient(context)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Ent Client
-	entClient, cleanup2, err := NewEntClient(context)
+	helper := jwt.NewJWTHelper(context)
+	consumerService := service.NewConsumerService(context, consumerRepo, loginLogRepo, eventBus, helper)
+	smsLogRepo := data.NewSMSLogRepo(context, entClient)
+	client, cleanup2, err := NewRedisClient(context)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-
-	// Logistics Client
+	smsClients, err := NewSMSClients(context)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	smsService := service.NewSMSService(context, smsLogRepo, client, smsClients)
+	paymentOrderRepo := data.NewPaymentOrderRepo(context, entClient)
+	paymentClient, err := NewPaymentClient(context)
+	if err != nil {
+		cleanup2()
+		cleanup()
+		return nil, nil, err
+	}
+	paymentService := service.NewPaymentService(context, paymentOrderRepo, paymentClient, eventBus)
+	financeAccountRepo := data.NewFinanceAccountRepo(context, entClient)
+	financeTransactionRepo := data.NewFinanceTransactionRepo(context, entClient)
+	financeService := service.NewFinanceService(context, financeAccountRepo, financeTransactionRepo, eventBus)
+	wechatService := service.NewWechatService(context, client, eventBus)
+	logisticsTrackingRepo := data.NewLogisticsTrackingRepo(context, entClient)
 	logisticsClient, err := NewLogisticsClient(context)
 	if err != nil {
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-
-	// Data Layer - Repositories
-	consumerRepo := data.NewConsumerRepo(context, entClient)
-	loginLogRepo := data.NewLoginLogRepo(context, entClient)
-	smsLogRepo := data.NewSMSLogRepo(context, entClient)
-	paymentOrderRepo := data.NewPaymentOrderRepo(context, entClient)
-	financeAccountRepo := data.NewFinanceAccountRepo(context, entClient)
-	financeTransactionRepo := data.NewFinanceTransactionRepo(context, entClient)
-	logisticsTrackingRepo := data.NewLogisticsTrackingRepo(context, entClient)
-
-	// Service Layer
-	consumerService := service.NewConsumerService(context, consumerRepo, loginLogRepo, eventBus, jwtHelper)
-	smsService := service.NewSMSService(context, smsLogRepo, client, smsClients)
-	paymentService := service.NewPaymentService(context, paymentOrderRepo, paymentClient, eventBus)
-	financeService := service.NewFinanceService(context, financeAccountRepo, financeTransactionRepo, eventBus)
-	wechatService := service.NewWechatService(context, client, eventBus)
 	logisticsService := service.NewLogisticsService(context, logisticsTrackingRepo, logisticsClient, client, eventBus)
-
-	// Server Layer
 	httpServer, err := server.NewRestServer(context, consumerService, smsService, paymentService, financeService, wechatService, logisticsService)
 	if err != nil {
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-
 	kafkaServer, err := server.NewKafkaServer(context)
 	if err != nil {
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-
-	// Create App
 	app := newApp(context, httpServer, kafkaServer)
-
 	return app, func() {
 		cleanup2()
 		cleanup()
