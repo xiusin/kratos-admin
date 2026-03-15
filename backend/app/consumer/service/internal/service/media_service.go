@@ -313,7 +313,11 @@ func (s *MediaService) toProtoMediaFile(file *ent.MediaFile) *consumerV1.MediaFi
 		OssBucket:    &file.OssBucket,
 		OssKey:       &file.OssKey,
 		IsDeleted:    &file.IsDeleted,
-		CreatedAt:    timestamppb.New(file.CreatedAt),
+	}
+
+	// Handle optional CreatedAt field
+	if file.CreatedAt != nil {
+		result.CreatedAt = timestamppb.New(*file.CreatedAt)
 	}
 
 	// Handle optional DeletedAt field

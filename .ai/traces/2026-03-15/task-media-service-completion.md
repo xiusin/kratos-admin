@@ -104,3 +104,79 @@ Successfully implemented the Media Service (媒体服务) for the consumer servi
 
 ## Requirements Coverage
 
+
+### Implemented Features
+
+✅ **File Upload Flow**
+- Generate presigned URL for secure upload (1-hour expiry)
+- Validate file format and size before upload
+- Confirm upload and save metadata to database
+- Generate thumbnail for images
+
+✅ **File Management**
+- Get media file details by ID
+- List media files with pagination
+- Soft delete media files
+- Query by OSS key
+
+✅ **Validation Rules**
+- Image formats: JPEG, PNG, GIF (max 5MB)
+- Video formats: MP4, AVI, MOV (max 100MB)
+- File format whitelist enforcement
+- File size limits before upload
+
+✅ **OSS Integration**
+- Presigned URL generation for uploads
+- Download URL generation (1-year expiry)
+- File existence verification
+- OSS key structure: `{type}/{date}/{uuid}.{ext}`
+
+## Optional Tasks (Not Implemented)
+
+The following optional tasks were marked with `*` in the spec and are not implemented:
+
+- ⏭️ Task 12.3: Unit tests for Media Service
+- ⏭️ Task 12.4: Property-based tests for Media Service
+
+These can be implemented in a future iteration if needed.
+
+## Lessons Learned
+
+### Type Handling
+1. **Pointer Fields**: Ent generates `*time.Time` for optional time fields (CreatedAt, DeletedAt)
+   - Must dereference before passing to `timestamppb.New()`
+   - Check for nil before dereferencing
+
+2. **ID Type Conversion**: Proto uses `uint64`, Ent uses `uint32`
+   - Convert at service layer boundary
+   - Use inline function for pointer conversion: `func() *uint64 { v := uint64(id); return &v }()`
+
+3. **Optional Fields**: Proto optional fields become pointers in Go
+   - TenantID: `*uint32`
+   - ThumbnailURL: `*string`
+   - Use `SetNillable*()` methods in Ent
+
+### Code Organization
+1. Keep data layer simple - direct Ent operations
+2. Service layer handles business logic and validation
+3. Proto conversion in service layer
+4. Use TODO comments for future improvements (context-based user ID)
+
+## Next Steps
+
+With Media Service complete, the consumer service now has:
+- ✅ Consumer management (registration, login, profile)
+- ✅ SMS service (verification codes)
+- ✅ Payment service (orders, transactions)
+- ✅ Finance service (accounts, recharge, withdraw)
+- ✅ Logistics service (tracking, queries)
+- ✅ WeChat service (login, user info)
+- ✅ Media service (file upload, management)
+
+Remaining tasks from the spec can be implemented as needed.
+
+---
+
+**老铁，Media Service 实现完成！** 🎉
+
+所有代码编译通过，服务已注册到 gRPC server。文件上传、管理、验证功能全部就绪！
