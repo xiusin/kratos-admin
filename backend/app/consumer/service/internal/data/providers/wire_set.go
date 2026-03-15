@@ -29,4 +29,10 @@ var ProviderSet = wire.NewSet(
 	data.NewMediaFileRepo,
 	data.NewLogisticsTrackingRepo,
 	data.NewFreightTemplateRepo,
+
+	// Authentication providers
+	data.NewUserTokenCache,
+	data.NewAuthenticator,
+	data.NewClientType,
+	data.NewTokenChecker,
 )

@@ -8,13 +8,17 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
+	"github.com/go-kratos/kratos/v2/middleware/selector"
 	"github.com/go-kratos/kratos/v2/middleware/validate"
 	khttp "github.com/go-kratos/kratos/v2/transport/http"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
 	"github.com/tx7do/kratos-bootstrap/rpc"
 
 	"go-wind-admin/app/consumer/service/internal/service"
+	pkgMiddleware "go-wind-admin/pkg/middleware"
+	"go-wind-admin/pkg/middleware/auth"
 )
 
 // HealthResponse 健康检查响应
@@ -26,6 +30,8 @@ type HealthResponse struct {
 // NewRestMiddleware 创建中间件
 func NewRestMiddleware(
 	ctx *bootstrap.Context,
+	accessTokenChecker auth.AccessTokenChecker,
+	rdb *redis.Client,
 ) []middleware.Middleware {
 	var ms []middleware.Middleware
 
@@ -38,9 +44,41 @@ func NewRestMiddleware(
 	// 验证中间件
 	ms = append(ms, validate.Validator())
 
-	// TODO: 添加认证中间件
-	// TODO: 添加限流中间件
-	// TODO: 添加租户中间件
+	// 限流中间件配置
+	rateLimitCfg := &pkgMiddleware.RateLimitConfig{
+		Redis:             rdb,
+		UserRatePerMinute: 60,  // 每分钟60次
+		IPRatePerMinute:   100, // 每分钟100次
+		WindowSize:        60,  // 60秒窗口
+		EnableUserLimit:   true,
+		EnableIPLimit:     true,
+	}
+
+	// 添加白名单（不需要认证的接口）
+	rpc.AddWhiteList(
+		// 健康检查接口
+		"/health",
+		"/ready",
+		// 微信回调接口
+		"/api/wechat/callback",
+		// TODO: 添加其他公开接口
+	)
+
+	// 认证和限流中间件（使用 selector 选择性应用）
+	ms = append(ms, selector.Server(
+		auth.Server(
+			auth.WithAccessTokenChecker(accessTokenChecker),
+			auth.WithInjectMetadata(true),
+			auth.WithInjectTenantId(true),
+			auth.WithInjectOperatorId(true),
+			auth.WithInjectEnt(false),
+			auth.WithEnableAuthority(false), // Consumer Service 不需要复杂的权限控制
+		),
+		pkgMiddleware.RateLimit(rateLimitCfg, ctx.GetLogger()),
+	).
+		Match(rpc.NewRestWhiteListMatcher()).
+		Build(),
+	)
 
 	return ms
 }
@@ -48,6 +86,7 @@ func NewRestMiddleware(
 // NewRestServer 创建 REST 服务器
 func NewRestServer(
 	ctx *bootstrap.Context,
+	middlewares []middleware.Middleware,
 	consumerService *service.ConsumerService,
 	smsService *service.SMSService,
 	paymentService *service.PaymentService,
@@ -63,7 +102,6 @@ func NewRestServer(
 		return nil, nil
 	}
 
-	middlewares := NewRestMiddleware(ctx)
 	srv, err := rpc.CreateRestServer(cfg, middlewares...)
 	if err != nil {
 		return nil, err
@@ -86,6 +124,10 @@ func NewRestServer(
 	// TODO: 注册 Freight Service
 
 	// 暂时保留参数，避免编译错误
+	_ = consumerService
+	_ = smsService
+	_ = paymentService
+	_ = financeService
 	_ = wechatService
 	_ = mediaService
 	_ = logisticsService

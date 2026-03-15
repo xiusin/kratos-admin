@@ -28,8 +28,18 @@ import (
 //   - func(): 应用关闭时的清理函数 / func(): cleanup function to run on shutdown
 //   - error: 构建过程中可能发生的错误 / error: possible construction error
 func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
-	entClient, cleanup, err := NewEntClient(context)
+	client, cleanup, err := NewRedisClient(context)
 	if err != nil {
+		return nil, nil, err
+	}
+	userTokenCache := data.NewUserTokenCache(context, client)
+	authenticator := data.NewAuthenticator(context, userTokenCache)
+	clientType := data.NewClientType()
+	accessTokenChecker := data.NewTokenChecker(context, authenticator, clientType)
+	v := server.NewRestMiddleware(context, accessTokenChecker, client)
+	entClient, cleanup2, err := NewEntClient(context)
+	if err != nil {
+		cleanup()
 		return nil, nil, err
 	}
 	consumerRepo := data.NewConsumerRepo(context, entClient)
@@ -38,11 +48,6 @@ func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
 	helper := jwt.NewJWTHelper(context)
 	consumerService := service.NewConsumerService(context, consumerRepo, loginLogRepo, eventBus, helper)
 	smsLogRepo := data.NewSMSLogRepo(context, entClient)
-	client, cleanup2, err := NewRedisClient(context)
-	if err != nil {
-		cleanup()
-		return nil, nil, err
-	}
 	smsClients, err := NewSMSClients(context)
 	if err != nil {
 		cleanup2()
@@ -80,7 +85,7 @@ func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
 	logisticsService := service.NewLogisticsService(context, logisticsTrackingRepo, logisticsClient, client, eventBus)
 	freightTemplateRepo := data.NewFreightTemplateRepo(context, entClient)
 	freightService := service.NewFreightService(context, freightTemplateRepo)
-	httpServer, err := server.NewRestServer(context, consumerService, smsService, paymentService, financeService, wechatService, mediaService, logisticsService, freightService)
+	httpServer, err := server.NewRestServer(context, v, consumerService, smsService, paymentService, financeService, wechatService, mediaService, logisticsService, freightService)
 	if err != nil {
 		cleanup2()
 		cleanup()
