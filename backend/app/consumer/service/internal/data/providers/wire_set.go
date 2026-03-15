@@ -29,6 +29,8 @@ var ProviderSet = wire.NewSet(
 	data.NewMediaFileRepo,
 	data.NewLogisticsTrackingRepo,
 	data.NewFreightTemplateRepo,
+	data.NewTenantConfigRepo,
+	data.NewTenantConfigCache,
 
 	// Authentication providers
 	data.NewUserTokenCache,

@@ -119,6 +119,7 @@ func NewRestServer(
 	mediaService *service.MediaService,
 	logisticsService *service.LogisticsService,
 	freightService *service.FreightService,
+	configService *service.ConfigService,
 ) (*khttp.Server, error) {
 	cfg := ctx.GetConfig()
 
@@ -156,6 +157,7 @@ func NewRestServer(
 	_ = mediaService
 	_ = logisticsService
 	_ = freightService
+	_ = configService
 
 	// 注册微信事件回调接口
 	registerWechatCallback(srv, wechatService, ctx)
