@@ -65,10 +65,10 @@ func NewWechatService(
 	// 配置路径：third_party.wechat.official_account
 	appID := "your-wechat-official-app-id"
 	appSecret := "your-wechat-official-app-secret"
-	
+
 	logger := ctx.NewLoggerHelper("wechat/service/consumer-service")
 	logger.Infof("Wechat service initialized with AppID: %s", appID)
-	
+
 	return &WechatService{
 		rdb:       rdb,
 		eventBus:  eventBus,
@@ -543,7 +543,6 @@ func (s *WechatService) HandleWechatEvent(ctx context.Context, eventType string,
 	return nil
 }
 
-
 // WechatEventMessage 微信事件消息结构（XML）
 type WechatEventMessage struct {
 	ToUserName   string `xml:"ToUserName"`   // 开发者微信号
@@ -565,13 +564,13 @@ type WechatEventMessage struct {
 // ParseWechatEventXML 解析微信事件消息XML
 func (s *WechatService) ParseWechatEventXML(xmlData []byte) (*WechatEventMessage, error) {
 	var msg WechatEventMessage
-	
+
 	// 简单的 XML 解析（使用 encoding/xml）
 	// 注意：这里需要导入 "encoding/xml"
 	// 由于当前没有导入，我们先用字符串解析
-	
+
 	xmlStr := string(xmlData)
-	
+
 	// 提取关键字段
 	msg.ToUserName = extractXMLValue(xmlStr, "ToUserName")
 	msg.FromUserName = extractXMLValue(xmlStr, "FromUserName")
@@ -579,7 +578,7 @@ func (s *WechatService) ParseWechatEventXML(xmlData []byte) (*WechatEventMessage
 	msg.Event = extractXMLValue(xmlStr, "Event")
 	msg.EventKey = extractXMLValue(xmlStr, "EventKey")
 	msg.Content = extractXMLValue(xmlStr, "Content")
-	
+
 	return &msg, nil
 }
 
@@ -588,24 +587,24 @@ func extractXMLValue(xmlStr, tagName string) string {
 	// 查找 <tagName><![CDATA[value]]></tagName> 或 <tagName>value</tagName>
 	startTag := fmt.Sprintf("<%s>", tagName)
 	endTag := fmt.Sprintf("</%s>", tagName)
-	
+
 	startIdx := strings.Index(xmlStr, startTag)
 	if startIdx == -1 {
 		return ""
 	}
-	
+
 	startIdx += len(startTag)
 	endIdx := strings.Index(xmlStr[startIdx:], endTag)
 	if endIdx == -1 {
 		return ""
 	}
-	
+
 	value := xmlStr[startIdx : startIdx+endIdx]
-	
+
 	// 处理 CDATA
 	if strings.HasPrefix(value, "<![CDATA[") && strings.HasSuffix(value, "]]>") {
 		value = value[9 : len(value)-3]
 	}
-	
+
 	return strings.TrimSpace(value)
 }

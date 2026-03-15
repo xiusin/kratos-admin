@@ -137,10 +137,10 @@ func (s *LogisticsService) ListLogisticsHistory(ctx context.Context, req *consum
 // convertToLogisticsInfo 转换为 LogisticsInfo
 func (s *LogisticsService) convertToLogisticsInfo(trackingInfo *logistics.TrackingInfo) *consumerV1.LogisticsInfo {
 	logisticsInfo := &consumerV1.LogisticsInfo{
-		TrackingNo:     trackingInfo.TrackingNo,
-		CourierCompany: trackingInfo.CourierName,
-		Status:         s.convertStatus(trackingInfo.Status),
-		LastUpdatedAt:  timestamppb.New(trackingInfo.LastUpdateTime),
+		TrackingNo:      trackingInfo.TrackingNo,
+		CourierCompany:  trackingInfo.CourierName,
+		Status:          s.convertStatus(trackingInfo.Status),
+		LastUpdatedAt:   timestamppb.New(trackingInfo.LastUpdateTime),
 		TrackingDetails: make([]*consumerV1.TrackingDetail, 0, len(trackingInfo.Traces)),
 	}
 

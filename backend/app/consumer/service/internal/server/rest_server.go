@@ -155,7 +155,7 @@ func registerWechatCallback(srv *khttp.Server, wechatService *service.WechatServ
 				w.Write([]byte("signature verification failed"))
 				return
 			}
-			
+
 			logger.Infof("Wechat callback verification success: signature=%s, timestamp=%s, nonce=%s", signature, timestamp, nonce)
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(echostr))
@@ -171,7 +171,7 @@ func registerWechatCallback(srv *khttp.Server, wechatService *service.WechatServ
 				w.Write([]byte("signature verification failed"))
 				return
 			}
-			
+
 			// 读取请求体
 			body, err := io.ReadAll(r.Body)
 			if err != nil {
@@ -183,7 +183,7 @@ func registerWechatCallback(srv *khttp.Server, wechatService *service.WechatServ
 
 			// 解析 XML 消息
 			logger.Infof("Received wechat event: %s", string(body))
-			
+
 			eventMsg, err := wechatService.ParseWechatEventXML(body)
 			if err != nil {
 				logger.Errorf("parse wechat event xml failed: %v", err)
@@ -196,7 +196,7 @@ func registerWechatCallback(srv *khttp.Server, wechatService *service.WechatServ
 			if eventMsg.Event != "" {
 				eventType = eventMsg.Event
 			}
-			
+
 			eventData := map[string]interface{}{
 				"to_user_name":   eventMsg.ToUserName,
 				"from_user_name": eventMsg.FromUserName,

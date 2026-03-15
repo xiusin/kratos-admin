@@ -30,35 +30,35 @@ import (
 func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
 	// JWT Helper
 	jwtHelper := jwt.NewJWTHelper(context)
-	
+
 	// Event Bus
 	eventBus := NewEventBus(context)
-	
+
 	// SMS Clients
 	smsClients, err := NewSMSClients(context)
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	// Payment Client
 	paymentClient, err := NewPaymentClient(context)
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	// Redis Client
 	client, cleanup, err := NewRedisClient(context)
 	if err != nil {
 		return nil, nil, err
 	}
-	
+
 	// Ent Client
 	entClient, cleanup2, err := NewEntClient(context)
 	if err != nil {
 		cleanup()
 		return nil, nil, err
 	}
-	
+
 	// Logistics Client
 	logisticsClient, err := NewLogisticsClient(context)
 	if err != nil {
@@ -66,7 +66,7 @@ func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	
+
 	// Data Layer - Repositories
 	consumerRepo := data.NewConsumerRepo(context, entClient)
 	loginLogRepo := data.NewLoginLogRepo(context, entClient)
@@ -75,7 +75,7 @@ func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
 	financeAccountRepo := data.NewFinanceAccountRepo(context, entClient)
 	financeTransactionRepo := data.NewFinanceTransactionRepo(context, entClient)
 	logisticsTrackingRepo := data.NewLogisticsTrackingRepo(context, entClient)
-	
+
 	// Service Layer
 	consumerService := service.NewConsumerService(context, consumerRepo, loginLogRepo, eventBus, jwtHelper)
 	smsService := service.NewSMSService(context, smsLogRepo, client, smsClients)
@@ -83,7 +83,7 @@ func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
 	financeService := service.NewFinanceService(context, financeAccountRepo, financeTransactionRepo, eventBus)
 	wechatService := service.NewWechatService(context, client, eventBus)
 	logisticsService := service.NewLogisticsService(context, logisticsTrackingRepo, logisticsClient, client, eventBus)
-	
+
 	// Server Layer
 	httpServer, err := server.NewRestServer(context, consumerService, smsService, paymentService, financeService, wechatService, logisticsService)
 	if err != nil {
@@ -91,17 +91,17 @@ func initApp(context *bootstrap.Context) (*kratos.App, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	
+
 	kafkaServer, err := server.NewKafkaServer(context)
 	if err != nil {
 		cleanup2()
 		cleanup()
 		return nil, nil, err
 	}
-	
+
 	// Create App
 	app := newApp(context, httpServer, kafkaServer)
-	
+
 	return app, func() {
 		cleanup2()
 		cleanup()
