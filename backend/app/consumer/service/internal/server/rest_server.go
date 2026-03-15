@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -51,6 +52,7 @@ func NewRestServer(
 	smsService *service.SMSService,
 	paymentService *service.PaymentService,
 	financeService *service.FinanceService,
+	wechatService *service.WechatService,
 ) (*khttp.Server, error) {
 	cfg := ctx.GetConfig()
 
@@ -75,10 +77,16 @@ func NewRestServer(
 	// TODO: 注册 SMS Service HTTP路由
 	// TODO: 注册 Payment Service
 	// TODO: 注册 Finance Service
-	// TODO: 注册 Wechat Service
+	// TODO: 注册 Wechat Service (已添加到参数)
 	// TODO: 注册 Media Service
 	// TODO: 注册 Logistics Service
 	// TODO: 注册 Freight Service
+
+	// 暂时保留 wechatService 参数，避免编译错误
+	_ = wechatService
+
+	// 注册微信事件回调接口
+	registerWechatCallback(srv, wechatService, ctx)
 
 	return srv, nil
 }
@@ -122,4 +130,98 @@ func registerHealthCheck(srv *khttp.Server, ctx *bootstrap.Context) {
 
 		json.NewEncoder(w).Encode(resp)
 	})
+}
+
+// registerWechatCallback 注册微信事件回调接口
+func registerWechatCallback(srv *khttp.Server, wechatService *service.WechatService, ctx *bootstrap.Context) {
+	logger := ctx.NewLoggerHelper("wechat/callback")
+
+	// 微信事件回调接口（用于接收微信服务器推送的事件）
+	srv.HandleFunc("/api/wechat/callback", func(w http.ResponseWriter, r *http.Request) {
+		// 获取验证参数
+		signature := r.URL.Query().Get("signature")
+		timestamp := r.URL.Query().Get("timestamp")
+		nonce := r.URL.Query().Get("nonce")
+		echostr := r.URL.Query().Get("echostr")
+
+		// GET 请求：微信服务器验证
+		if r.Method == http.MethodGet {
+			// 验证签名
+			if !wechatService.VerifySignature(signature, timestamp, nonce) {
+				logger.Errorf("Wechat signature verification failed: signature=%s, timestamp=%s, nonce=%s", signature, timestamp, nonce)
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte("signature verification failed"))
+				return
+			}
+			
+			logger.Infof("Wechat callback verification success: signature=%s, timestamp=%s, nonce=%s", signature, timestamp, nonce)
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(echostr))
+			return
+		}
+
+		// POST 请求：接收微信事件消息
+		if r.Method == http.MethodPost {
+			// 验证签名
+			if !wechatService.VerifySignature(signature, timestamp, nonce) {
+				logger.Errorf("Wechat signature verification failed: signature=%s, timestamp=%s, nonce=%s", signature, timestamp, nonce)
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte("signature verification failed"))
+				return
+			}
+			
+			// 读取请求体
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				logger.Errorf("read request body failed: %v", err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			defer r.Body.Close()
+
+			// 解析 XML 消息
+			logger.Infof("Received wechat event: %s", string(body))
+			
+			eventMsg, err := wechatService.ParseWechatEventXML(body)
+			if err != nil {
+				logger.Errorf("parse wechat event xml failed: %v", err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			// 构建事件类型和数据
+			eventType := eventMsg.MsgType
+			if eventMsg.Event != "" {
+				eventType = eventMsg.Event
+			}
+			
+			eventData := map[string]interface{}{
+				"to_user_name":   eventMsg.ToUserName,
+				"from_user_name": eventMsg.FromUserName,
+				"create_time":    eventMsg.CreateTime,
+				"msg_type":       eventMsg.MsgType,
+				"event":          eventMsg.Event,
+				"event_key":      eventMsg.EventKey,
+				"content":        eventMsg.Content,
+				"raw_body":       string(body),
+			}
+
+			// 调用 WechatService 处理事件
+			if err := wechatService.HandleWechatEvent(r.Context(), eventType, eventData); err != nil {
+				logger.Errorf("handle wechat event failed: %v", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			// 返回成功响应
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("success"))
+			return
+		}
+
+		// 其他请求方法不支持
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	})
+
+	logger.Info("Wechat callback registered: /api/wechat/callback")
 }

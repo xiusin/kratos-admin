@@ -453,8 +453,8 @@
   - 确保所有测试通过,询问用户是否继续
 
 
-- [-] 11. Wechat Service实现(微信服务)
-  - [ ] 11.1 实现WechatService服务层 - OAuth登录
+- [x] 11. Wechat Service实现(微信服务)
+  - [x] 11.1 实现WechatService服务层 - OAuth登录
     - 实现GetAuthURL方法(获取微信授权URL)
     - 实现AuthCallback方法(微信授权回调)
     - 实现GetWechatUserInfo方法(获取微信用户信息)
@@ -463,7 +463,7 @@
     - 实现微信签名验证
     - _Requirements: 6.1, 6.2, 6.3, 6.6, 6.10_
 
-  - [ ] 11.2 实现WechatService服务层 - 公众号和小程序
+  - [x] 11.2 实现WechatService服务层 - 公众号和小程序
     - 实现SendTemplateMessage方法(发送模板消息)
     - 实现MiniProgramLogin方法(小程序登录)
     - 实现微信事件消息处理
