@@ -50,6 +50,7 @@ func NewRestServer(
 	consumerService *service.ConsumerService,
 	smsService *service.SMSService,
 	paymentService *service.PaymentService,
+	financeService *service.FinanceService,
 ) (*khttp.Server, error) {
 	cfg := ctx.GetConfig()
 

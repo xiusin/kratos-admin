@@ -18,6 +18,11 @@ const (
 	EventUserLoggedIn  = "user.logged_in"
 	EventUserLoggedOut = "user.logged_out"
 
+	// Consumer events (C端用户)
+	TopicUserRegistered  = "consumer.user.registered"
+	TopicPaymentSuccess  = "consumer.payment.success"
+	TopicLogisticsStatus = "consumer.logistics.status_changed"
+
 	// Task events
 	EventTaskCreated   = "task.created"
 	EventTaskStarted   = "task.started"
@@ -73,4 +78,30 @@ type SystemErrorEvent struct {
 	Component string `json:"component"`
 	Error     string `json:"error"`
 	Severity  string `json:"severity"`
+}
+
+// UserRegisteredEvent C端用户注册事件
+type UserRegisteredEvent struct {
+	TenantID uint32 `json:"tenant_id"`
+	UserID   uint32 `json:"user_id"`
+	Phone    string `json:"phone"`
+	Nickname string `json:"nickname,omitempty"`
+}
+
+// PaymentSuccessEvent 支付成功事件
+type PaymentSuccessEvent struct {
+	TenantID  uint32 `json:"tenant_id"`
+	OrderNo   string `json:"order_no"`
+	UserID    uint32 `json:"user_id"`
+	Amount    int64  `json:"amount"` // 金额(分)
+	PaymentMethod string `json:"payment_method"`
+}
+
+// LogisticsStatusChangedEvent 物流状态变更事件
+type LogisticsStatusChangedEvent struct {
+	TenantID    uint32 `json:"tenant_id"`
+	TrackingNo  string `json:"tracking_no"`
+	OldStatus   string `json:"old_status"`
+	NewStatus   string `json:"new_status"`
+	UpdatedAt   int64  `json:"updated_at"`
 }

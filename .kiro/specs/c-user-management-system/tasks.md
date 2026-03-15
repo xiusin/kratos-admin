@@ -378,8 +378,8 @@
     - **Property 25: 退款流水记录**
     - **Validates: Requirements 4.10, 4.12**
 
-- [ ] 9. Finance Service实现(财务服务)
-  - [ ] 9.1 实现FinanceAccountRepo数据层
+- [x] 9. Finance Service实现(财务服务)
+  - [x] 9.1 实现FinanceAccountRepo数据层
     - 实现Create方法(创建财务账户)
     - 实现Get方法(查询账户)
     - 实现GetByConsumerID方法(按用户ID查询)
@@ -387,20 +387,20 @@
     - 实现多租户过滤
     - _Requirements: 5.1, 5.9_
 
-  - [ ] 9.2 实现FinanceTransactionRepo数据层
+  - [x] 9.2 实现FinanceTransactionRepo数据层
     - 实现Create方法(记录财务流水)
     - 实现List方法(分页查询流水)
     - 实现Export方法(导出流水为CSV)
     - 实现多租户过滤
     - _Requirements: 5.7, 5.11_
 
-  - [ ] 9.3 实现FinanceService服务层 - 账户管理
+  - [x] 9.3 实现FinanceService服务层 - 账户管理
     - 实现GetAccount方法(获取账户余额)
     - 实现自动创建财务账户(用户注册时)
     - 订阅UserRegisteredEvent事件
     - _Requirements: 5.1, 11.2_
 
-  - [ ] 9.4 实现FinanceService服务层 - 充值提现
+  - [x] 9.4 实现FinanceService服务层 - 充值提现
     - 实现Recharge方法(充值)
     - 实现Withdraw方法(申请提现)
     - 实现ApproveWithdraw方法(审核提现)
@@ -412,7 +412,7 @@
     - 实现财务流水记录
     - _Requirements: 5.2-5.12, 11.4_
 
-  - [ ] 9.5 实现FinanceService服务层 - 流水查询
+  - [x] 9.5 实现FinanceService服务层 - 流水查询
     - 实现ListTransactions方法(查询财务流水)
     - 实现ExportTransactions方法(导出流水)
     - 实现分页和筛选(按时间范围、交易类型)
