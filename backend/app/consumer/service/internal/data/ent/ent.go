@@ -15,6 +15,7 @@ import (
 	"go-wind-admin/app/consumer/service/internal/data/ent/mediafile"
 	"go-wind-admin/app/consumer/service/internal/data/ent/paymentorder"
 	"go-wind-admin/app/consumer/service/internal/data/ent/smslog"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfig"
 	"reflect"
 	"sync"
 
@@ -90,6 +91,7 @@ func checkColumn(t, c string) error {
 			mediafile.Table:          mediafile.ValidColumn,
 			paymentorder.Table:       paymentorder.ValidColumn,
 			smslog.Table:             smslog.ValidColumn,
+			tenantconfig.Table:       tenantconfig.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

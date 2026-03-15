@@ -14,6 +14,7 @@ import (
 	"go-wind-admin/app/consumer/service/internal/data/ent/paymentorder"
 	"go-wind-admin/app/consumer/service/internal/data/ent/schema"
 	"go-wind-admin/app/consumer/service/internal/data/ent/smslog"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfig"
 
 	"entgo.io/ent"
 	"entgo.io/ent/privacy"
@@ -491,6 +492,64 @@ func init() {
 	smslogDescID := smslogMixinFields0[0].Descriptor()
 	// smslog.IDValidator is a validator for the "id" field. It is called by the builders before save.
 	smslog.IDValidator = smslogDescID.Validators[0].(func(uint32) error)
+	tenantconfigMixin := schema.TenantConfig{}.Mixin()
+	tenantconfig.Policy = privacy.NewPolicies(tenantconfigMixin[3], schema.TenantConfig{})
+	tenantconfig.Hooks[0] = func(next ent.Mutator) ent.Mutator {
+		return ent.MutateFunc(func(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+			if err := tenantconfig.Policy.EvalMutation(ctx, m); err != nil {
+				return nil, err
+			}
+			return next.Mutate(ctx, m)
+		})
+	}
+	tenantconfigMixinFields0 := tenantconfigMixin[0].Fields()
+	_ = tenantconfigMixinFields0
+	tenantconfigMixinFields3 := tenantconfigMixin[3].Fields()
+	_ = tenantconfigMixinFields3
+	tenantconfigFields := schema.TenantConfig{}.Fields()
+	_ = tenantconfigFields
+	// tenantconfigDescTenantID is the schema descriptor for tenant_id field.
+	tenantconfigDescTenantID := tenantconfigMixinFields3[0].Descriptor()
+	// tenantconfig.DefaultTenantID holds the default value on creation for the tenant_id field.
+	tenantconfig.DefaultTenantID = tenantconfigDescTenantID.Default.(uint32)
+	// tenantconfigDescConfigKey is the schema descriptor for config_key field.
+	tenantconfigDescConfigKey := tenantconfigFields[0].Descriptor()
+	// tenantconfig.ConfigKeyValidator is a validator for the "config_key" field. It is called by the builders before save.
+	tenantconfig.ConfigKeyValidator = func() func(string) error {
+		validators := tenantconfigDescConfigKey.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(config_key string) error {
+			for _, fn := range fns {
+				if err := fn(config_key); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// tenantconfigDescConfigValue is the schema descriptor for config_value field.
+	tenantconfigDescConfigValue := tenantconfigFields[1].Descriptor()
+	// tenantconfig.ConfigValueValidator is a validator for the "config_value" field. It is called by the builders before save.
+	tenantconfig.ConfigValueValidator = tenantconfigDescConfigValue.Validators[0].(func(string) error)
+	// tenantconfigDescDescription is the schema descriptor for description field.
+	tenantconfigDescDescription := tenantconfigFields[2].Descriptor()
+	// tenantconfig.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	tenantconfig.DescriptionValidator = tenantconfigDescDescription.Validators[0].(func(string) error)
+	// tenantconfigDescIsEncrypted is the schema descriptor for is_encrypted field.
+	tenantconfigDescIsEncrypted := tenantconfigFields[4].Descriptor()
+	// tenantconfig.DefaultIsEncrypted holds the default value on creation for the is_encrypted field.
+	tenantconfig.DefaultIsEncrypted = tenantconfigDescIsEncrypted.Default.(bool)
+	// tenantconfigDescIsActive is the schema descriptor for is_active field.
+	tenantconfigDescIsActive := tenantconfigFields[5].Descriptor()
+	// tenantconfig.DefaultIsActive holds the default value on creation for the is_active field.
+	tenantconfig.DefaultIsActive = tenantconfigDescIsActive.Default.(bool)
+	// tenantconfigDescID is the schema descriptor for id field.
+	tenantconfigDescID := tenantconfigMixinFields0[0].Descriptor()
+	// tenantconfig.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	tenantconfig.IDValidator = tenantconfigDescID.Validators[0].(func(uint32) error)
 }
 
 const (

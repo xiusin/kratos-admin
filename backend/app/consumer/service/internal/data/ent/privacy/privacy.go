@@ -327,6 +327,30 @@ func (f SMSLogMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.SMSLogMutation", m)
 }
 
+// The TenantConfigQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type TenantConfigQueryRuleFunc func(context.Context, *ent.TenantConfigQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f TenantConfigQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.TenantConfigQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.TenantConfigQuery", q)
+}
+
+// The TenantConfigMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type TenantConfigMutationRuleFunc func(context.Context, *ent.TenantConfigMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f TenantConfigMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.TenantConfigMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.TenantConfigMutation", m)
+}
+
 type (
 	// Filter is the interface that wraps the Where function
 	// for filtering nodes in queries and mutations.
@@ -380,6 +404,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.SMSLogQuery:
 		return q.Filter(), nil
+	case *ent.TenantConfigQuery:
+		return q.Filter(), nil
 	default:
 		return nil, Denyf("ent/privacy: unexpected query type %T for query filter", q)
 	}
@@ -404,6 +430,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.PaymentOrderMutation:
 		return m.Filter(), nil
 	case *ent.SMSLogMutation:
+		return m.Filter(), nil
+	case *ent.TenantConfigMutation:
 		return m.Filter(), nil
 	default:
 		return nil, Denyf("ent/privacy: unexpected mutation type %T for mutation filter", m)

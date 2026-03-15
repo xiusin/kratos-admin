@@ -32,3 +32,6 @@ type PaymentOrder func(*sql.Selector)
 
 // SMSLog is the predicate function for smslog builders.
 type SMSLog func(*sql.Selector)
+
+// TenantConfig is the predicate function for tenantconfig builders.
+type TenantConfig func(*sql.Selector)

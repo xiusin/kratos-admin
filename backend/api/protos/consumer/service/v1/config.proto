@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+package consumer.service.v1;
+
+import "gnostic/openapi/v3/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+import "pagination/v1/pagination.proto";
+
+// 配置管理服务
+service ConfigService {
+  // 获取配置
+  rpc GetConfig (GetConfigRequest) returns (TenantConfig) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "getConfig"
+      tags: "Config"
+      summary: "获取配置"
+      description: "查询租户配置"
+    };
+  }
+
+  // 获取配置列表
+  rpc ListConfigs (ListConfigsRequest) returns (ListConfigsResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "listConfigs"
+      tags: "Config"
+      summary: "获取配置列表"
+      description: "分页查询租户配置列表"
+    };
+  }
+
+  // 更新配置
+  rpc UpdateConfig (UpdateConfigRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "updateConfig"
+      tags: "Config"
+      summary: "更新配置"
+      description: "更新租户配置"
+    };
+  }
+
+  // 批量更新配置
+  rpc BatchUpdateConfigs (BatchUpdateConfigsRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "batchUpdateConfigs"
+      tags: "Config"
+      summary: "批量更新配置"
+      description: "批量更新租户配置"
+    };
+  }
+
+  // 删除配置
+  rpc DeleteConfig (DeleteConfigRequest) returns (google.protobuf.Empty) {
+    option (gnostic.openapi.v3.operation) = {
+      operation_id: "deleteConfig"
+      tags: "Config"
+      summary: "删除配置"
+      description: "删除租户配置"
+    };
+  }
+}
+
+// 配置类型枚举
+enum ConfigType {
+  CONFIG_TYPE_UNSPECIFIED = 0;
+  SMS = 1;        // 短信配置
+  PAYMENT = 2;    // 支付配置
+  OSS = 3;        // 对象存储配置
+  WECHAT = 4;     // 微信配置
+  LOGISTICS = 5;  // 物流配置
+  FREIGHT = 6;    // 运费配置
+  SYSTEM = 7;     // 系统配置
+}
+
+// 租户配置
+message TenantConfig {
+  optional uint64 id = 1;
+  optional uint32 tenant_id = 2;
+  optional string config_key = 3;
+  optional string config_value = 4;
+  optional string description = 5;
+  optional ConfigType config_type = 6;
+  optional bool is_encrypted = 7;
+  optional bool is_active = 8;
+  optional uint32 created_by = 9;
+  optional uint32 updated_by = 10;
+  optional google.protobuf.Timestamp created_at = 11;
+  optional google.protobuf.Timestamp updated_at = 12;
+}
+
+// 获取配置请求
+message GetConfigRequest {
+  string config_key = 1 [(validate.rules).string = {min_len: 1, max_len: 100}];
+}
+
+// 获取配置列表请求
+message ListConfigsRequest {
+  optional ConfigType config_type = 1;
+  optional bool is_active = 2;
+  optional pagination.PagingRequest paging = 3;
+}
+
+// 获取配置列表响应
+message ListConfigsResponse {
+  repeated TenantConfig items = 1;
+  optional pagination.PagingResponse paging = 2;
+}
+
+// 更新配置请求
+message UpdateConfigRequest {
+  string config_key = 1 [(validate.rules).string = {min_len: 1, max_len: 100}];
+  optional string config_value = 2 [(validate.rules).string.max_len = 5000];
+  optional string description = 3 [(validate.rules).string.max_len = 500];
+  optional ConfigType config_type = 4;
+  optional bool is_encrypted = 5;
+  optional bool is_active = 6;
+}
+
+// 批量更新配置请求
+message BatchUpdateConfigsRequest {
+  repeated UpdateConfigRequest configs = 1 [(validate.rules).repeated.min_items = 1];
+}
+
+// 删除配置请求
+message DeleteConfigRequest {
+  string config_key = 1 [(validate.rules).string = {min_len: 1, max_len: 100}];
+}

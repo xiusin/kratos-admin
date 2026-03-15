@@ -12,6 +12,7 @@ import (
 	"go-wind-admin/app/consumer/service/internal/data/ent/mediafile"
 	"go-wind-admin/app/consumer/service/internal/data/ent/paymentorder"
 	"go-wind-admin/app/consumer/service/internal/data/ent/smslog"
+	"go-wind-admin/app/consumer/service/internal/data/ent/tenantconfig"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -21,7 +22,7 @@ import (
 
 // schemaGraph holds a representation of ent/schema at runtime.
 var schemaGraph = func() *sqlgraph.Schema {
-	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 9)}
+	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 10)}
 	graph.Nodes[0] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   consumer.Table,
@@ -247,6 +248,32 @@ var schemaGraph = func() *sqlgraph.Schema {
 			smslog.FieldErrorMessage: {Type: field.TypeString, Column: smslog.FieldErrorMessage},
 			smslog.FieldSentAt:       {Type: field.TypeTime, Column: smslog.FieldSentAt},
 			smslog.FieldExpiresAt:    {Type: field.TypeTime, Column: smslog.FieldExpiresAt},
+		},
+	}
+	graph.Nodes[9] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
+			Table:   tenantconfig.Table,
+			Columns: tenantconfig.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUint32,
+				Column: tenantconfig.FieldID,
+			},
+		},
+		Type: "TenantConfig",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			tenantconfig.FieldCreatedBy:   {Type: field.TypeUint32, Column: tenantconfig.FieldCreatedBy},
+			tenantconfig.FieldUpdatedBy:   {Type: field.TypeUint32, Column: tenantconfig.FieldUpdatedBy},
+			tenantconfig.FieldDeletedBy:   {Type: field.TypeUint32, Column: tenantconfig.FieldDeletedBy},
+			tenantconfig.FieldCreatedAt:   {Type: field.TypeTime, Column: tenantconfig.FieldCreatedAt},
+			tenantconfig.FieldUpdatedAt:   {Type: field.TypeTime, Column: tenantconfig.FieldUpdatedAt},
+			tenantconfig.FieldDeletedAt:   {Type: field.TypeTime, Column: tenantconfig.FieldDeletedAt},
+			tenantconfig.FieldTenantID:    {Type: field.TypeUint32, Column: tenantconfig.FieldTenantID},
+			tenantconfig.FieldConfigKey:   {Type: field.TypeString, Column: tenantconfig.FieldConfigKey},
+			tenantconfig.FieldConfigValue: {Type: field.TypeString, Column: tenantconfig.FieldConfigValue},
+			tenantconfig.FieldDescription: {Type: field.TypeString, Column: tenantconfig.FieldDescription},
+			tenantconfig.FieldConfigType:  {Type: field.TypeEnum, Column: tenantconfig.FieldConfigType},
+			tenantconfig.FieldIsEncrypted: {Type: field.TypeBool, Column: tenantconfig.FieldIsEncrypted},
+			tenantconfig.FieldIsActive:    {Type: field.TypeBool, Column: tenantconfig.FieldIsActive},
 		},
 	}
 	return graph
@@ -1166,4 +1193,109 @@ func (f *SMSLogFilter) WhereSentAt(p entql.TimeP) {
 // WhereExpiresAt applies the entql time.Time predicate on the expires_at field.
 func (f *SMSLogFilter) WhereExpiresAt(p entql.TimeP) {
 	f.Where(p.Field(smslog.FieldExpiresAt))
+}
+
+// addPredicate implements the predicateAdder interface.
+func (_q *TenantConfigQuery) addPredicate(pred func(s *sql.Selector)) {
+	_q.predicates = append(_q.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the TenantConfigQuery builder.
+func (_q *TenantConfigQuery) Filter() *TenantConfigFilter {
+	return &TenantConfigFilter{config: _q.config, predicateAdder: _q}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *TenantConfigMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the TenantConfigMutation builder.
+func (m *TenantConfigMutation) Filter() *TenantConfigFilter {
+	return &TenantConfigFilter{config: m.config, predicateAdder: m}
+}
+
+// TenantConfigFilter provides a generic filtering capability at runtime for TenantConfigQuery.
+type TenantConfigFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *TenantConfigFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[9].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql uint32 predicate on the id field.
+func (f *TenantConfigFilter) WhereID(p entql.Uint32P) {
+	f.Where(p.Field(tenantconfig.FieldID))
+}
+
+// WhereCreatedBy applies the entql uint32 predicate on the created_by field.
+func (f *TenantConfigFilter) WhereCreatedBy(p entql.Uint32P) {
+	f.Where(p.Field(tenantconfig.FieldCreatedBy))
+}
+
+// WhereUpdatedBy applies the entql uint32 predicate on the updated_by field.
+func (f *TenantConfigFilter) WhereUpdatedBy(p entql.Uint32P) {
+	f.Where(p.Field(tenantconfig.FieldUpdatedBy))
+}
+
+// WhereDeletedBy applies the entql uint32 predicate on the deleted_by field.
+func (f *TenantConfigFilter) WhereDeletedBy(p entql.Uint32P) {
+	f.Where(p.Field(tenantconfig.FieldDeletedBy))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *TenantConfigFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(tenantconfig.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *TenantConfigFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(tenantconfig.FieldUpdatedAt))
+}
+
+// WhereDeletedAt applies the entql time.Time predicate on the deleted_at field.
+func (f *TenantConfigFilter) WhereDeletedAt(p entql.TimeP) {
+	f.Where(p.Field(tenantconfig.FieldDeletedAt))
+}
+
+// WhereTenantID applies the entql uint32 predicate on the tenant_id field.
+func (f *TenantConfigFilter) WhereTenantID(p entql.Uint32P) {
+	f.Where(p.Field(tenantconfig.FieldTenantID))
+}
+
+// WhereConfigKey applies the entql string predicate on the config_key field.
+func (f *TenantConfigFilter) WhereConfigKey(p entql.StringP) {
+	f.Where(p.Field(tenantconfig.FieldConfigKey))
+}
+
+// WhereConfigValue applies the entql string predicate on the config_value field.
+func (f *TenantConfigFilter) WhereConfigValue(p entql.StringP) {
+	f.Where(p.Field(tenantconfig.FieldConfigValue))
+}
+
+// WhereDescription applies the entql string predicate on the description field.
+func (f *TenantConfigFilter) WhereDescription(p entql.StringP) {
+	f.Where(p.Field(tenantconfig.FieldDescription))
+}
+
+// WhereConfigType applies the entql string predicate on the config_type field.
+func (f *TenantConfigFilter) WhereConfigType(p entql.StringP) {
+	f.Where(p.Field(tenantconfig.FieldConfigType))
+}
+
+// WhereIsEncrypted applies the entql bool predicate on the is_encrypted field.
+func (f *TenantConfigFilter) WhereIsEncrypted(p entql.BoolP) {
+	f.Where(p.Field(tenantconfig.FieldIsEncrypted))
+}
+
+// WhereIsActive applies the entql bool predicate on the is_active field.
+func (f *TenantConfigFilter) WhereIsActive(p entql.BoolP) {
+	f.Where(p.Field(tenantconfig.FieldIsActive))
 }

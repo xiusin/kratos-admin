@@ -93,9 +93,9 @@ func (s *FreightService) CalculateFreight(ctx context.Context, req *consumerV1.C
 
 	// 4. 返回结果
 	return &consumerV1.CalculateFreightResponse{
-		Freight:            freight.StringFixed(2),
-		IsFreeShipping:     false,
-		CalculationDetail:  &calculationDetail,
+		Freight:           freight.StringFixed(2),
+		IsFreeShipping:    false,
+		CalculationDetail: &calculationDetail,
 	}, nil
 }
 
