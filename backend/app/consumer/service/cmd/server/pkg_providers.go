@@ -98,26 +98,8 @@ func NewRedisClient(ctx *bootstrap.Context) (*redis.Client, func(), error) {
 
 // NewEntClient 创建Ent客户端
 func NewEntClient(ctx *bootstrap.Context) (*entCrud.EntClient[*ent.Client], func(), error) {
-	cfg := ctx.GetConfig()
-	if cfg == nil {
-		return nil, func() {}, nil
-	}
-
-	l := ctx.NewLoggerHelper("ent/data/consumer-service")
-
-	// 创建Ent客户端
-	entClient, err := data.NewEntClient(cfg, l)
-	if err != nil {
-		return nil, func() {}, err
-	}
-
-	cleanup := func() {
-		if err := entClient.Close(); err != nil {
-			l.Error(err)
-		}
-	}
-
-	return entClient, cleanup, nil
+	// 直接调用 data 包中的 NewEntClient
+	return data.NewEntClient(ctx)
 }
 
 // PkgProviderSet pkg层的依赖注入集合

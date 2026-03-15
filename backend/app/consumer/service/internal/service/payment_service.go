@@ -143,7 +143,7 @@ func (s *PaymentService) QueryPaymentStatus(ctx context.Context, req *consumerV1
 		order.GetStatus() == consumerV1.PaymentOrder_CLOSED ||
 		order.GetStatus() == consumerV1.PaymentOrder_REFUNDED {
 		return &consumerV1.PaymentStatusResponse{
-			Status:        order.GetStatus(),
+			Status:        *order.Status,
 			TransactionId: order.TransactionId,
 			PaidAt:        order.PaidAt,
 		}, nil
@@ -155,7 +155,7 @@ func (s *PaymentService) QueryPaymentStatus(ctx context.Context, req *consumerV1
 		s.log.Errorf("query payment status from third-party failed: %v", err)
 		// 返回本地状态
 		return &consumerV1.PaymentStatusResponse{
-			Status:        order.GetStatus(),
+			Status:        *order.Status,
 			TransactionId: order.TransactionId,
 			PaidAt:        order.PaidAt,
 		}, nil
@@ -179,14 +179,14 @@ func (s *PaymentService) QueryPaymentStatus(ctx context.Context, req *consumerV1
 		}
 
 		return &consumerV1.PaymentStatusResponse{
-			Status:        consumerV1.PaymentOrder_SUCCESS.Enum(),
+			Status:        consumerV1.PaymentOrder_SUCCESS,
 			TransactionId: &queryResp.TransactionID,
 			PaidAt:        timestamppb.New(*queryResp.PaidAt),
 		}, nil
 	}
 
 	return &consumerV1.PaymentStatusResponse{
-		Status:        order.GetStatus(),
+		Status:        *order.Status,
 		TransactionId: order.TransactionId,
 		PaidAt:        order.PaidAt,
 	}, nil
