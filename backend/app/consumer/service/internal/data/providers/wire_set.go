@@ -26,7 +26,7 @@ var ProviderSet = wire.NewSet(
 	data.NewPaymentOrderRepo,
 	data.NewFinanceAccountRepo,
 	data.NewFinanceTransactionRepo,
+	data.NewMediaFileRepo,
 	data.NewLogisticsTrackingRepo,
-	// TODO: 添加其他 Repository providers
-	// data.NewFreightTemplateRepo,
+	data.NewFreightTemplateRepo,
 )
