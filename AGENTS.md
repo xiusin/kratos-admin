@@ -1086,6 +1086,230 @@ grep -r "errors\." backend/app/admin/service/internal/service/ | head -20
 
 **这是血的教训，永不再犯！**
 
+### 6.10 新增教训：2026-03-15 Checkpoint 10 验证
+
+**🚨 本次错误总结：Checkpoint 验证中的三大失误**
+
+#### 失误 1: 指针类型理解不深刻
+
+**错误代码：**
+```go
+// account.Balance 已经是 *string 类型
+BalanceBefore: &account.Balance  // ❌ 错误：**string
+```
+
+**根本原因：**
+- 没有仔细查看 Protobuf 生成的 Go 类型定义
+- 假设所有字段都需要取地址
+- 没有理解 optional 字段在 Go 中的表示
+
+**正确做法：**
+```go
+// 1. 先查看 proto 定义
+cat backend/api/protos/consumer/service/v1/finance.proto | grep "balance"
+
+// 2. 查看生成的 Go 类型
+cat backend/api/gen/go/consumer/service/v1/finance.pb.go | grep "Balance"
+
+// 3. 理解类型规则
+// - optional string balance = 1;  → Go: Balance *string
+// - string balance = 1;           → Go: Balance string
+
+// 4. 正确使用
+BalanceBefore: account.Balance  // ✅ 正确：*string
+```
+
+**新增铁律：**
+```
+铁律5: 类型先查，后使用（CHECK TYPE FIRST）
+
+在使用任何 Protobuf 生成的字段前：
+1. 查看 .proto 定义（是否 optional）
+2. 查看生成的 .pb.go 类型（指针还是值）
+3. 使用 Get*() 方法读取（自动处理 nil）
+4. 直接使用字段写入（不要多余的 &）
+```
+
+#### 失误 2: 接口实现理解不完整
+
+**错误代码：**
+```go
+// 直接传递函数，不满足 Handler 接口
+s.eventBus.Subscribe(topic, func(ctx context.Context, event eventbus.Event) error {
+    // ...
+})  // ❌ 缺少 Handle 方法
+```
+
+**根本原因：**
+- 没有查看 eventbus.Handler 接口定义
+- 假设可以直接传递函数
+- 没有查看参考实现或文档
+
+**正确做法：**
+```go
+// 1. 先查看接口定义
+cat backend/pkg/eventbus/handler.go | grep "type Handler interface" -A 5
+
+// 2. 查看适配器实现
+cat backend/pkg/eventbus/handler.go | grep "EventHandlerFunc" -A 10
+
+// 3. 使用适配器包装
+s.eventBus.Subscribe(topic, eventbus.EventHandlerFunc(func(ctx context.Context, event *eventbus.Event) error {
+    // ...
+}))  // ✅ 正确：实现了 Handler 接口
+```
+
+**新增铁律：**
+```
+铁律6: 接口先查，后实现（CHECK INTERFACE FIRST）
+
+在实现任何接口前：
+1. 查看接口定义（方法签名）
+2. 查看是否有适配器（如 HandlerFunc）
+3. 查看参考实现（其他地方如何使用）
+4. 使用正确的实现方式
+```
+
+#### 失误 3: Wire 生成文件理解不足
+
+**错误现象：**
+```go
+// wire_gen.go (自动生成)
+httpServer, err := server.NewRestServer(context, consumerService, smsService, paymentService)
+// ❌ 缺少 financeService 参数
+```
+
+**根本原因：**
+- 修改了 NewRestServer 函数签名，但没有重新生成 Wire 代码
+- 不理解 wire_gen.go 是自动生成的文件
+- 没有意识到需要运行 go generate
+
+**正确做法：**
+```bash
+# 1. 理解 Wire 工作原理
+# - wire.go: 定义依赖注入配置（手动编写）
+# - wire_gen.go: 生成的依赖注入代码（自动生成）
+
+# 2. 修改函数签名后必须重新生成
+cd backend/app/consumer/service/cmd/server
+go generate
+
+# 3. 验证生成结果
+grep "NewRestServer" wire_gen.go
+```
+
+**新增铁律：**
+```
+铁律7: Wire 文件必须重新生成（REGENERATE WIRE）
+
+修改以下内容后必须运行 go generate：
+1. 修改 Provider 函数签名
+2. 添加新的 Service 或 Repository
+3. 修改依赖注入关系
+4. 更新 ProviderSet
+
+验证方法：
+- 检查 wire_gen.go 是否包含新的依赖
+- 运行 go build 验证编译通过
+```
+
+#### 失误 4: 验证流程不完整
+
+**本次验证流程的问题：**
+1. ❌ 没有在修复后立即编译验证
+2. ❌ 没有意识到 Wire 生成文件需要更新
+3. ❌ 依赖用户手动执行编译命令
+
+**改进的验证流程：**
+```
+标准验证流程（强制执行）：
+
+1. 修复代码错误
+   ↓
+2. 检查是否需要重新生成（Wire、Protobuf、Ent）
+   ↓
+3. 如果需要，提示用户运行生成命令
+   ↓
+4. 等待用户反馈编译结果
+   ↓
+5. 根据结果继续修复或完成验证
+```
+
+**新增铁律：**
+```
+铁律8: 完整验证流程（COMPLETE VERIFICATION）
+
+每次修复后必须：
+1. 检查是否需要重新生成代码
+2. 明确告知用户需要执行的命令
+3. 等待用户反馈结果
+4. 根据反馈继续修复
+5. 不要假设修复成功
+
+生成代码检查清单：
+- [ ] Wire (修改 Provider 函数签名)
+- [ ] Protobuf (修改 .proto 文件)
+- [ ] Ent (修改 Schema)
+- [ ] 其他代码生成工具
+```
+
+### 6.11 防幻觉检查清单（更新版）
+
+**在生成任何代码前，必须完成：**
+
+#### 基础验证（铁律 1-4）
+- [ ] 验证所有函数是否存在
+- [ ] 验证所有类型是否正确
+- [ ] 查看参考实现
+- [ ] 增量开发，立即验证
+
+#### 类型验证（铁律 5）
+- [ ] 查看 proto 定义（optional 关键字）
+- [ ] 查看生成的 Go 类型（指针或值）
+- [ ] 使用 Get*() 方法读取
+- [ ] 直接使用字段写入（避免多余的 &）
+
+#### 接口验证（铁律 6）
+- [ ] 查看接口定义（方法签名）
+- [ ] 查看是否有适配器
+- [ ] 查看参考实现
+- [ ] 使用正确的实现方式
+
+#### 生成代码验证（铁律 7）
+- [ ] 检查是否修改了 Provider 函数
+- [ ] 检查是否需要重新生成 Wire
+- [ ] 检查是否需要重新生成 Protobuf
+- [ ] 检查是否需要重新生成 Ent
+
+#### 完整验证流程（铁律 8）
+- [ ] 修复后检查生成代码需求
+- [ ] 明确告知用户执行命令
+- [ ] 等待用户反馈结果
+- [ ] 根据反馈继续修复
+- [ ] 不假设修复成功
+
+### 6.12 错误统计和改进
+
+**历史错误统计：**
+
+| 日期 | 错误类型 | 次数 | 修复时间 | 根本原因 |
+|------|---------|------|---------|---------|
+| 2026-03-15 | 指针类型错误 | 3 | 10分钟 | 未查看类型定义 |
+| 2026-03-15 | 接口不匹配 | 2 | 15分钟 | 未查看接口定义 |
+| 2026-03-15 | Wire 未生成 | 1 | 5分钟 | 未意识到需要重新生成 |
+| 2026-03-12 | 错误函数幻觉 | 15+ | 16小时+ | 未验证函数存在性 |
+
+**改进效果：**
+- 2026-03-12: 17小时+ (错误方法)
+- 2026-03-15: 30分钟 (改进后，但仍有提升空间)
+- 目标: 10分钟内完成验证（零错误）
+
+**持续改进措施：**
+1. 每次错误后更新宪法
+2. 建立错误模式库
+3. 完善验证检查清单
+4. 自动化验证流程
+
 ---
 
 ## 7. 任务留痕 (Task Tracing)

@@ -445,7 +445,7 @@
     - **Property 48: 充值事件触发余额增加**
     - **Validates: Requirements 11.4**
 
-- [ ] 10. Checkpoint - 核心服务验证
+- [x] 10. Checkpoint - 核心服务验证
   - 验证Consumer、SMS、Payment、Finance服务编译通过
   - 验证所有单元测试通过
   - 验证所有属性测试通过(Properties 1-32, 48)
@@ -453,7 +453,7 @@
   - 确保所有测试通过,询问用户是否继续
 
 
-- [ ] 11. Wechat Service实现(微信服务)
+- [-] 11. Wechat Service实现(微信服务)
   - [ ] 11.1 实现WechatService服务层 - OAuth登录
     - 实现GetAuthURL方法(获取微信授权URL)
     - 实现AuthCallback方法(微信授权回调)
