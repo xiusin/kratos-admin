@@ -12,6 +12,8 @@ import (
 
 	"github.com/tx7do/kratos-bootstrap/bootstrap"
 	"github.com/tx7do/kratos-bootstrap/rpc"
+
+	"go-wind-admin/app/consumer/service/internal/service"
 )
 
 // HealthResponse 健康检查响应
@@ -45,6 +47,9 @@ func NewRestMiddleware(
 // NewRestServer 创建 REST 服务器
 func NewRestServer(
 	ctx *bootstrap.Context,
+	consumerService *service.ConsumerService,
+	smsService *service.SMSService,
+	paymentService *service.PaymentService,
 ) (*khttp.Server, error) {
 	cfg := ctx.GetConfig()
 
@@ -61,8 +66,12 @@ func NewRestServer(
 	// 注册健康检查接口
 	registerHealthCheck(srv, ctx)
 
-	// TODO: 注册 Consumer Service
-	// TODO: 注册 SMS Service
+	// 注册 Consumer Service (gRPC-Gateway)
+	// 由于Protobuf没有HTTP注解,这里暂时不注册HTTP服务
+	// 可以通过gRPC-Gateway或者手动添加HTTP路由来实现REST API
+
+	// TODO: 添加HTTP路由映射
+	// TODO: 注册 SMS Service HTTP路由
 	// TODO: 注册 Payment Service
 	// TODO: 注册 Finance Service
 	// TODO: 注册 Wechat Service

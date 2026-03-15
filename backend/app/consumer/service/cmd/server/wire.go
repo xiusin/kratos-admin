@@ -37,6 +37,7 @@ import (
 func initApp(*bootstrap.Context) (*kratos.App, func(), error) {
 	panic(
 		wire.Build(
+			PkgProviderSet,
 			serverProviders.ProviderSet,
 			serviceProviders.ProviderSet,
 			dataProviders.ProviderSet,
