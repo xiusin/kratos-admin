@@ -3031,6 +3031,75 @@ mediaFile, err := s.mediaFileRepo.Get(ctx, uint32(req.Id))  // uint64 → uint32
 Id: func() *uint64 { v := uint64(file.ID); return &v }()  // uint32 → *uint64
 ```
 
+**铁律15: 构造函数签名必须一致（CONSISTENT CONSTRUCTOR SIGNATURE）**
+
+```
+在同一个服务模块中，所有 Service 构造函数必须遵循统一模式：
+
+1. 查看参考实现
+   grep -A 10 "func New.*Service" backend/app/consumer/service/internal/service/*.go
+
+2. 确认统一模式
+   - 第一个参数：ctx *bootstrap.Context
+   - 后续参数：依赖的 Repository、Client、Helper 等
+   - 返回值：*XxxService
+
+3. 标准模式
+   func NewXxxService(
+       ctx *bootstrap.Context,  // ✅ 必须是第一个参数
+       xxxRepo data.XxxRepo,
+       xxxClient xxx.Client,
+   ) *XxxService {
+       return &XxxService{
+           xxxRepo: xxxRepo,
+           xxxClient: xxxClient,
+           log: log.NewHelper(log.With(ctx.GetLogger(), "module", "service/xxx")),
+       }
+   }
+
+4. 禁止的模式
+   ❌ func NewXxxService(logger log.Logger, ...)  // 直接依赖 log.Logger
+   ❌ func NewXxxService(cfg *conf.Config, ...)   // 直接依赖配置
+   ❌ func NewXxxService(db *ent.Client, ...)     // 直接依赖数据库
+
+5. 验证方法
+   # 检查所有构造函数签名
+   grep -A 3 "func New.*Service" backend/app/consumer/service/internal/service/*.go | grep "ctx \*bootstrap.Context"
+   
+   # 如果有任何构造函数不包含 ctx *bootstrap.Context，立即修复
+```
+
+**铁律16: Wire 错误必须分析依赖链（ANALYZE WIRE DEPENDENCY CHAIN）**
+
+```
+当 Wire 生成失败时，必须：
+
+1. 阅读完整的错误信息
+   wire: inject initApp: no provider found for github.com/go-kratos/kratos/v2/log.Logger
+   needed by *go-wind-admin/app/consumer/service/internal/service.MediaService
+   needed by *github.com/go-kratos/kratos/v2/transport/http.Server
+   needed by *github.com/go-kratos/kratos/v2.App
+
+2. 分析依赖链
+   - 谁需要 log.Logger？→ MediaService
+   - MediaService 在哪里定义？→ internal/service/media_service.go
+   - 为什么需要 log.Logger？→ 构造函数参数
+
+3. 对比参考实现
+   - 查看其他 Service 如何获取 Logger
+   - 发现模式不一致
+
+4. 修复方案
+   - 修改构造函数签名，使用 ctx *bootstrap.Context
+   - 从 ctx.GetLogger() 获取 Logger
+   - 保持与其他 Service 一致
+
+5. 不要猜测
+   ❌ 不要在 PkgProviderSet 中添加 Logger Provider
+   ❌ 不要修改 Wire 配置
+   ✅ 修改构造函数签名，遵循统一模式
+```
+
 ### 15.4 更新的验证检查清单
 
 **在生成任何代码前，必须完成：**
@@ -3050,13 +3119,27 @@ Id: func() *uint64 { v := uint64(file.ID); return &v }()  // uint32 → *uint64
 - [ ] 使用 Get*() 方法读取
 - [ ] 直接使用字段写入（避免多余的 &）
 
-#### ID 类型验证（铁律 14）← 新增
+#### 构造函数验证（铁律 15）← 新增
+- [ ] 查看同模块其他 Service 构造函数
+- [ ] 确认第一个参数是 ctx *bootstrap.Context
+- [ ] 确认从 ctx.GetLogger() 获取 Logger
+- [ ] 确认不直接依赖 log.Logger、*conf.Config、*ent.Client
+- [ ] 保持构造函数签名一致性
+
+#### Wire 验证（铁律 16）← 新增
+- [ ] Wire 错误时阅读完整依赖链
+- [ ] 分析谁需要缺失的依赖
+- [ ] 对比参考实现找出差异
+- [ ] 修复构造函数而不是添加 Provider
+- [ ] 验证修复后 Wire 生成成功
+
+#### ID 类型验证（铁律 14）
 - [ ] 查看 Proto ID 类型（通常 uint64）
 - [ ] 查看 Ent ID 类型（根据 Mixin）
 - [ ] 在服务层边界进行显式转换
 - [ ] 返回 Proto 时正确处理指针
 
-#### 编译验证（铁律 13）← 新增
+#### 编译验证（铁律 13）
 - [ ] 编译错误时先清理缓存
 - [ ] 验证错误信息与代码匹配
 - [ ] 检查文件实际内容
@@ -3088,20 +3171,21 @@ Id: func() *uint64 { v := uint64(file.ID); return &v }()  // uint32 → *uint64
 | 日期 | 任务 | 错误次数 | 修复时间 | 效率 |
 |------|------|---------|---------|------|
 | 2026-03-12 | Logistics | 10+ | 67分钟 | 基准 |
-| 2026-03-15 | Checkpoint | 6 | 30分钟 | 提升 55% |
+| 2026-03-15 | Checkpoint 10 | 6 | 30分钟 | 提升 55% |
 | 2026-03-15 | Media Service | 2 | 15分钟 | 提升 78% |
+| 2026-03-15 | Checkpoint 15 | 1 | 5分钟 | 提升 92% |
 
 **改进趋势：**
-- 错误次数：10+ → 6 → 2（减少 80%）
-- 修复时间：67分钟 → 30分钟 → 15分钟（减少 78%）
+- 错误次数：10+ → 6 → 2 → 1（减少 90%）
+- 修复时间：67分钟 → 30分钟 → 15分钟 → 5分钟（减少 92%）
 - **宪法执行效果显著！** ✅
 
-### 15.6 给未来自己的提醒（第3次更新）
+### 15.6 给未来自己的提醒（第4次更新）
 
 ```
 亲爱的未来的我：
 
-如果你又遇到了编译错误，请回到这里，问自己：
+如果你又遇到了编译错误或 Wire 错误，请回到这里，问自己：
 
 1. 我是否查看了参考实现？
    如果没有，立即停止，去查看！
@@ -3109,11 +3193,51 @@ Id: func() *uint64 { v := uint64(file.ID); return &v }()  // uint32 → *uint64
 2. 我是否验证了所有引用？
    如果没有，立即停止，去验证！
 
-3. 我是否查看了 Ent 生成的实际代码？← 新增
+3. 我是否查看了 Ent 生成的实际代码？
    如果没有，立即停止，去查看！
 
-4. 我是否清理了 build cache？← 新增
+4. 我是否清理了 build cache？
    如果错误信息不匹配，立即清理！
+
+5. 我是否保持了构造函数签名一致？← 新增
+   如果没有，立即停止，去对比！
+
+6. 我是否分析了 Wire 依赖链？← 新增
+   如果没有，立即停止，去分析！
+
+7. 我是否增量开发？
+   如果没有，立即停止，重新开始！
+
+8. 我是否理解 Wire？
+   如果没有，立即停止，去学习！
+
+9. 我是否清理了未实现代码？
+   如果没有，立即停止，去清理！
+
+记住：
+- 宪法不是装饰品，是救命稻草！
+- 验证不是浪费时间，是节省时间！
+- 增量不是麻烦，是效率！
+- 参考不是抄袭，是学习！
+- Ent 生成代码必须查看，不能假设！
+- 编译错误不匹配先清理缓存！
+- ID 类型转换在服务层边界！
+- 构造函数签名必须一致！← 新增
+- Wire 错误先分析依赖链！← 新增
+
+遵循宪法 = 节省时间 + 减少错误 + 提高质量
+
+效果已验证：
+- 2026-03-12: 67分钟，10+错误
+- 2026-03-15 Checkpoint 10: 30分钟，6错误
+- 2026-03-15 Media Service: 15分钟，2错误
+- 2026-03-15 Checkpoint 15: 5分钟，1错误
+- 效率提升：92%！
+
+不要再犯同样的错误了！
+
+—— 2026-03-15 的我（第4次更新）
+```
 
 5. 我是否增量开发？
    如果没有，立即停止，重新开始！

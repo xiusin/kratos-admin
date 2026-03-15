@@ -10,6 +10,7 @@ import (
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/uuid"
+	"github.com/tx7do/kratos-bootstrap/bootstrap"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -32,14 +33,14 @@ type MediaService struct {
 
 // NewMediaService 创建媒体服务
 func NewMediaService(
+	ctx *bootstrap.Context,
 	mediaFileRepo data.MediaFileRepo,
 	ossClient oss.Client,
-	logger log.Logger,
 ) *MediaService {
 	return &MediaService{
 		mediaFileRepo: mediaFileRepo,
 		ossClient:     ossClient,
-		log:           log.NewHelper(log.With(logger, "module", "service/media")),
+		log:           log.NewHelper(log.With(ctx.GetLogger(), "module", "service/media")),
 	}
 }
 
