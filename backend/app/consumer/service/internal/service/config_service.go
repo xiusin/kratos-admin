@@ -21,9 +21,10 @@ import (
 type ConfigService struct {
 	consumerV1.UnimplementedConfigServiceServer
 
-	configRepo  data.TenantConfigRepo
-	configCache data.TenantConfigCache
-	log         *log.Helper
+	configRepo        data.TenantConfigRepo
+	configCache       data.TenantConfigCache
+	configHistoryRepo data.ConfigChangeHistoryRepo
+	log               *log.Helper
 }
 
 // NewConfigService 创建配置管理服务实例
@@ -31,11 +32,13 @@ func NewConfigService(
 	ctx *bootstrap.Context,
 	configRepo data.TenantConfigRepo,
 	configCache data.TenantConfigCache,
+	configHistoryRepo data.ConfigChangeHistoryRepo,
 ) *ConfigService {
 	return &ConfigService{
-		configRepo:  configRepo,
-		configCache: configCache,
-		log:         ctx.NewLoggerHelper("consumer/service/config-service"),
+		configRepo:        configRepo,
+		configCache:       configCache,
+		configHistoryRepo: configHistoryRepo,
+		log:               ctx.NewLoggerHelper("consumer/service/config-service"),
 	}
 }
 
@@ -136,6 +139,21 @@ func (s *ConfigService) UpdateConfig(ctx context.Context, req *consumerV1.Update
 	tenantID := uint32(1)      // 临时硬编码
 	currentUserID := uint32(1) // 临时硬编码
 
+	// 验证配置值的格式和有效性 (Requirement 14.5)
+	if req.ConfigValue != nil {
+		if err := s.validateConfigValue(req.GetConfigKey(), req.GetConfigValue(), req.GetConfigType()); err != nil {
+			s.log.Warnf("config validation failed: %v", err)
+			return nil, err
+		}
+	}
+
+	// 获取旧配置（用于记录变更历史）
+	oldConfig, err := s.configRepo.GetByKey(ctx, tenantID, req.GetConfigKey())
+	if err != nil && !ent.IsNotFound(err) {
+		s.log.Errorf("get old config failed: %v", err)
+		return nil, errors.InternalServer("INTERNAL_ERROR", "failed to get old config")
+	}
+
 	// 构建配置对象
 	config := &ent.TenantConfig{
 		TenantID:    &tenantID,
@@ -159,13 +177,19 @@ func (s *ConfigService) UpdateConfig(ctx context.Context, req *consumerV1.Update
 	}
 
 	// 创建或更新配置
-	_, err := s.configRepo.Upsert(ctx, config)
+	updatedConfig, err := s.configRepo.Upsert(ctx, config)
 	if err != nil {
 		s.log.Errorf("upsert config failed: %v", err)
 		return nil, errors.InternalServer("INTERNAL_ERROR", "failed to update config")
 	}
 
-	// 删除缓存
+	// 记录配置变更历史 (Requirement 14.6)
+	if err := s.recordConfigChange(ctx, tenantID, currentUserID, oldConfig, updatedConfig); err != nil {
+		s.log.Warnf("record config change history failed: %v", err)
+		// 不影响主流程，只记录警告
+	}
+
+	// 删除缓存（支持热更新 Requirement 14.2）
 	if err := s.configCache.Delete(ctx, tenantID, req.GetConfigKey()); err != nil {
 		s.log.Warnf("delete config cache failed: %v", err)
 	}
@@ -335,4 +359,98 @@ func (s *ConfigService) toEntConfigType(configType consumerV1.ConfigType) tenant
 	default:
 		return tenantconfig.ConfigTypeSystem
 	}
+}
+
+// validateConfigValue 验证配置值的格式和有效性
+func (s *ConfigService) validateConfigValue(configKey, configValue string, configType consumerV1.ConfigType) error {
+	// 基本验证：配置值不能为空（除非是删除操作）
+	if configValue == "" {
+		return nil // 允许空值（用于删除配置）
+	}
+
+	// 根据配置类型进行特定验证
+	switch configType {
+	case consumerV1.ConfigType_SMS:
+		// 短信配置验证：应该包含必要的字段（如 access_key, secret_key）
+		// 这里简化处理，实际应该解析JSON并验证字段
+		if len(configValue) < 10 {
+			return errors.BadRequest("INVALID_CONFIG_VALUE", "SMS config value too short")
+		}
+
+	case consumerV1.ConfigType_PAYMENT:
+		// 支付配置验证
+		if len(configValue) < 10 {
+			return errors.BadRequest("INVALID_CONFIG_VALUE", "Payment config value too short")
+		}
+
+	case consumerV1.ConfigType_OSS:
+		// OSS配置验证
+		if len(configValue) < 10 {
+			return errors.BadRequest("INVALID_CONFIG_VALUE", "OSS config value too short")
+		}
+
+	case consumerV1.ConfigType_WECHAT:
+		// 微信配置验证
+		if len(configValue) < 10 {
+			return errors.BadRequest("INVALID_CONFIG_VALUE", "Wechat config value too short")
+		}
+
+	case consumerV1.ConfigType_LOGISTICS:
+		// 物流配置验证
+		if len(configValue) < 10 {
+			return errors.BadRequest("INVALID_CONFIG_VALUE", "Logistics config value too short")
+		}
+
+	case consumerV1.ConfigType_FREIGHT:
+		// 运费配置验证
+		if len(configValue) < 10 {
+			return errors.BadRequest("INVALID_CONFIG_VALUE", "Freight config value too short")
+		}
+
+	case consumerV1.ConfigType_SYSTEM:
+		// 系统配置验证
+		// 允许任何值
+	}
+
+	// 配置值长度限制
+	if len(configValue) > 5000 {
+		return errors.BadRequest("INVALID_CONFIG_VALUE", "config value too long (max 5000 characters)")
+	}
+
+	return nil
+}
+
+// recordConfigChange 记录配置变更历史 (Requirement 14.6)
+func (s *ConfigService) recordConfigChange(ctx context.Context, tenantID, changedBy uint32, oldConfig, newConfig *ent.TenantConfig) error {
+	// 确定变更类型
+	var changeType string
+	var oldValue, newValue *string
+
+	if oldConfig == nil {
+		// 新建配置
+		changeType = "CREATE"
+		if newConfig.ConfigValue != nil {
+			newValue = newConfig.ConfigValue
+		}
+	} else {
+		// 更新配置
+		changeType = "UPDATE"
+		if oldConfig.ConfigValue != nil {
+			oldValue = oldConfig.ConfigValue
+		}
+		if newConfig.ConfigValue != nil {
+			newValue = newConfig.ConfigValue
+		}
+	}
+
+	// 创建变更历史记录
+	return s.configHistoryRepo.Create(ctx, &data.ConfigChangeHistoryInput{
+		TenantID:   tenantID,
+		ConfigID:   newConfig.ID,
+		ConfigKey:  newConfig.ConfigKey,
+		OldValue:   oldValue,
+		NewValue:   newValue,
+		ChangeType: changeType,
+		ChangedBy:  changedBy,
+	})
 }

@@ -8,6 +8,10 @@
 
 ## 🔥 开始前必读（3条铁律）
 
+- 交互使用中文
+- 对话任务称呼我为“xiusin”
+
+
 ### 铁律1: Pagination 必须搜索（用户强调100次！）
 ```bash
 # 🚨 每次使用 pagination 前必须执行这个命令
@@ -515,6 +519,58 @@ cat internal/data/ent/mediafile.go | grep -A 30 "type MediaFile struct"
 # 修复：清理缓存
 go clean -cache
 go build ./...
+```
+
+### 错误6: initApp 函数未定义 ⚡ 自动修复
+```bash
+# 症状：cmd/server/main.go:XX:XX: undefined: initApp
+# 原因：wire_gen.go 文件不存在或过期
+
+# 🤖 自动修复流程（AI必须执行）：
+
+# 步骤1: 检查 wire_gen.go 是否存在
+if [ ! -f backend/app/consumer/service/cmd/server/wire_gen.go ]; then
+    echo "wire_gen.go 不存在，需要生成"
+fi
+
+# 步骤2: 自动生成 Wire 代码
+cd backend/app/consumer/service/cmd/server
+go generate
+
+# 步骤3: 验证生成结果
+if [ -f wire_gen.go ]; then
+    echo "✅ wire_gen.go 生成成功"
+    ls -lh wire_gen.go
+else
+    echo "❌ wire_gen.go 生成失败"
+    # 检查 Wire 工具是否安装
+    go install github.com/google/wire/cmd/wire@latest
+    go generate
+fi
+
+# 步骤4: 重新编译验证
+cd ../..
+go build ./...
+```
+
+**AI执行规则**：
+- 当遇到 `undefined: initApp` 错误时，AI **必须自动执行**上述步骤
+- **不要**询问用户是否执行
+- **不要**等待用户手动操作
+- 直接运行 `go generate` 命令
+- 如果失败，自动安装 Wire 工具后重试
+- 生成成功后立即编译验证
+
+**为什么会出现这个错误**：
+1. 新项目首次编译，wire_gen.go 还未生成
+2. 修改了 wire.go 或 ProviderSet，但未重新生成
+3. 删除了 wire_gen.go 文件
+4. Git 忽略了 wire_gen.go（不应该忽略）
+
+**预防措施**：
+- wire_gen.go 应该提交到 Git（不要加入 .gitignore）
+- 修改 ProviderSet 后立即运行 go generate
+- CI/CD 流程中包含 go generate 步骤
 ```
 
 ---

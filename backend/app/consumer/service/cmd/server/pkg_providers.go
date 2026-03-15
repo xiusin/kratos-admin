@@ -23,6 +23,12 @@ func NewEventBus(ctx *bootstrap.Context) eventbus.EventBus {
 	return eventbus.NewEventBus(ctx.GetLogger())
 }
 
+// NewJWTHelper 创建JWT助手
+func NewJWTHelper(ctx *bootstrap.Context) *jwt.JWTHelper {
+	// TODO: 从配置文件读取密钥
+	return jwt.NewJWTHelper("your-secret-key", ctx.GetLogger())
+}
+
 // NewSMSClients 创建SMS客户端集合
 func NewSMSClients(ctx *bootstrap.Context) (*service.SMSClients, error) {
 	// TODO: 从配置文件读取配置
