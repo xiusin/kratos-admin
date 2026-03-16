@@ -764,7 +764,7 @@
   - 确保所有测试通过,询问用户是否继续
 
 
-- [-] 21. 前端实现 - Store状态管理
+- [x] 21. 前端实现 - Store状态管理
   - [x] 21.1 创建Consumer Store
     - 创建consumer.state.ts(用户注册、登录、信息管理)
     - 封装gRPC客户端调用(ConsumerService)
@@ -802,13 +802,13 @@
     - 实现物流信息轮询
     - _Requirements: 8.1-8.10_
 
-  - [ ] 21.7 创建Freight Store
+  - [x] 21.7 创建Freight Store
     - 创建freight.state.ts(计算运费、模板管理)
     - 封装gRPC客户端调用(FreightService)
     - _Requirements: 9.1-9.10_
 
-- [ ] 22. 前端实现 - 页面组件
-  - [ ] 22.1 创建用户注册登录页面
+- [x] 22. 前端实现 - 页面组件
+  - [x] 22.1 创建用户注册登录页面
     - 创建views/auth/register.vue(手机号注册)
     - 创建views/auth/login.vue(手机号登录、微信登录)
     - 实现表单验证(手机号格式、验证码)
@@ -816,20 +816,20 @@
     - 实现登录状态保持(JWT存储)
     - _Requirements: 1.1-1.4_
 
-  - [ ] 22.2 创建用户信息管理页面
+  - [x] 22.2 创建用户信息管理页面
     - 创建views/user/profile.vue(查看和编辑个人信息)
     - 创建views/user/avatar.vue(上传头像)
     - 创建views/user/security.vue(修改手机号、邮箱、密码)
     - 实现表单验证和提交
     - _Requirements: 2.1-2.8_
 
-  - [ ] 22.3 创建登录日志页面
+  - [x] 22.3 创建登录日志页面
     - 创建views/user/login-logs.vue(查看登录日志)
     - 实现分页和筛选(按时间范围、状态)
     - 实现数据表格展示
     - _Requirements: 12.1-12.8_
 
-  - [ ] 22.4 创建财务管理页面
+  - [x] 22.4 创建财务管理页面
     - 创建views/finance/account.vue(查看余额)
     - 创建views/finance/recharge.vue(充值)
     - 创建views/finance/withdraw.vue(提现)
@@ -838,7 +838,7 @@
     - 实现流水导出(CSV)
     - _Requirements: 5.1-5.12_
 
-  - [ ] 22.5 创建媒体管理页面
+  - [x] 22.5 创建媒体管理页面
     - 创建views/media/upload.vue(上传图片、视频)
     - 创建views/media/list.vue(媒体文件列表)
     - 实现文件上传(拖拽、选择)
@@ -846,22 +846,22 @@
     - 实现文件预览和删除
     - _Requirements: 7.1-7.13_
 
-  - [ ] 22.6 创建物流查询页面
+  - [x] 22.6 创建物流查询页面
     - 创建views/logistics/query.vue(查询物流)
     - 创建views/logistics/tracking.vue(物流轨迹)
     - 实现物流信息展示(时间轴)
     - 实现物流状态订阅
     - _Requirements: 8.1-8.10_
 
-  - [ ] 22.7 创建运费计算页面
+  - [x] 22.7 创建运费计算页面
     - 创建views/freight/calculator.vue(运费计算器)
     - 创建views/freight/templates.vue(运费模板管理)
     - 实现运费计算表单
     - 实现模板CRUD操作
     - _Requirements: 9.1-9.10_
 
-- [ ] 23. 前端实现 - 路由配置
-  - [ ] 23.1 配置用户模块路由
+- [x] 23. 前端实现 - 路由配置
+  - [x] 23.1 配置用户模块路由
     - 配置/auth/register路由(注册页面)
     - 配置/auth/login路由(登录页面)
     - 配置/user/profile路由(个人信息)
@@ -869,7 +869,7 @@
     - 设置路由守卫(需要登录)
     - _Requirements: 1.1-1.10, 2.1-2.8, 12.1-12.8_
 
-  - [ ] 23.2 配置财务模块路由
+  - [x] 23.2 配置财务模块路由
     - 配置/finance/account路由(账户余额)
     - 配置/finance/recharge路由(充值)
     - 配置/finance/withdraw路由(提现)
@@ -877,7 +877,7 @@
     - 设置路由守卫(需要登录)
     - _Requirements: 5.1-5.12_
 
-  - [ ] 23.3 配置媒体和物流模块路由
+  - [x] 23.3 配置媒体和物流模块路由
     - 配置/media/upload路由(上传文件)
     - 配置/media/list路由(文件列表)
     - 配置/logistics/query路由(物流查询)
@@ -885,28 +885,28 @@
     - 设置路由守卫(需要登录)
     - _Requirements: 7.1-7.13, 8.1-8.10, 9.1-9.10_
 
-- [ ] 24. 前端实现 - 通用组件
-  - [ ] 24.1 创建验证码输入组件
+- [x] 24. 前端实现 - 通用组件
+  - [x] 24.1 创建验证码输入组件
     - 创建components/VerificationCodeInput.vue
     - 实现6位数字输入
     - 实现自动聚焦和跳转
     - 实现倒计时显示
     - _Requirements: 3.3_
 
-  - [ ] 24.2 创建支付方式选择组件
+  - [x] 24.2 创建支付方式选择组件
     - 创建components/PaymentMethodSelector.vue
     - 实现微信支付、支付宝选择
     - 实现支付二维码展示
     - _Requirements: 4.1, 4.2_
 
-  - [ ] 24.3 创建文件上传组件
+  - [x] 24.3 创建文件上传组件
     - 创建components/FileUploader.vue
     - 实现拖拽上传
     - 实现上传进度显示
     - 实现文件格式和大小验证
     - _Requirements: 7.1-7.4_
 
-  - [ ] 24.4 创建金额输入组件
+  - [x] 24.4 创建金额输入组件
     - 创建components/AmountInput.vue
     - 实现金额格式化(保留两位小数)
     - 实现金额验证(最小值、最大值)
