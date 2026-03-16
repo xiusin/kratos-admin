@@ -24,19 +24,21 @@ import (
 	applogging "go-wind-admin/pkg/middleware/logging"
 )
 
-// HealthResponse 健康检查响应
-type HealthResponse struct {
-	Status   string            `json:"status"`
-	Services map[string]string `json:"services"`
-}
-
 // NewRestMiddleware 创建中间件
 func NewRestMiddleware(
 	ctx *bootstrap.Context,
 	accessTokenChecker auth.AccessTokenChecker,
 	rdb *redis.Client,
+	monitoringService *service.MonitoringService,
+	tracingService *service.TracingService,
 ) []middleware.Middleware {
 	var ms []middleware.Middleware
+
+	// 链路追踪中间件
+	ms = append(ms, TracingMiddleware(tracingService))
+
+	// 监控中间件（记录响应时间）
+	ms = append(ms, MonitoringMiddleware(monitoringService))
 
 	// 日志中间件（Kratos 基础日志）
 	ms = append(ms, logging.Server(ctx.GetLogger()))
@@ -120,6 +122,7 @@ func NewRestServer(
 	logisticsService *service.LogisticsService,
 	freightService *service.FreightService,
 	configService *service.ConfigService,
+	monitoringService *service.MonitoringService,
 ) (*khttp.Server, error) {
 	cfg := ctx.GetConfig()
 
@@ -133,7 +136,7 @@ func NewRestServer(
 	}
 
 	// 注册健康检查接口
-	registerHealthCheck(srv, ctx)
+	registerHealthCheck(srv, ctx, monitoringService)
 
 	// 注册 Consumer Service (gRPC-Gateway)
 	// 由于Protobuf没有HTTP注解,这里暂时不注册HTTP服务
@@ -166,43 +169,49 @@ func NewRestServer(
 }
 
 // registerHealthCheck 注册健康检查接口
-func registerHealthCheck(srv *khttp.Server, ctx *bootstrap.Context) {
+func registerHealthCheck(srv *khttp.Server, ctx *bootstrap.Context, monitoringService *service.MonitoringService) {
 	// /health - 基础健康检查
 	srv.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
 
-		resp := HealthResponse{
-			Status: "UP",
-			Services: map[string]string{
-				"consumer-service": "UP",
-			},
+		// 执行健康检查
+		healthCheck := monitoringService.HealthCheck(r.Context())
+
+		// 根据健康状态设置 HTTP 状态码
+		if healthCheck.Status == service.HealthStatusUp {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
 		}
 
-		json.NewEncoder(w).Encode(resp)
+		json.NewEncoder(w).Encode(healthCheck)
 	})
 
 	// /ready - 就绪检查（检查依赖服务）
 	srv.HandleFunc("/ready", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		// TODO: 检查数据库连接
-		// TODO: 检查 Redis 连接
-		// TODO: 检查 Kafka 连接
+		// 执行健康检查
+		healthCheck := monitoringService.HealthCheck(r.Context())
 
-		// 暂时返回就绪状态
-		w.WriteHeader(http.StatusOK)
-
-		resp := HealthResponse{
-			Status: "READY",
-			Services: map[string]string{
-				"database": "UP",
-				"redis":    "UP",
-				"kafka":    "UP",
-			},
+		// 根据健康状态设置 HTTP 状态码
+		if healthCheck.Status == service.HealthStatusUp {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
 		}
 
-		json.NewEncoder(w).Encode(resp)
+		json.NewEncoder(w).Encode(healthCheck)
+	})
+
+	// /metrics - Prometheus 格式的指标
+	srv.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
+		w.WriteHeader(http.StatusOK)
+
+		// 获取 Prometheus 格式的指标
+		metrics := monitoringService.GetPrometheusMetrics(r.Context())
+		w.Write([]byte(metrics))
 	})
 }
 
