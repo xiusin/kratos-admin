@@ -755,7 +755,7 @@
     - **Property 47: 事件重试机制**
     - **Validates: Requirements 11.7, 11.8**
 
-- [-] 20. Checkpoint - 完整系统验证
+- [x] 20. Checkpoint - 完整系统验证
   - 验证所有功能模块正常工作
   - 验证所有单元测试通过
   - 验证所有属性测试通过(Properties 1-57)
@@ -764,39 +764,39 @@
   - 确保所有测试通过,询问用户是否继续
 
 
-- [ ] 21. 前端实现 - Store状态管理
-  - [ ] 21.1 创建Consumer Store
+- [-] 21. 前端实现 - Store状态管理
+  - [x] 21.1 创建Consumer Store
     - 创建consumer.state.ts(用户注册、登录、信息管理)
     - 封装gRPC客户端调用(ConsumerService)
     - 实现状态管理(用户信息、登录状态)
     - 实现错误处理
     - _Requirements: 1.1-1.10, 2.1-2.8_
 
-  - [ ] 21.2 创建SMS Store
+  - [x] 21.2 创建SMS Store
     - 创建sms.state.ts(发送验证码、验证)
     - 封装gRPC客户端调用(SMSService)
     - 实现验证码倒计时
     - _Requirements: 3.1-3.10_
 
-  - [ ] 21.3 创建Payment Store
+  - [x] 21.3 创建Payment Store
     - 创建payment.state.ts(创建支付、查询、退款)
     - 封装gRPC客户端调用(PaymentService)
     - 实现支付状态轮询
     - _Requirements: 4.1-4.12_
 
-  - [ ] 21.4 创建Finance Store
+  - [x] 21.4 创建Finance Store
     - 创建finance.state.ts(余额、充值、提现、流水)
     - 封装gRPC客户端调用(FinanceService)
     - 实现余额实时更新
     - _Requirements: 5.1-5.12_
 
-  - [ ] 21.5 创建Media Store
+  - [x] 21.5 创建Media Store
     - 创建media.state.ts(上传、查询、删除)
     - 封装gRPC客户端调用(MediaService)
     - 实现文件上传进度
     - _Requirements: 7.1-7.13_
 
-  - [ ] 21.6 创建Logistics Store
+  - [x] 21.6 创建Logistics Store
     - 创建logistics.state.ts(查询物流、订阅)
     - 封装gRPC客户端调用(LogisticsService)
     - 实现物流信息轮询
