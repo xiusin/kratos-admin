@@ -755,7 +755,7 @@
     - **Property 47: 事件重试机制**
     - **Validates: Requirements 11.7, 11.8**
 
-- [ ] 20. Checkpoint - 完整系统验证
+- [-] 20. Checkpoint - 完整系统验证
   - 验证所有功能模块正常工作
   - 验证所有单元测试通过
   - 验证所有属性测试通过(Properties 1-57)
