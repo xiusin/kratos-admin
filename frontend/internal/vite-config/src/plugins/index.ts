@@ -15,7 +15,6 @@ import viteCompressPlugin from 'vite-plugin-compression';
 import viteDtsPlugin from 'vite-plugin-dts';
 import { createHtmlPlugin as viteHtmlPlugin } from 'vite-plugin-html';
 import { VitePWA } from 'vite-plugin-pwa';
-import viteVueDevTools from 'vite-plugin-vue-devtools';
 
 import { viteArchiverPlugin } from './archiver';
 import { viteExtraAppConfigPlugin } from './extra-app-config';
@@ -65,7 +64,10 @@ async function loadCommonPlugins(
 
     {
       condition: !isBuild && devtools,
-      plugins: () => [viteVueDevTools()],
+      plugins: async () => {
+        const { default: viteVueDevTools } = await import('vite-plugin-vue-devtools');
+        return [viteVueDevTools()];
+      },
     },
     {
       condition: injectMetadata,
